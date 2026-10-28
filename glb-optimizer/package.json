@@ -1,0 +1,23 @@
+{
+  "name": "glb-optimizer",
+  "version": "1.0.0",
+  "description": "Web app per ottimizzare file GLB con compressione Draco e texture WebP/JPEG",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --max-old-space-size=16384 server.js",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.1.0",
+    "@gltf-transform/extensions": "^4.1.0",
+    "@gltf-transform/functions": "^4.1.0",
+    "draco3d": "^1.5.7",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "obj2gltf": "^3.2.0",
+    "sharp": "^0.33.4"
+  }
+}

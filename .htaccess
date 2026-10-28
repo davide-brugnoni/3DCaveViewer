@@ -1,0 +1,181 @@
+# 3D Cave Viewer - Security Configuration
+# https://github.com/davide-brugnoni/3DCaveViewer/
+
+# Disable directory browsing
+Options -Indexes
+
+# Deny access to sensitive files
+<FilesMatch "\.(log|bak|cache|hash|old|swp|tmp|ini|~)$">
+    Require all denied
+</FilesMatch>
+
+# Deny access to hidden files (except .well-known for certbot)
+<FilesMatch "^\.">
+    <If "%{REQUEST_URI} !~ m#^/\.well-known/#">
+        Require all denied
+    </If>
+</FilesMatch>
+
+# Deny access to version control files
+<FilesMatch "^(\.git|\.gitignore|\.gitattributes)">
+    Require all denied
+</FilesMatch>
+
+# Security Headers (fallback if PHP headers are not set)
+<IfModule mod_headers.c>
+    # Prevent clickjacking.
+    # setifempty (non set) perché PHP resta l'autorità su questo header:
+    # viewer.php lo omette di proposito in modalità incorporata (?embed=1),
+    # dove il framing è governato dalla direttiva CSP frame-ancestors.
+    # Vedi sendSecurityHeaders() ed embedFrameAncestors() in config.php.
+    # Richiede Apache >= 2.4.7; per versioni precedenti sostituire con:
+    #   Header always set X-Frame-Options "SAMEORIGIN"
+    #   Header always unset X-Frame-Options "expr=%{QUERY_STRING} =~ /(^|&)embed=1(&|$)/"
+    Header always setifempty X-Frame-Options "SAMEORIGIN"
+
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Referrer policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Remove server signature
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+
+    # Permissions Policy
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # HSTS (solo su HTTPS: la PWA richiede comunque HTTPS in produzione)
+    <If "%{HTTPS} == 'on'">
+        Header always set Strict-Transport-Security "max-age=31536000"
+    </If>
+
+    # Service Worker scope control (file in js/ folder)
+    <FilesMatch "pwa-service-worker\.js$">
+        Header set Service-Worker-Allowed "/"
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+
+    # Icon files - ensure proper CORS headers
+    <FilesMatch "\.(png|jpg|jpeg|webp|ico)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+
+    # Modelli 3D: cache lunga e immutabile (il SW usa comunque cache-first)
+    <FilesMatch "\.(glb|gltf)$">
+        Header set Cache-Control "public, max-age=15552000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# Hide server signature
+ServerSignature Off
+
+# PHP Security Settings (if mod_php is enabled). Il nome del modulo dipende
+# dalla versione (mod_php7.c per PHP 7, mod_php.c per PHP 8); con PHP-FPM
+# questi flag non si applicano e vanno impostati in php.ini / pool FPM.
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
+
+# Prevent access to error_log
+<Files "error_log">
+    Require all denied
+</Files>
+
+# Enable Brotli compression (preferred, better ratio than GZIP)
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css text/javascript application/javascript application/json application/manifest+json font/woff font/woff2 image/svg+xml
+</IfModule>
+
+# Enable GZIP compression as fallback
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/manifest+json font/woff image/svg+xml
+</IfModule>
+
+# PWA MIME types
+# NOTA: niente AddType su .json — forzerebbe application/manifest+json su
+# tutti i JSON (metadati modelli, catalogo). Il manifest è servito da
+# manifest.php con il content type corretto.
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType image/png .png
+    AddType model/gltf-binary .glb
+    AddType model/gltf+json .gltf
+</IfModule>
+
+# Browser caching for static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType application/manifest+json "access plus 0 seconds"
+    ExpiresByType text/html "access plus 0 seconds"
+    # Font caching (immutabili, cache lunga)
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    # GLB/GLTF 3D models
+    ExpiresByType model/gltf-binary "access plus 6 months"
+    ExpiresByType application/octet-stream "access plus 6 months"
+</IfModule>
+
+# Protect against certain attack patterns
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # NOTA: Il redirect www -> non-www è stato rimosso.
+    # Se l'app è installata in una sottocartella di un sito WordPress (es. /3d/),
+    # il redirect del dominio deve essere gestito a livello del server principale
+    # (WordPress o Apache config globale), non qui.
+    # Se l'app è installata alla root di un dominio dedicato, aggiungere il
+    # redirect nel .htaccess principale o nella configurazione di Apache/Nginx.
+
+    # Allow social media crawlers (Facebook, Twitter/X, LinkedIn, WhatsApp, Telegram, Pinterest, Discord)
+    RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Pinterestbot|Discordbot) [NC]
+    RewriteRule .* - [L]
+
+    # Sitemap XML generata dinamicamente dal catalogo modelli
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+    # Manifest PWA dinamico (branding/colori da config.php); l'URL
+    # manifest.json resta valido per pagine e PWA già installate
+    RewriteRule ^manifest\.json$ manifest.php [L]
+
+    # robots.txt dinamico (la direttiva Sitemap richiede un URL assoluto)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^robots\.txt$ robots.php [L]
+
+    # Block requests with suspicious user agents
+    RewriteCond %{HTTP_USER_AGENT} (libwww|wget|python|nikto|curl|scan|nmap|winhttp|clshttp|loader) [NC,OR]
+    RewriteCond %{HTTP_USER_AGENT} (<|>|'|%0A|%0D|%27|%3C|%3E|%00) [NC,OR]
+    RewriteCond %{HTTP_USER_AGENT} (;|<|>|'|\"|\)|\(|%0A|%0D|%27|%3C|%3E|%00).*(libwww|wget|python|nikto|curl|scan|nmap|winhttp|clshttp|loader) [NC]
+    RewriteRule .* - [F,L]
+
+    # Block SQL injection attempts in query strings
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=http:// [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=(\.\.//?)+ [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=/([a-z0-9_.]//?)+ [NC,OR]
+    RewriteCond %{QUERY_STRING} \=PHP[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} [NC,OR]
+    RewriteCond %{QUERY_STRING} (\.\./|\.\.\\|\.\.%2F|\.\.%5C) [NC,OR]
+    RewriteCond %{QUERY_STRING} (union.*select|select.*union|concat.*\(|insert.*into|update.*set|delete.*from) [NC]
+    RewriteRule .* - [F,L]
+
+    # Block path traversal attempts
+    RewriteCond %{REQUEST_URI} (\.\.\/|\.\.\\|\.\.%2F|\.\.%5C) [NC,OR]
+    RewriteCond %{REQUEST_URI} (/etc/passwd|/proc/self/environ) [NC]
+    RewriteRule .* - [F,L]
+</IfModule>

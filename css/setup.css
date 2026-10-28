@@ -1,0 +1,715 @@
+/*
+  3D Cave Viewer - Installazione guidata (stili)
+  https://github.com/davide-brugnoni/3DCaveViewer/
+  https://www.3dcaveviewer.com
+
+  Copyright (C) 2025 Davide Brugnoni davide.brugnoni@gmail.com
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see https://www.gnu.org/licenses/.
+*/
+
+/* Il wizard gira prima che l'installazione esista, quindi js/config.php non
+   viene caricato: le variabili sono dichiarate qui per intero, e js/setup.js
+   ne sovrascrive alcune dal vivo mentre si scelgono i colori. */
+:root {
+    --bg-color: #0d1117;
+    --panel-bg-solid: #161b22;
+    --border-color: rgba(60, 60, 80, 0.5);
+    --text-color: #e0e0e0;
+    --text-muted: #8b949e;
+    --accent-color: #0696af;
+    --accent-hover: #1ebfd7;
+    --success-color: #3fb950;
+    --warning-color: #d29922;
+    --danger-color: #f85149;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.setup-shell {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+/* ===== Intestazione ===== */
+.setup-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.setup-head .setup-logo {
+    height: 56px;
+    width: auto;
+}
+
+.setup-head-text {
+    flex: 1 1 200px;
+}
+
+.setup-head-text h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.setup-head-text p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.setup-langs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.setup-lang {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+}
+
+.setup-lang.is-active,
+.setup-lang:hover {
+    color: var(--text-color);
+    border-color: var(--accent-color);
+}
+
+/* ===== Passi ===== */
+.setup-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.setup-chip {
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.setup-chip:hover {
+    color: var(--text-color);
+}
+
+.setup-chip.is-active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+    font-weight: 600;
+}
+
+.setup-chip:focus-visible {
+    outline: 2px solid var(--accent-hover);
+    outline-offset: 2px;
+}
+
+.progress-bar-bg {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+/* ===== Schede ===== */
+.card {
+    background: var(--panel-bg-solid);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 16px 20px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Senza JavaScript tutti i passi restano visibili e il form è comunque
+   inviabile: la navigazione a schede è un miglioramento, non un requisito. */
+.setup-js .setup-step {
+    display: none;
+}
+
+.setup-js .setup-step.is-active {
+    display: block;
+}
+
+.setup-lead {
+    margin-top: 0;
+    color: var(--text-muted);
+}
+
+.setup-subtitle {
+    font-size: 1rem;
+    margin: 24px 0 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.setup-features {
+    margin: 0 0 16px;
+    padding-left: 20px;
+}
+
+.setup-features li {
+    margin-bottom: 4px;
+}
+
+/* ===== Campi ===== */
+.setup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 18px;
+}
+
+.setup-field label {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.setup-field input[type="text"],
+.setup-field input[type="url"],
+.setup-field input[type="email"],
+.setup-field input[type="number"],
+.setup-search input[type="search"],
+.setup-field select,
+.setup-ini {
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-height: 44px;
+    width: 100%;
+}
+
+.setup-field input:focus,
+.setup-search input[type="search"]:focus,
+.setup-field select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.setup-field input[type="file"] {
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.setup-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.setup-hint[data-state="ok"] {
+    color: var(--success-color);
+}
+
+.setup-hint[data-state="error"] {
+    color: var(--danger-color);
+}
+
+/* Comandi che senza JavaScript non farebbero nulla (download di un file,
+   lettura del file della chiave): restano nascosti finché js/setup.js non
+   marca il body. Il resto del wizard funziona comunque. */
+body:not(.setup-js) .setup-js-only {
+    display: none;
+}
+
+/* ===== Errori di validazione ===== */
+.setup-error {
+    font-size: 0.8rem;
+    color: var(--danger-color);
+}
+
+.setup-field.has-error input,
+.setup-field.has-error select {
+    border-color: var(--danger-color);
+}
+
+.setup-error-notes {
+    margin: 8px 0 0;
+    padding-left: 20px;
+}
+
+.setup-check-field label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 400;
+}
+
+.setup-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0 20px;
+}
+
+.setup-advanced {
+    margin-top: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+
+.setup-advanced summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.setup-advanced[open] summary {
+    margin-bottom: 16px;
+}
+
+/* ===== Colori ===== */
+.setup-color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.setup-color input[type="color"] {
+    width: 56px;
+    height: 44px;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.setup-color-value {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.setup-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+/* ===== Logo ===== */
+.setup-logo-preview {
+    margin: -8px 0 18px;
+}
+
+.setup-logo-preview img {
+    max-height: 90px;
+    max-width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ===== Mappa ===== */
+.setup-map {
+    height: 340px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+/* Ricerca dell'indirizzo (geocodifica OpenStreetMap) */
+.setup-search {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.setup-search label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.setup-search-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.setup-search-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.setup-search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.setup-search-hit {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.setup-search-results li:last-child .setup-search-hit {
+    border-bottom: none;
+}
+
+.setup-search-hit:hover,
+.setup-search-hit:focus {
+    background: var(--accent-color);
+    color: #fff;
+    outline: none;
+}
+
+/* Lettura della vista corrente: il numero dello zoom accanto al livello che
+   la mappa sta mostrando, e le coordinate del centro che verrà salvato. */
+.setup-map-readout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.setup-map-zoom {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.setup-zoom-lead {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Campo dello zoom che la mappa sta mostrando in anteprima */
+.setup-zoom-field.is-zoom-active {
+    border-left: 3px solid var(--accent-color);
+    padding-left: 8px;
+}
+
+/* ===== Requisiti ===== */
+.setup-checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.setup-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.setup-check:last-child {
+    border-bottom: none;
+}
+
+.setup-check-icon::before {
+    content: '…';
+    color: var(--text-muted);
+}
+
+.setup-check[data-status="ok"] .setup-check-icon::before {
+    content: '✓';
+    color: var(--success-color);
+}
+
+.setup-check[data-status="warn"] .setup-check-icon::before {
+    content: '!';
+    color: var(--warning-color);
+}
+
+.setup-check[data-status="fail"] .setup-check-icon::before {
+    content: '✕';
+    color: var(--danger-color);
+}
+
+.setup-check-label {
+    flex: 1;
+}
+
+.setup-check-detail,
+.setup-key {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 2px 8px;
+    word-break: break-all;
+}
+
+.setup-key {
+    display: block;
+    margin: 8px 0;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    padding: 10px 12px;
+    user-select: all;
+}
+
+/* ===== Sblocco con la chiave ===== */
+.setup-unlock {
+    margin: 0 0 8px;
+}
+
+.setup-keybox {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* ===== Riepilogo ===== */
+.setup-summary {
+    display: grid;
+    grid-template-columns: minmax(140px, auto) 1fr;
+    gap: 6px 16px;
+    margin: 0 0 20px;
+    font-size: 0.9rem;
+}
+
+.setup-summary dt {
+    color: var(--text-muted);
+}
+
+.setup-summary dd {
+    margin: 0;
+    word-break: break-word;
+}
+
+.setup-ini {
+    resize: vertical;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.setup-manual-steps {
+    padding-left: 20px;
+}
+
+/* ===== Messaggi ===== */
+.status-message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    border: 1px solid;
+}
+
+/* Lo sfondo resta neutro: il bordo e il testo seguono il colore principale,
+   che nello step "Colori" cambia sotto gli occhi di chi sta scegliendo. */
+.status-message.info {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--accent-color);
+    color: var(--accent-hover);
+}
+
+.status-message.success {
+    background: rgba(63, 185, 80, 0.15);
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.status-message.warning {
+    background: rgba(210, 153, 34, 0.15);
+    border-color: var(--warning-color);
+    color: var(--warning-color);
+}
+
+.status-message.error {
+    background: rgba(248, 81, 73, 0.15);
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+}
+
+/* ===== Pulsanti ===== */
+.setup-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 18px;
+    min-height: 44px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.setup-btn:hover:not(:disabled) {
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.setup-btn:focus-visible {
+    outline: 2px solid var(--accent-hover);
+    outline-offset: 2px;
+}
+
+.setup-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.setup-btn-primary {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.setup-btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.setup-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.setup-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+/* ===== Footer ===== */
+.setup-foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.setup-foot a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.setup-foot a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .setup-shell {
+        padding-top: 16px;
+    }
+
+    .setup-head-text h1 {
+        font-size: 1.25rem;
+    }
+
+    .setup-map {
+        height: 280px;
+    }
+
+    .setup-summary {
+        grid-template-columns: 1fr;
+        gap: 2px 0;
+    }
+
+    .setup-summary dd {
+        margin-bottom: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .setup-btn,
+    .setup-chip,
+    .progress-bar-fill {
+        transition: none;
+    }
+
+    .setup-btn:hover:not(:disabled) {
+        transform: none;
+    }
+}

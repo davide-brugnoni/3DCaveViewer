@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLB Optimizer & OBJ Converter</title>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@gltf-transform/core":       "https://esm.sh/@gltf-transform/core@4.1.0",
+      "@gltf-transform/extensions": "https://esm.sh/@gltf-transform/extensions@4.1.0",
+      "@gltf-transform/functions":  "https://esm.sh/@gltf-transform/functions@4.1.0",
+      "three":                      "https://esm.sh/three@0.168.0",
+      "three/addons/":              "https://esm.sh/three@0.168.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #1a1d2e;
+      border: 1px solid #2d3250;
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem; }
+    .subtitle { font-size: 0.85rem; color: #6b7280; margin-bottom: 1.5rem; }
+
+    /* Mode tabs */
+    .mode-tabs {
+      display: flex; gap: 0.5rem; margin-bottom: 1.25rem;
+    }
+    .mode-tab {
+      flex: 1; padding: 0.45rem 0.5rem; font-size: 0.8rem; font-weight: 600;
+      border: 1px solid #2d3250; border-radius: 0.5rem; background: #12152a;
+      color: #6b7280; cursor: default; text-align: center;
+      transition: all 0.15s;
+    }
+    .mode-tab.active   { border-color: #6366f1; color: #a5b4fc; background: rgba(99,102,241,0.12); }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed #3b4166;
+      border-radius: 0.75rem;
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #6366f1;
+      background: rgba(99,102,241,0.05);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon  { font-size: 2.2rem; margin-bottom: 0.4rem; }
+    .drop-label { font-size: 0.88rem; color: #94a3b8; }
+    .drop-label span { color: #818cf8; font-weight: 600; }
+    .drop-hint  { font-size: 0.72rem; color: #4b5563; margin-top: 0.3rem; }
+
+    /* File list detected */
+    .file-list {
+      margin-top: 0.75rem; display: none;
+      flex-direction: column; gap: 0.25rem;
+    }
+    .file-list.visible { display: flex; }
+    .file-pill {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.78rem; padding: 0.3rem 0.6rem;
+      background: #12152a; border-radius: 0.35rem;
+      border: 1px solid #2d3250;
+    }
+    .file-pill .badge {
+      font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem;
+      border-radius: 0.2rem; text-transform: uppercase; flex-shrink: 0;
+    }
+    .badge-glb  { background: #1e3a5f; color: #60a5fa; }
+    .badge-obj  { background: #3b2760; color: #c084fc; }
+    .badge-mtl  { background: #1a3a2a; color: #4ade80; }
+    .badge-tex  { background: #3a2a1a; color: #fb923c; }
+    .file-pill .fname { color: #e2e8f0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-pill .fsize { color: #4b5563; flex-shrink: 0; }
+    .pill-remove {
+      cursor: pointer; color: #6b7280; font-size: 0.7rem;
+      margin-left: 0.2rem; padding: 0.1rem 0.3rem; border-radius: 0.2rem;
+      border: none; background: transparent; line-height: 1;
+    }
+    .pill-remove:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+
+    /* Options */
+    .section-title {
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #6b7280; margin: 1.25rem 0 0.6rem;
+    }
+
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+    .opt-item {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      background: #12152a; border: 1px solid #2d3250;
+      border-radius: 0.5rem; padding: 0.55rem 0.7rem;
+      cursor: pointer; transition: border-color 0.15s;
+    }
+    .opt-item:hover          { border-color: #6366f1; }
+    .opt-item.is-disabled    { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    .opt-item input[type="checkbox"] { accent-color: #6366f1; margin-top: 0.15rem; flex-shrink: 0; }
+    .opt-label { font-size: 0.8rem; font-weight: 600; color: #e2e8f0; line-height: 1.2; }
+    .opt-desc  { font-size: 0.7rem; color: #6b7280; margin-top: 0.1rem; }
+
+    .draco-badge {
+      font-size: 0.65rem; font-weight: 600; padding: 0.12rem 0.35rem;
+      border-radius: 0.2rem; margin-top: 0.25rem; display: inline-block;
+    }
+    .badge-loading { background: #374151; color: #9ca3af; }
+    .badge-ok      { background: #064e3b; color: #34d399; }
+    .badge-fail    { background: #450a0a; color: #f87171; }
+
+    /* Button */
+    .btn {
+      width: 100%; margin-top: 1.25rem; padding: 0.8rem;
+      background: #6366f1; color: #fff; font-size: 0.93rem; font-weight: 600;
+      border: none; border-radius: 0.6rem; cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn:hover:not(:disabled) { background: #4f46e5; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Status */
+    .status { margin-top: 0.9rem; font-size: 0.83rem; text-align: center; min-height: 1.1rem; display: none; }
+    .status.processing { color: #f59e0b; display: block; }
+    .status.error      { color: #f87171; display: block; }
+    .status.success    { color: #34d399; display: block; }
+
+    /* Stats */
+    .stats-box {
+      margin-top: 0.9rem; background: #12152a; border: 1px solid #2d3250;
+      border-radius: 0.6rem; padding: 0.7rem 0.9rem; display: none;
+    }
+    .stats-box.visible { display: block; }
+    .stats-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.8rem; color: #94a3b8; padding: 0.18rem 0;
+    }
+    .stats-row strong { color: #e2e8f0; }
+    .savings { font-size: 0.88rem; font-weight: 700; color: #34d399; text-align: center; margin-top: 0.35rem; }
+
+    .warning {
+      font-size: 0.76rem; color: #f59e0b;
+      background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 0.4rem; padding: 0.4rem 0.6rem; margin-top: 0.5rem; display: none;
+    }
+
+    .spinner {
+      display: inline-block; width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      vertical-align: middle; margin-right: 5px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>GLB Optimizer</h1>
+  <p class="subtitle">Conversione OBJ → GLB · Ottimizzazione GLB · tutto in-browser</p>
+
+  <!-- Mode indicator (auto) -->
+  <div class="mode-tabs">
+    <div class="mode-tab" id="tabGLB">⚡ Ottimizza GLB</div>
+    <div class="mode-tab" id="tabOBJ">🔄 Converti OBJ → GLB</div>
+  </div>
+
+  <!-- Drop zone (accetta file multipli) -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput"
+           accept=".glb,.obj,.mtl,.png,.jpg,.jpeg,.bmp,.tga,.webp"
+           multiple>
+    <div class="drop-icon" id="dropIcon">📦</div>
+    <div class="drop-label">Trascina i file qui oppure <span>clicca per scegliere</span></div>
+    <div class="drop-hint" id="dropHint">
+      Trascina tutto insieme — GLB, oppure OBJ + MTL + texture
+    </div>
+  </div>
+
+  <div class="file-list" id="fileList"></div>
+  <div class="warning"   id="sizeWarning">
+    ⚠ File grande (&gt;100 MB): l'elaborazione richiede tempo e molta RAM.
+  </div>
+
+  <div class="section-title">Ottimizzazione</div>
+  <div class="options-grid">
+
+    <label class="opt-item" id="dracoItem">
+      <input type="checkbox" id="optDraco" checked>
+      <div>
+        <div class="opt-label">Draco</div>
+        <div class="opt-desc">Compressione geometria</div>
+        <span class="draco-badge badge-loading" id="dracoBadge">caricamento…</span>
+      </div>
+    </label>
+
+    <label class="opt-item">
+      <input type="checkbox" id="optWeld">
+      <div>
+        <div class="opt-label">Unisci vertici</div>
+        <div class="opt-desc">Merge vertici duplicati</div>
+      </div>
+    </label>
+
+    <label class="opt-item">
+      <input type="checkbox" id="optDedup" checked>
+      <div>
+        <div class="opt-label">Deduplica</div>
+        <div class="opt-desc">Rimuovi risorse identiche</div>
+      </div>
+    </label>
+
+    <label class="opt-item">
+      <input type="checkbox" id="optPrune" checked>
+      <div>
+        <div class="opt-label">Prune</div>
+        <div class="opt-desc">Elimina dati inutilizzati</div>
+      </div>
+    </label>
+
+  </div>
+
+  <button class="btn" id="mainBtn" disabled>Scegli i file per iniziare</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="stats-box" id="statsBox">
+    <div class="stats-row"><span>Prima</span><strong id="sizeIn">—</strong></div>
+    <div class="stats-row"><span>Dopo</span><strong id="sizeOut">—</strong></div>
+    <div class="savings" id="savings"></div>
+  </div>
+</div>
+
+<script type="module">
+// ── Librerie ───────────────────────────────────────────────────────────────
+import { WebIO }              from '@gltf-transform/core';
+import { ALL_EXTENSIONS }     from '@gltf-transform/extensions';
+import { draco as dracoTransform, dedup, prune, weld } from '@gltf-transform/functions';
+import * as THREE             from 'three';
+import { OBJLoader }          from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader }          from 'three/addons/loaders/MTLLoader.js';
+import { GLTFExporter }       from 'three/addons/exporters/GLTFExporter.js';
+
+// ── UI refs ────────────────────────────────────────────────────────────────
+const dropZone    = document.getElementById('dropZone');
+const fileInput   = document.getElementById('fileInput');
+const fileListEl  = document.getElementById('fileList');
+const mainBtn     = document.getElementById('mainBtn');
+const statusEl    = document.getElementById('status');
+const statsBox    = document.getElementById('statsBox');
+const sizeWarning = document.getElementById('sizeWarning');
+const dracoBadge  = document.getElementById('dracoBadge');
+const dracoItem   = document.getElementById('dracoItem');
+const optDraco    = document.getElementById('optDraco');
+const optWeld     = document.getElementById('optWeld');
+const optDedup    = document.getElementById('optDedup');
+const optPrune    = document.getElementById('optPrune');
+const tabGLB      = document.getElementById('tabGLB');
+const tabOBJ      = document.getElementById('tabOBJ');
+const sizeInEl    = document.getElementById('sizeIn');
+const sizeOutEl   = document.getElementById('sizeOut');
+const savingsEl   = document.getElementById('savings');
+
+// ── Stato ─────────────────────────────────────────────────────────────────
+let glbFile   = null;   // modalità GLB
+let objFile   = null;   // modalità OBJ
+let mtlFiles  = [];
+let texFiles  = [];
+let mode      = null;   // 'glb' | 'obj'
+
+let dracoReady  = false;
+let dracoEncMod = null;
+let dracoDecMod = null;
+
+// ── Inizializza Draco in background ──────────────────────────────────────
+(async () => {
+  try {
+    const mod = await import('https://esm.sh/draco3d@1.5.7');
+    const d3d = mod.default ?? mod;
+    [dracoEncMod, dracoDecMod] = await Promise.all([
+      d3d.createEncoderModule(),
+      d3d.createDecoderModule(),
+    ]);
+    dracoReady = true;
+    dracoBadge.textContent = '✓ disponibile';
+    dracoBadge.className   = 'draco-badge badge-ok';
+  } catch (e) {
+    console.warn('[GLB Optimizer] Draco non disponibile:', e.message);
+    dracoBadge.textContent = '✗ non disponibile';
+    dracoBadge.className   = 'draco-badge badge-fail';
+    dracoItem.classList.add('is-disabled');
+    optDraco.checked  = false;
+    optDraco.disabled = true;
+  }
+})();
+
+// ── Drag & drop (file multipli) ───────────────────────────────────────────
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+function handleFiles(fileList) {
+  const all = Array.from(fileList);
+
+  // Classifica per tipo
+  const _glb  = all.find(f => /\.glb$/i.test(f.name));
+  const _obj  = all.find(f => /\.obj$/i.test(f.name));
+  const _mtls = all.filter(f => /\.mtl$/i.test(f.name));
+  const _tex  = all.filter(f => /\.(png|jpe?g|bmp|tga|webp)$/i.test(f.name));
+
+  if (!_glb && !_obj) {
+    setStatus('Trascina un file .glb oppure .obj', 'error');
+    return;
+  }
+  if (_glb && _obj) {
+    setStatus('Trascina GLB oppure OBJ, non entrambi', 'error');
+    return;
+  }
+
+  // Reset
+  glbFile = null; objFile = null; mtlFiles = []; texFiles = [];
+  statsBox.classList.remove('visible');
+  setStatus('', '');
+
+  if (_glb) {
+    glbFile = _glb;
+    mode = 'glb';
+  } else {
+    objFile  = _obj;
+    mtlFiles = _mtls;
+    texFiles = _tex;
+    mode = 'obj';
+  }
+
+  updateUI();
+}
+
+function updateUI() {
+  // Mode tabs
+  tabGLB.classList.toggle('active', mode === 'glb');
+  tabOBJ.classList.toggle('active', mode === 'obj');
+
+  // File pills
+  fileListEl.innerHTML = '';
+  if (mode === 'glb') {
+    addPill('glb', glbFile.name, glbFile.size, null);
+    sizeWarning.style.display = glbFile.size > 100*1024*1024 ? 'block' : 'none';
+  } else {
+    addPill('obj', objFile.name, objFile.size, null);
+    mtlFiles.forEach((f, i) => addPill('mtl', f.name, f.size, () => {
+      mtlFiles.splice(i, 1);
+      updateUI();
+    }));
+    texFiles.forEach((f, i) => addPill('tex', f.name, f.size, () => {
+      texFiles.splice(i, 1);
+      updateUI();
+    }));
+    const totalSize = objFile.size
+      + mtlFiles.reduce((a,f)=>a+f.size,0)
+      + texFiles.reduce((a,f)=>a+f.size,0);
+    if (objFile.size > 500*1024*1024) {
+      sizeWarning.textContent = '⚠ File OBJ molto grande (>' + fmtSize(objFile.size) + '). I browser hanno un limite sulla dimensione delle stringhe (~512 MB–1 GB): la conversione potrebbe fallire silenziosamente. Usa la versione server (glb-optimizer/) per file di questa dimensione.';
+      sizeWarning.style.display = 'block';
+    } else {
+      sizeWarning.style.display = totalSize > 100*1024*1024 ? 'block' : 'none';
+    }
+  }
+  fileListEl.classList.add('visible');
+
+  mainBtn.disabled    = false;
+  mainBtn.textContent = mode === 'glb' ? 'Ottimizza e Scarica' : 'Converti in GLB e Ottimizza';
+}
+
+function addPill(type, name, size, onRemove) {
+  const div  = document.createElement('div');
+  div.className = 'file-pill';
+  div.innerHTML =
+    `<span class="badge badge-${type}">${type}</span>` +
+    `<span class="fname">${name}</span>` +
+    `<span class="fsize">${fmtSize(size)}</span>`;
+  if (onRemove) {
+    const btn = document.createElement('button');
+    btn.className = 'pill-remove';
+    btn.textContent = '✕';
+    btn.title = 'Rimuovi';
+    btn.addEventListener('click', onRemove);
+    div.appendChild(btn);
+  }
+  fileListEl.appendChild(div);
+}
+
+// ── Bottone principale ────────────────────────────────────────────────────
+mainBtn.addEventListener('click', async () => {
+  mainBtn.disabled = true;
+  mainBtn.innerHTML = '<span class="spinner"></span>Elaborazione in corso…';
+  statsBox.classList.remove('visible');
+
+  try {
+    let glbData; // Uint8Array finale da ottimizzare
+    let inputSize;
+
+    if (mode === 'glb') {
+      // ── Modalità GLB: leggi direttamente ──────────────────────────────
+      inputSize = glbFile.size;
+      const buf = await glbFile.arrayBuffer();
+      glbData = new Uint8Array(buf);
+
+    } else {
+      // ── Modalità OBJ: converti prima con Three.js ─────────────────────
+      setStatus('Conversione OBJ → GLB…', 'processing');
+      inputSize = objFile.size
+        + mtlFiles.reduce((s,f)=>s+f.size,0)
+        + texFiles.reduce((s,f)=>s+f.size,0);
+      glbData = await convertOBJtoGLB(objFile, mtlFiles, texFiles);
+    }
+
+    // ── Validazione: conversione non vuota ──────────────────────────
+    if (glbData.byteLength < 1024) {
+      throw new Error(
+        'La conversione ha prodotto un file quasi vuoto. ' +
+        (mode === 'obj'
+          ? 'Il file OBJ potrebbe essere troppo grande per il browser (usa la versione server per file > 500 MB) o non contenere geometria valida.'
+          : 'Il file GLB potrebbe essere corrotto o vuoto.')
+      );
+    }
+
+    // ── Ottimizzazione gltf-transform ─────────────────────────────────
+    setStatus('Ottimizzazione in corso…', 'processing');
+    const optimizedData = await optimizeGLB(glbData);
+    const outputSize = optimizedData.byteLength;
+
+    // ── Sanity check: output non sospettosamente piccolo ──────────────
+    if (outputSize < 1024 && inputSize > 10 * 1024 * 1024) {
+      throw new Error(
+        `Output sospettosamente piccolo (${fmtSize(outputSize)} da ${fmtSize(inputSize)}). ` +
+        'La geometria potrebbe essere andata persa. Prova a disabilitare Prune e Dedup.'
+      );
+    }
+
+    // ── Download ───────────────────────────────────────────────────────
+    const baseName = (objFile || glbFile).name.replace(/\.(obj|glb)$/i, '');
+    const suffix   = mode === 'obj' ? '_converted.glb' : '_optimized.glb';
+    downloadBlob(optimizedData, baseName + suffix);
+
+    // ── Stats ──────────────────────────────────────────────────────────
+    sizeInEl.parentElement.querySelector('span').textContent =
+      mode === 'obj' ? 'OBJ originale' : 'GLB originale';
+    sizeOutEl.parentElement.querySelector('span').textContent = 'GLB ottimizzato';
+    sizeInEl.textContent  = fmtSize(inputSize);
+    sizeOutEl.textContent = fmtSize(outputSize);
+    const pct = Math.round((1 - outputSize / inputSize) * 100);
+    savingsEl.textContent = pct > 0
+      ? `Riduzione: ${pct}%  (${fmtSize(inputSize - outputSize)} risparmiati)`
+      : 'Dimensione invariata (file già ottimizzato?)';
+    statsBox.classList.add('visible');
+
+    setStatus('✓ File convertito e ottimizzato, download avviato!', 'success');
+    mainBtn.textContent = 'Converti di nuovo';
+    mainBtn.disabled    = false;
+
+  } catch (err) {
+    console.error(err);
+    setStatus(`Errore: ${err.message}`, 'error');
+    mainBtn.textContent = 'Riprova';
+    mainBtn.disabled    = false;
+  }
+});
+
+// ── Conversione OBJ → GLB con Three.js ───────────────────────────────────
+async function convertOBJtoGLB(objFile, mtlFiles, texFiles) {
+  // Mappa nome_file → objectURL per le texture
+  const texURLs = new Map();
+  texFiles.forEach(f => texURLs.set(f.name.toLowerCase(), URL.createObjectURL(f)));
+
+  // LoadingManager con URL redirect per le texture locali
+  const manager = new THREE.LoadingManager();
+  manager.setURLModifier(url => {
+    const name = url.split(/[/\\]/).pop().toLowerCase();
+    return texURLs.get(name) ?? url;
+  });
+
+  // Traccia i caricamenti pendenti (texture async)
+  let pending = 0;
+  let resolvePending = null;
+  const _is = manager.itemStart.bind(manager);
+  const _ie = manager.itemEnd.bind(manager);
+  const _er = manager.itemError.bind(manager);
+  manager.itemStart = u => { pending++;                           _is(u); };
+  manager.itemEnd   = u => { _ie(u); if (--pending <= 0 && resolvePending) resolvePending(); };
+  manager.itemError = u => { _er(u); if (--pending <= 0 && resolvePending) resolvePending(); };
+
+  // Costruisci la scena Three.js
+  const scene   = new THREE.Scene();
+  const objText = await objFile.text();
+
+  if (mtlFiles && mtlFiles.length > 0) {
+    // Concatena tutti gli MTL in un unico blocco (i blocchi `newmtl` sono indipendenti)
+    const mtlTexts = await Promise.all(mtlFiles.map(f => f.text()));
+    const mtlText  = mtlTexts.join('\n');
+    const matCreator = new MTLLoader(manager).parse(mtlText, '');
+    matCreator.preload(); // avvia caricamento texture tramite il manager
+    const parsed = new OBJLoader(manager).setMaterials(matCreator).parse(objText);
+    // Snapshot con spread: .children è un live array, scene.add() rimuove dal parent
+    [...parsed.children].forEach(c => scene.add(c));
+  } else {
+    const parsed = new OBJLoader().parse(objText);
+    [...parsed.children].forEach(c => scene.add(c));
+  }
+
+  // Aspetta un tick, poi attendi le texture se ci sono
+  await tick();
+  if (pending > 0) {
+    setStatus('Caricamento texture…', 'processing');
+    await Promise.race([
+      new Promise(r => resolvePending = r),
+      delay(30_000), // timeout 30s
+    ]);
+  }
+
+  if (scene.children.length === 0) {
+    throw new Error(
+      'Il parser OBJ non ha prodotto nessuna geometria. ' +
+      'Il file potrebbe essere troppo grande per il browser, corrotto, o vuoto. ' +
+      'Per file OBJ > 500 MB usa la versione server (glb-optimizer/).'
+    );
+  }
+
+  // Esporta la scena in GLB
+  const glb = await new Promise((resolve, reject) => {
+    new GLTFExporter().parse(
+      scene,
+      buf => resolve(new Uint8Array(buf)),
+      reject,
+      { binary: true, embedImages: true }
+    );
+  });
+
+  // Libera object URLs
+  texURLs.forEach(url => URL.revokeObjectURL(url));
+  return glb;
+}
+
+// ── Ottimizzazione GLB con gltf-transform ────────────────────────────────
+async function optimizeGLB(inputU8) {
+  // ALL_EXTENSIONS come in glb-optimizer/server.js: KHRONOS_EXTENSIONS
+  // contiene solo le KHR_, e un GLB con EXT_texture_webp o EXT_meshopt
+  // uscirebbe con estensioni non dichiarate.
+  const io = new WebIO().registerExtensions(ALL_EXTENSIONS);
+  if (dracoReady) {
+    io.registerDependencies({
+      'draco3d.encoder': dracoEncMod,
+      'draco3d.decoder': dracoDecMod,
+    });
+  }
+
+  const gltfDoc = await io.readBinary(inputU8);
+
+  const transforms = [];
+  if (optWeld.checked)               transforms.push(weld());
+  if (optDedup.checked)              transforms.push(dedup());
+  if (optPrune.checked)              transforms.push(prune());
+  // Stessa quantizzazione del server: una griglia unica per la scena (niente
+  // fessure fra mesh adiacenti) e UV a 14 bit (niente frange sugli atlanti).
+  if (optDraco.checked && dracoReady) transforms.push(dracoTransform({
+    quantizationVolume: 'scene',
+    quantizeTexcoord: 14,
+  }));
+
+  if (transforms.length > 0) await gltfDoc.transform(...transforms);
+
+  return io.writeBinary(gltfDoc);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function downloadBlob(data, filename) {
+  const url = URL.createObjectURL(new Blob([data], { type: 'model/gltf-binary' }));
+  const a   = Object.assign(document.createElement('a'), { href: url, download: filename });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function setStatus(msg, type) {
+  statusEl.textContent = msg;
+  statusEl.className   = `status ${type}`;
+}
+
+function fmtSize(bytes) {
+  if (bytes >= 1024*1024) return (bytes/1024/1024).toFixed(1)+' MB';
+  if (bytes >= 1024)      return (bytes/1024).toFixed(0)+' KB';
+  return bytes+' B';
+}
+
+const tick  = ()  => new Promise(r => setTimeout(r, 10));
+const delay = ms  => new Promise(r => setTimeout(r, ms));
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Modelli 3D della singola installazione: dati dell'utente, mai versionati
+# (come custom/, un aggiornamento non li tocca). Resta solo il segnaposto
+# che fa esistere la cartella dopo un clone. Comprende anche la cache del
+# catalogo, rigenerata da api/catalogo.php.
+modelli/*
+!modelli/.gitkeep
+
+# Override avanzati in PHP per la singola installazione (opzionale)
+# custom/settings.ini è invece tracciato: arriva già con i default pronti,
+# ogni installazione lo modifica direttamente con i propri valori.
+custom/config.local.php
+
+# Marker dell'installazione guidata (contiene la chiave di riapertura) e
+# copia di sicurezza scritta dal wizard prima di riscrivere le impostazioni
+custom/.installed
+custom/settings.ini.bak
+
+# Loghi e icone della singola installazione: i default del progetto
+# stanno in img/, quello che c'e' in custom/ appartiene all'utente
+custom/logo.*
+custom/icon-*
+
+# Icone PWA generate automaticamente dal logo (generatedIconPath() in
+# config.php) — cache derivata, mai da tracciare, rigenerata da sola
+custom/generated/
+
+# Dependencies
+node_modules/

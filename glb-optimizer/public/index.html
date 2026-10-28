@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLB Optimizer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #1a1d2e;
+      border: 1px solid #2d3250;
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; color: #fff; }
+    .subtitle { font-size: 0.85rem; color: #6b7280; margin-bottom: 1.5rem; }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 2px dashed #3b4166;
+      border-radius: 0.75rem;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.05);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 2.5rem; margin-bottom: 0.5rem; transition: transform 0.2s; }
+    .drop-zone:hover .drop-icon { transform: scale(1.1); }
+    .drop-label { font-size: 0.9rem; color: #94a3b8; }
+    .drop-label span { color: #818cf8; font-weight: 600; }
+    .drop-label strong { color: #e2e8f0; }
+
+    .file-info { display: none; margin-top: 0.75rem; align-items: center; justify-content: center; gap: 0.5rem; }
+    .file-info.visible { display: flex; }
+    .file-badge {
+      font-size: 0.7rem; font-weight: 700;
+      padding: 0.15rem 0.45rem; border-radius: 0.3rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .file-badge.glb, .file-badge.gltf { background: #1e3a5f; color: #60a5fa; }
+    .file-badge.obj                    { background: #2d1f5e; color: #a78bfa; }
+    .file-name-text { font-size: 0.85rem; color: #6366f1; font-weight: 500; }
+    .change-link    { font-size: 0.75rem; color: #6b7280; text-decoration: underline; cursor: pointer; }
+
+    /* File list pills */
+    .file-list {
+      margin-top: 0.75rem; display: none;
+      flex-direction: column; gap: 0.25rem;
+    }
+    .file-list.visible { display: flex; }
+    .file-pill {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.78rem; padding: 0.3rem 0.6rem;
+      background: #12152a; border-radius: 0.35rem;
+      border: 1px solid #2d3250;
+    }
+    .file-pill .badge {
+      font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem;
+      border-radius: 0.2rem; text-transform: uppercase; flex-shrink: 0;
+    }
+    .badge-glb  { background: #1e3a5f; color: #60a5fa; }
+    .badge-gltf { background: #1e3a5f; color: #60a5fa; }
+    .badge-obj  { background: #3b2760; color: #c084fc; }
+    .badge-mtl  { background: #1a3a2a; color: #4ade80; }
+    .badge-tex  { background: #3a2a1a; color: #fb923c; }
+    .file-pill .fname { color: #e2e8f0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-pill .fsize { color: #4b5563; flex-shrink: 0; font-size: 0.72rem; }
+    .pill-remove {
+      cursor: pointer; color: #6b7280; font-size: 0.7rem;
+      margin-left: 0.2rem; padding: 0.1rem 0.3rem; border-radius: 0.2rem;
+      border: none; background: transparent; line-height: 1;
+    }
+    .pill-remove:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+
+    .mode-hint { display: none; margin-top: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 500; text-align: center; }
+    .mode-hint.visible { display: block; }
+    .mode-hint.glb-hint { background: rgba(96,165,250,0.08); color: #93c5fd; border: 1px solid rgba(96,165,250,0.2); }
+    .mode-hint.obj-hint { background: rgba(167,139,250,0.08); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.2); }
+
+    /* ── Aux OBJ files ── */
+    .aux-section { display: none; margin-top: 0.75rem; }
+    .aux-section.visible { display: block; }
+    .aux-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-top: 0.4rem; padding: 0.5rem 0.75rem;
+      background: #12152a; border: 1px solid #2d3250; border-radius: 0.5rem;
+    }
+    .aux-row:first-child { margin-top: 0; }
+    .aux-row-label {
+      font-size: 0.82rem; font-weight: 600; color: #e2e8f0;
+      min-width: 70px; display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;
+    }
+    .badge { font-size: 0.65rem; background: #252847; color: #6b7280; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-weight: 500; }
+    .aux-pick { flex: 1; cursor: pointer; }
+    .aux-pick input[type="file"] { display: none; }
+    .aux-pick-name { font-size: 0.78rem; color: #6b7280; text-decoration: underline; cursor: pointer; }
+    .aux-pick-name.selected { color: #a78bfa; }
+
+    /* ── Option items ── */
+    .section-title {
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #6b7280; margin: 1.5rem 0 0.6rem;
+    }
+
+    .opts-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+
+    .opt-item {
+      background: #12152a; border: 1px solid #2d3250;
+      border-radius: 0.5rem; transition: border-color 0.15s;
+    }
+    .opt-item:hover { border-color: #4b5280; }
+    .opt-item.checked { border-color: #3b4166; }
+
+    .opt-header {
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      padding: 0.6rem 0.75rem; cursor: pointer; width: 100%;
+    }
+    .opt-header input[type="checkbox"] { accent-color: #6366f1; flex-shrink: 0; width: 15px; height: 15px; margin-top: 0.1rem; }
+    .opt-text { flex: 1; }
+    .opt-label { font-size: 0.82rem; font-weight: 600; color: #e2e8f0; line-height: 1.2; }
+    .opt-desc  { font-size: 0.72rem; color: #6b7280; margin-top: 0.05rem; }
+
+    .setting-label { font-size: 0.78rem; color: #94a3b8; white-space: nowrap; min-width: 95px; }
+    .setting-control { flex: 1; display: flex; align-items: center; gap: 0.5rem; }
+    .setting-control input[type="range"] { flex: 1; accent-color: #6366f1; cursor: pointer; }
+    .setting-hint { font-size: 0.68rem; color: #4b5563; white-space: nowrap; }
+    .setting-val  { font-size: 0.78rem; color: #818cf8; font-weight: 700; min-width: 32px; text-align: right; }
+
+    .opt-sub {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.4rem 0.75rem 0.55rem;
+      border-top: 1px solid #2d3250;
+    }
+    .opt-sub.hidden { display: none; }
+
+    .size-warning {
+      display: none; margin-top: 0.5rem; padding: 0.45rem 0.75rem;
+      border-radius: 0.5rem; font-size: 0.78rem; text-align: center;
+      background: rgba(245,158,11,0.08); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2);
+    }
+    .size-warning.visible { display: block; }
+
+    /* ── Texture section ── */
+    .select-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      background: #12152a; border: 1px solid #2d3250;
+      border-radius: 0.5rem 0.5rem 0 0; padding: 0.6rem 0.75rem;
+      margin-top: 0.4rem;
+    }
+    .select-row.standalone { border-radius: 0.5rem; }
+    .select-row label { font-size: 0.82rem; font-weight: 600; color: #e2e8f0; flex: 1; }
+    .select-row select {
+      background: #1a1d2e; border: 1px solid #3b4166; border-radius: 0.4rem;
+      color: #e2e8f0; font-size: 0.8rem; padding: 0.3rem 0.5rem; cursor: pointer;
+    }
+    .tex-quality-row {
+      display: none; align-items: center; gap: 0.75rem;
+      background: #0e1122; border: 1px solid #2d3250; border-top: none;
+      border-radius: 0 0 0.5rem 0.5rem; padding: 0.55rem 0.75rem;
+    }
+    .tex-quality-row.visible { display: flex; }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%; margin-top: 1.5rem; padding: 0.85rem;
+      background: #6366f1; color: #fff; font-size: 0.95rem; font-weight: 600;
+      border: none; border-radius: 0.6rem; cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn:hover:not(:disabled) { background: #4f46e5; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Status & Stats ── */
+    .status { margin-top: 1rem; font-size: 0.85rem; text-align: center; min-height: 1.2rem; display: none; }
+    .status.processing { color: #f59e0b; display: block; }
+    .status.error      { color: #f87171; display: block; }
+    .status.success    { color: #34d399; display: block; }
+
+    .stats-box { margin-top: 1rem; background: #12152a; border: 1px solid #2d3250; border-radius: 0.6rem; padding: 0.75rem 1rem; display: none; }
+    .stats-box.visible { display: block; }
+    .stats-row { display: flex; justify-content: space-between; font-size: 0.82rem; color: #94a3b8; padding: 0.2rem 0; }
+    .stats-row strong { color: #e2e8f0; }
+    .savings { font-size: 0.9rem; font-weight: 700; text-align: center; margin-top: 0.4rem; }
+
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      vertical-align: middle; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>GLB Optimizer</h1>
+  <p class="subtitle">Carica un file GLB/GLTF per ottimizzarlo, o un OBJ per convertirlo in GLB</p>
+
+  <!-- Drop zone unica -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput"
+           accept=".glb,.gltf,.obj,.mtl,.png,.jpg,.jpeg,.bmp,.tga,.webp"
+           multiple>
+    <div class="drop-icon" id="dropIcon">📁</div>
+    <div class="drop-label" id="dropLabel">
+      Trascina i file qui oppure <span>clicca per scegliere</span><br>
+      <strong>.glb</strong> · <strong>.gltf</strong> · <strong>.obj</strong> + MTL + texture<br>
+      <small style="color:#4b5563">Trascina tutto insieme — OBJ, MTL e texture verranno riconosciuti automaticamente</small>
+    </div>
+    <div class="file-info" id="fileInfo">
+      <span class="file-badge" id="fileBadge"></span>
+      <span class="file-name-text" id="fileNameText"></span>
+      <span class="change-link" id="changeLink">cambia</span>
+    </div>
+  </div>
+
+  <div class="file-list" id="fileList"></div>
+
+  <!-- Hint modalità -->
+  <div class="mode-hint" id="modeHint"></div>
+  <div class="size-warning" id="sizeWarning"></div>
+
+  <!-- File ausiliari OBJ -->
+  <div class="aux-section" id="auxSection">
+    <div class="aux-row">
+      <span class="aux-row-label">MTL <span class="badge">opzionale</span></span>
+      <label class="aux-pick">
+        <input type="file" id="fileInputMTL" accept=".mtl" multiple>
+        <span class="aux-pick-name" id="mtlPickName">Clicca per scegliere…</span>
+      </label>
+    </div>
+    <div class="aux-row">
+      <span class="aux-row-label">Texture <span class="badge">opzionale</span></span>
+      <label class="aux-pick">
+        <input type="file" id="fileInputTex" accept=".png,.jpg,.jpeg,.bmp,.tga,.webp" multiple>
+        <span class="aux-pick-name" id="texPickName">Clicca per scegliere…</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── Opzioni geometria ─────────────────────────────────────────────── -->
+  <div class="section-title">Geometria</div>
+  <div class="opts-list">
+
+    <!-- Draco -->
+    <div class="opt-item checked" id="itemDraco">
+      <label class="opt-header">
+        <input type="checkbox" id="optDraco" checked>
+        <div class="opt-text">
+          <div class="opt-label">Draco</div>
+          <div class="opt-desc">Compressione geometria (−70–90%)</div>
+        </div>
+      </label>
+      <div class="opt-sub" id="dracoSpeedRow">
+        <span class="setting-label">Velocità</span>
+        <div class="setting-control">
+          <span class="setting-hint">Lento</span>
+          <input type="range" id="dracoSpeed" min="0" max="10" value="5" step="1">
+          <span class="setting-hint">Veloce</span>
+          <span class="setting-val" id="dracoSpeedVal">5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weld -->
+    <div class="opt-item" id="itemWeld">
+      <label class="opt-header">
+        <input type="checkbox" id="optWeld">
+        <div class="opt-text">
+          <div class="opt-label">Unisci vertici</div>
+          <div class="opt-desc">Fonde vertici duplicati (weld)</div>
+        </div>
+      </label>
+      <div class="opt-sub hidden" id="weldToleranceRow">
+        <span class="setting-label">Tolleranza</span>
+        <div class="setting-control">
+          <span class="setting-hint">Fine</span>
+          <input type="range" id="weldTolerance" min="-6" max="-1" value="-4" step="1">
+          <span class="setting-hint">Grosso</span>
+          <span class="setting-val" id="weldTolVal">1e-4</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dedup -->
+    <div class="opt-item checked" id="itemDedup">
+      <label class="opt-header">
+        <input type="checkbox" id="optDedup" checked>
+        <div class="opt-text">
+          <div class="opt-label">Deduplica</div>
+          <div class="opt-desc">Rimuovi mesh, texture e materiali identici</div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Prune -->
+    <div class="opt-item checked" id="itemPrune">
+      <label class="opt-header">
+        <input type="checkbox" id="optPrune" checked>
+        <div class="opt-text">
+          <div class="opt-label">Prune</div>
+          <div class="opt-desc">Elimina nodi, accessori e dati inutilizzati</div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+
+  <!-- ── Texture ───────────────────────────────────────────────────────── -->
+  <div class="section-title">Texture</div>
+
+  <div class="select-row" id="texFormatRow">
+    <label for="optTexture">Formato output</label>
+    <select id="optTexture">
+      <option value="none">Originali (nessuna modifica)</option>
+      <option value="webp">WebP — max compressione</option>
+      <option value="jpeg">JPEG — massima compatibilità</option>
+    </select>
+  </div>
+  <div class="tex-quality-row" id="texQualityRow">
+    <span class="setting-label">Qualità</span>
+    <div class="setting-control">
+      <span class="setting-hint">Minore</span>
+      <input type="range" id="textureQuality" min="1" max="100" value="80" step="1">
+      <span class="setting-hint">Maggiore</span>
+      <span class="setting-val" id="texQualVal">80</span>
+    </div>
+  </div>
+
+  <button class="btn" id="actionBtn" disabled>Scegli un file per iniziare</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="stats-box" id="statsBox">
+    <div class="stats-row"><span id="labelIn">Prima</span><strong id="sizeIn">—</strong></div>
+    <div class="stats-row"><span id="labelOut">Dopo</span><strong id="sizeOut">—</strong></div>
+    <div class="stats-row" id="elapsedRow" style="display:none"><span>Tempo</span><strong id="elapsedVal">—</strong></div>
+    <div class="savings" id="savings"></div>
+  </div>
+</div>
+
+<script>
+  const dropZone   = document.getElementById('dropZone');
+  const fileInput  = document.getElementById('fileInput');
+  const actionBtn  = document.getElementById('actionBtn');
+  const statusEl   = document.getElementById('status');
+  const statsBox   = document.getElementById('statsBox');
+  const modeHint   = document.getElementById('modeHint');
+  const auxSection = document.getElementById('auxSection');
+
+  let mode        = null;
+  let mainFile    = null;
+  let mtlFiles    = [];
+  let texFiles    = [];
+  let fileBlocked = false;
+
+  // ── Drop zone ─────────────────────────────────────────────────────────────
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', function () { if (this.files.length) handleFiles(this.files); });
+  document.getElementById('changeLink').addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
+
+  function handleFiles(fileList) {
+    const all   = Array.from(fileList);
+    const main  = all.find(f => /\.(glb|gltf|obj)$/i.test(f.name));
+    if (!main) {
+      setStatus('Nessun file .glb/.gltf/.obj trovato', 'error');
+      return;
+    }
+    const ext  = main.name.split('.').pop().toLowerCase();
+    const mtls = all.filter(f => /\.mtl$/i.test(f.name));
+    const texs = all.filter(f => /\.(png|jpe?g|bmp|tga|webp)$/i.test(f.name));
+
+    if (ext === 'obj') {
+      mtlFiles = mtls;
+      texFiles = texs;
+    } else {
+      mtlFiles = [];
+      texFiles = [];
+    }
+    syncAuxLabels();
+
+    handleFile(main, ext);
+    renderFilePills();
+  }
+
+  function syncAuxLabels() {
+    const mtlEl = document.getElementById('mtlPickName');
+    mtlEl.textContent = mtlFiles.length === 0 ? 'Clicca per scegliere…'
+      : mtlFiles.length === 1 ? mtlFiles[0].name
+      : `${mtlFiles.length} file selezionati`;
+    mtlEl.className = 'aux-pick-name' + (mtlFiles.length ? ' selected' : '');
+
+    const texEl = document.getElementById('texPickName');
+    texEl.textContent = texFiles.length ? `${texFiles.length} file selezionati` : 'Clicca per scegliere…';
+    texEl.className   = 'aux-pick-name' + (texFiles.length ? ' selected' : '');
+  }
+
+  function handleFile(file, ext) {
+    ext = ext || file.name.split('.').pop().toLowerCase();
+    if (!['glb', 'gltf', 'obj'].includes(ext)) return;
+
+    mainFile = file;
+    mode     = ext === 'obj' ? 'obj' : 'glb';
+
+    document.getElementById('dropLabel').style.display = 'none';
+    document.getElementById('dropIcon').textContent    = mode === 'obj' ? '📐' : '📦';
+
+    const fileInfoEl = document.getElementById('fileInfo');
+    if (mode === 'obj') {
+      fileInfoEl.classList.remove('visible');
+    } else {
+      fileInfoEl.classList.add('visible');
+      const badge = document.getElementById('fileBadge');
+      badge.textContent = ext.toUpperCase();
+      badge.className   = `file-badge ${ext}`;
+      document.getElementById('fileNameText').textContent = `${file.name} (${formatSize(file.size)})`;
+    }
+
+    modeHint.classList.add('visible');
+    if (mode === 'glb') {
+      modeHint.className   = 'mode-hint visible glb-hint';
+      modeHint.textContent = '→ Verranno applicate le ottimizzazioni selezionate al file GLB';
+    } else {
+      modeHint.className   = 'mode-hint visible obj-hint';
+      modeHint.textContent = '→ Il modello OBJ sarà convertito in GLB e ottimizzato';
+    }
+
+    auxSection.classList.toggle('visible', mode === 'obj');
+
+    const sizeWarning = document.getElementById('sizeWarning');
+    const totalSize = file.size + mtlFiles.reduce((s,f)=>s+f.size,0) + texFiles.reduce((s,f)=>s+f.size,0);
+
+    const GB           = 1024 * 1024 * 1024;
+    const GB2          = 2 * GB;
+    const GLB_SPEC_MAX = 4294967295;   // il formato GLB usa lunghezze uint32
+    const MAX_UPLOAD   = 5 * GB;       // limite di upload del server
+
+    function showBlock(msg) {
+      sizeWarning.textContent = msg;
+      sizeWarning.classList.add('visible');
+      sizeWarning.style.background = 'rgba(239,68,68,0.10)';
+      sizeWarning.style.color = '#fca5a5';
+      sizeWarning.style.borderColor = 'rgba(239,68,68,0.3)';
+    }
+    function showWarn(msg) {
+      sizeWarning.textContent = msg;
+      sizeWarning.classList.add('visible');
+      sizeWarning.style.background = '';
+      sizeWarning.style.color = '';
+      sizeWarning.style.borderColor = '';
+    }
+
+    fileBlocked = false;
+    if (mode === 'glb' && file.size > GLB_SPEC_MAX) {
+      fileBlocked = true;
+      showBlock(`⛔ Il formato GLB non supporta file oltre 4,29 GB (questo è ${formatSize(file.size)}): il file è fuori specifica. Riesporta il modello come OBJ e usa la conversione OBJ → GLB.`);
+    } else if (totalSize > MAX_UPLOAD) {
+      fileBlocked = true;
+      showBlock(`⛔ File troppo grande (${formatSize(totalSize)}) — il limite del server è 5 GB.`);
+    } else if (totalSize >= GB2) {
+      // Disabilita automaticamente Prune e Dedup per file > 2 GB
+      const pruneChk = document.getElementById('optPrune');
+      const dedupChk = document.getElementById('optDedup');
+      if (pruneChk.checked) { pruneChk.checked = false; document.getElementById('itemPrune').classList.remove('checked'); }
+      if (dedupChk.checked) { dedupChk.checked = false; document.getElementById('itemDedup').classList.remove('checked'); }
+      showWarn(`⚠ File molto grande (${formatSize(totalSize)}) — Prune e Dedup disabilitati automaticamente per evitare perdita di geometria. L'elaborazione richiederà diversi minuti: non chiudere la pagina.`);
+    } else if (totalSize > 500 * 1024 * 1024) {
+      showWarn(`⚠ File grandi (${formatSize(totalSize)}) — l'elaborazione potrebbe richiedere diversi minuti`);
+    } else {
+      sizeWarning.classList.remove('visible');
+    }
+
+    setStatus('', '');
+    statsBox.classList.remove('visible');
+    updateButton();
+  }
+
+  function updateButton() {
+    actionBtn.disabled    = !mainFile || fileBlocked;
+    actionBtn.textContent = !mainFile ? 'Scegli un file per iniziare'
+      : fileBlocked      ? 'File non supportato'
+      : mode === 'glb'   ? 'Ottimizza e Scarica' : 'Converti e Scarica';
+  }
+
+  // ── File pills ──────────────────────────────────────────────────────────────
+  const fileListEl = document.getElementById('fileList');
+
+  function renderFilePills() {
+    fileListEl.innerHTML = '';
+    if (!mainFile) { fileListEl.classList.remove('visible'); return; }
+
+    const ext = mainFile.name.split('.').pop().toLowerCase();
+    addPill(ext === 'obj' ? 'obj' : ext, mainFile.name, mainFile.size, null);
+
+    mtlFiles.forEach((f, i) => addPill('mtl', f.name, f.size, () => {
+      mtlFiles.splice(i, 1);
+      syncAuxLabels();
+      if (mainFile) handleFile(mainFile);
+      renderFilePills();
+    }));
+
+    texFiles.forEach((f, i) => addPill('tex', f.name, f.size, () => {
+      texFiles.splice(i, 1);
+      syncAuxLabels();
+      if (mainFile) handleFile(mainFile);
+      renderFilePills();
+    }));
+
+    fileListEl.classList.add('visible');
+  }
+
+  function addPill(type, name, size, onRemove) {
+    const div = document.createElement('div');
+    div.className = 'file-pill';
+    div.innerHTML =
+      `<span class="badge badge-${type}">${type.toUpperCase()}</span>` +
+      `<span class="fname">${name}</span>` +
+      `<span class="fsize">${formatSize(size)}</span>`;
+    if (onRemove) {
+      const btn = document.createElement('button');
+      btn.className = 'pill-remove';
+      btn.textContent = '✕';
+      btn.title = 'Rimuovi';
+      btn.addEventListener('click', onRemove);
+      div.appendChild(btn);
+    }
+    fileListEl.appendChild(div);
+  }
+
+  // ── File ausiliari ────────────────────────────────────────────────────────
+  document.getElementById('fileInputMTL').addEventListener('change', function () {
+    mtlFiles = Array.from(this.files);
+    syncAuxLabels();
+    if (mainFile) handleFile(mainFile);
+    renderFilePills();
+  });
+  document.getElementById('fileInputTex').addEventListener('change', function () {
+    texFiles = Array.from(this.files);
+    syncAuxLabels();
+    if (mainFile) handleFile(mainFile);
+    renderFilePills();
+  });
+
+  // ── Opzioni: toggle checked style + sub-panels ────────────────────────────
+  function bindOpt(checkId, itemId, subId) {
+    const chk  = document.getElementById(checkId);
+    const item = document.getElementById(itemId);
+    const sub  = subId ? document.getElementById(subId) : null;
+    chk.addEventListener('change', () => {
+      item.classList.toggle('checked', chk.checked);
+      if (sub) sub.classList.toggle('hidden', !chk.checked);
+    });
+  }
+  bindOpt('optDraco', 'itemDraco', 'dracoSpeedRow');
+  bindOpt('optWeld',  'itemWeld',  'weldToleranceRow');
+  bindOpt('optDedup', 'itemDedup');
+  bindOpt('optPrune', 'itemPrune');
+
+  // Draco speed slider
+  const dracoSpeedSlider = document.getElementById('dracoSpeed');
+  const dracoSpeedVal    = document.getElementById('dracoSpeedVal');
+  dracoSpeedSlider.addEventListener('input', function () { dracoSpeedVal.textContent = this.value; });
+
+  // Weld tolerance slider (log scale: -6 → 1e-6, -1 → 0.1)
+  const weldTolSlider = document.getElementById('weldTolerance');
+  const weldTolVal    = document.getElementById('weldTolVal');
+  weldTolSlider.addEventListener('input', function () { weldTolVal.textContent = `1e${this.value}`; });
+
+  // ── Texture format + qualità ──────────────────────────────────────────────
+  const optTexture    = document.getElementById('optTexture');
+  const texQualityRow = document.getElementById('texQualityRow');
+  const texFormatRow  = document.getElementById('texFormatRow');
+  const texQualSlider = document.getElementById('textureQuality');
+  const texQualVal    = document.getElementById('texQualVal');
+
+  optTexture.addEventListener('change', () => {
+    const needsQuality = optTexture.value !== 'none';
+    texQualityRow.classList.toggle('visible', needsQuality);
+    texFormatRow.style.borderRadius = needsQuality ? '0.5rem 0.5rem 0 0' : '0.5rem';
+    if (optTexture.value === 'webp')  { texQualSlider.value = 80; texQualVal.textContent = '80'; }
+    if (optTexture.value === 'jpeg')  { texQualSlider.value = 85; texQualVal.textContent = '85'; }
+  });
+  texQualSlider.addEventListener('input', function () {
+    texQualVal.textContent = this.value;
+  });
+
+  // ── Azione principale ─────────────────────────────────────────────────────
+  actionBtn.addEventListener('click', () => {
+    if (mode === 'glb') runOptimize();
+    else                runConvert();
+  });
+
+  async function runOptimize() {
+    actionBtn.disabled = true;
+    actionBtn.innerHTML = '<span class="spinner"></span>Ottimizzazione in corso…';
+    setStatus('Elaborazione in corso, attendere…', 'processing');
+    statsBox.classList.remove('visible');
+
+    try {
+      const res = await fetch('/optimize', { method: 'POST', body: buildFormData('file', mainFile) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `Errore (${res.status})`);
+      const meta = getResponseMeta(res);
+      await triggerDownload(res, mainFile.name.replace(/\.(glb|gltf)$/i, '_optimized.glb'));
+      showStats(meta.inputSize, meta.outputSize, 'Prima', 'Dopo', meta.elapsedMs);
+      setStatus('✓ File ottimizzato e scaricato!', 'success');
+      actionBtn.textContent = 'Ottimizza di nuovo';
+    } catch (err) {
+      setStatus(`Errore: ${err.message}`, 'error');
+      actionBtn.textContent = 'Riprova';
+    }
+    actionBtn.disabled = false;
+  }
+
+  async function runConvert() {
+    actionBtn.disabled = true;
+    actionBtn.innerHTML = '<span class="spinner"></span>Conversione in corso…';
+    setStatus('Conversione OBJ → GLB e ottimizzazione in corso…', 'processing');
+    statsBox.classList.remove('visible');
+
+    const fd = buildFormData('obj', mainFile);
+    for (const m of mtlFiles) fd.append('mtl', m);
+    for (const t of texFiles) fd.append('textures', t);
+
+    try {
+      const res = await fetch('/convert', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `Errore (${res.status})`);
+      const meta = getResponseMeta(res);
+      await triggerDownload(res, mainFile.name.replace(/\.obj$/i, '_converted.glb'));
+      showStats(meta.inputSize, meta.outputSize, 'OBJ originale', 'GLB ottimizzato', meta.elapsedMs);
+      setStatus('✓ File convertito e ottimizzato, download avviato!', 'success');
+      actionBtn.textContent = 'Converti di nuovo';
+    } catch (err) {
+      setStatus(`Errore: ${err.message}`, 'error');
+      actionBtn.textContent = 'Riprova';
+    }
+    actionBtn.disabled = false;
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function buildFormData(fileField, file) {
+    const fd = new FormData();
+    fd.append(fileField, file);
+    fd.append('draco',          document.getElementById('optDraco').checked  ? 'true' : 'false');
+    fd.append('dracoSpeed',     document.getElementById('dracoSpeed').value);
+    fd.append('weld',           document.getElementById('optWeld').checked    ? 'true' : 'false');
+    fd.append('weldTolerance',  Math.pow(10, parseInt(document.getElementById('weldTolerance').value)).toString());
+    fd.append('dedup',          document.getElementById('optDedup').checked   ? 'true' : 'false');
+    fd.append('prune',          document.getElementById('optPrune').checked   ? 'true' : 'false');
+    fd.append('texture',        document.getElementById('optTexture').value);
+    fd.append('textureQuality', document.getElementById('textureQuality').value);
+    return fd;
+  }
+
+  function getResponseMeta(res) {
+    return {
+      inputSize:  parseInt(res.headers.get('X-Input-Size')  || '0'),
+      outputSize: parseInt(res.headers.get('X-Output-Size') || '0'),
+      elapsedMs:  parseInt(res.headers.get('X-Elapsed-Ms')  || '0'),
+    };
+  }
+
+  async function triggerDownload(res, filename) {
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), { href: url, download: filename }).click();
+    URL.revokeObjectURL(url);
+  }
+
+  function showStats(iSize, oSize, labelIn, labelOut, elapsedMs) {
+    if (!iSize || !oSize) return;
+    document.getElementById('labelIn').textContent  = labelIn;
+    document.getElementById('labelOut').textContent = labelOut;
+    document.getElementById('sizeIn').textContent   = formatSize(iSize);
+    document.getElementById('sizeOut').textContent  = formatSize(oSize);
+
+    const elapsedRow = document.getElementById('elapsedRow');
+    if (elapsedMs > 0) {
+      document.getElementById('elapsedVal').textContent = elapsedMs >= 1000 ? `${(elapsedMs / 1000).toFixed(1)}s` : `${elapsedMs}ms`;
+      elapsedRow.style.display = '';
+    } else {
+      elapsedRow.style.display = 'none';
+    }
+
+    const pct      = Math.round((1 - oSize / iSize) * 100);
+    const savingsEl = document.getElementById('savings');
+    if (pct > 0) {
+      savingsEl.style.color = '#34d399';
+      savingsEl.textContent = `Riduzione: ${pct}% (${formatSize(iSize - oSize)} risparmiati)`;
+    } else {
+      savingsEl.style.color = '#94a3b8';
+      savingsEl.textContent = `Output: ${formatSize(oSize)}${pct < 0 ? ` (+${Math.abs(pct)}% vs input)` : ''}`;
+    }
+    statsBox.classList.add('visible');
+  }
+
+  function setStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className   = `status ${type}`;
+  }
+
+  function formatSize(bytes) {
+    if (bytes >= 1024 * 1024 * 1024) return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+    if (bytes >= 1024 * 1024)        return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    if (bytes >= 1024)               return (bytes / 1024).toFixed(0) + ' KB';
+    return bytes + ' B';
+  }
+</script>
+</body>
+</html>

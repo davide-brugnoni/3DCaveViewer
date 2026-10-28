@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Offline - 3D Cave Viewer</title>
+  <meta name="theme-color" content="#0b0d10">
+  <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+  <link rel="stylesheet" href="lib/fonts/poppins.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f1b2a 0%, #1a2a3a 100%);
+      color: #e0e6ed;
+      padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+      text-align: center;
+    }
+
+    .container {
+      max-width: 500px;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      display: block;
+      width: 120px;
+      height: auto;
+      margin: 0 auto 24px;
+      border-radius: 12px;
+      transition: transform 0.2s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    p {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      opacity: 0.85;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    button, a.btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0e6ed;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .tips {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    .tips ul {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .tips li {
+      padding: 6px 0;
+    }
+
+    .tips li::before {
+      content: "• ";
+      opacity: 0.5;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 24px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .icon {
+        font-size: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Pagina statica: non può leggere i percorsi da config.php, quindi
+         prova i nomi di default dell'utente in custom/, poi il logo di
+         default del progetto in img/, e infine si nasconde. -->
+    <a href="index.php">
+      <picture>
+        <source srcset="custom/logo.webp" type="image/webp">
+        <img src="custom/logo.jpg" alt="Logo" class="logo"
+             onerror="if (this.src.indexOf('custom/') !== -1) { this.parentNode.querySelector('source')?.remove(); this.src = 'img/logo.png'; } else { this.parentNode.style.display = 'none'; }">
+      </picture>
+    </a>
+    <h1 data-i18n="heading">Sei offline</h1>
+    <p data-i18n="message">
+      Non è possibile raggiungere questa pagina perché non hai una connessione internet attiva.
+    </p>
+
+    <div class="actions">
+      <button class="btn-primary" onclick="window.location.reload()">
+        <span aria-hidden="true">🔄</span> <span data-i18n="retry">Riprova</span>
+      </button>
+      <a href="index.php" class="btn btn-secondary">
+        <span aria-hidden="true">🏠</span> <span data-i18n="home">Vai alla Home</span>
+      </a>
+      <a href="status.php" class="btn btn-secondary">
+        <span aria-hidden="true">📦</span> <span data-i18n="cache">Gestisci Cache</span>
+      </a>
+    </div>
+
+    <div class="tips">
+      <strong data-i18n="tipsTitle">Suggerimenti:</strong>
+      <ul>
+        <li data-i18n="tip1">Verifica la tua connessione WiFi o dati mobili</li>
+        <li data-i18n="tip2">Le pagine visitate in precedenza sono disponibili offline</li>
+        <li data-i18n="tip3">Vai su "Gestisci Cache" per vedere i contenuti salvati</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Pagina statica (cachata dal service worker), quindi le traduzioni sono
+    // inline: la lingua arriva dal cookie "lang" (i18n/loader.php) con
+    // fallback sulla lingua del browser, come il resto dell'app.
+    (function () {
+      const translations = {
+        it: {
+          heading: 'Sei offline',
+          message: 'Non è possibile raggiungere questa pagina perché non hai una connessione internet attiva.',
+          retry: 'Riprova',
+          home: 'Vai alla Home',
+          cache: 'Gestisci Cache',
+          tipsTitle: 'Suggerimenti:',
+          tip1: 'Verifica la tua connessione WiFi o dati mobili',
+          tip2: 'Le pagine visitate in precedenza sono disponibili offline',
+          tip3: 'Vai su "Gestisci Cache" per vedere i contenuti salvati'
+        },
+        en: {
+          heading: "You're offline",
+          message: "This page can't be reached because you don't have an active internet connection.",
+          retry: 'Retry',
+          home: 'Go to Home',
+          cache: 'Manage Cache',
+          tipsTitle: 'Tips:',
+          tip1: 'Check your WiFi or mobile data connection',
+          tip2: 'Previously visited pages are available offline',
+          tip3: 'Open "Manage Cache" to see saved content'
+        },
+        fr: {
+          heading: 'Vous êtes hors ligne',
+          message: "Cette page est inaccessible car vous n'avez pas de connexion internet active.",
+          retry: 'Réessayer',
+          home: "Aller à l'accueil",
+          cache: 'Gérer le cache',
+          tipsTitle: 'Conseils :',
+          tip1: 'Vérifiez votre connexion WiFi ou données mobiles',
+          tip2: 'Les pages déjà visitées sont disponibles hors ligne',
+          tip3: 'Ouvrez « Gérer le cache » pour voir les contenus enregistrés'
+        },
+        es: {
+          heading: 'Estás sin conexión',
+          message: 'No se puede acceder a esta página porque no tienes una conexión a internet activa.',
+          retry: 'Reintentar',
+          home: 'Ir al inicio',
+          cache: 'Gestionar caché',
+          tipsTitle: 'Consejos:',
+          tip1: 'Comprueba tu conexión WiFi o datos móviles',
+          tip2: 'Las páginas visitadas anteriormente están disponibles sin conexión',
+          tip3: 'Abre «Gestionar caché» para ver el contenido guardado'
+        }
+      };
+
+      const cookieLang = (document.cookie.match(/(?:^|;\s*)lang=([a-z]{2})/) || [])[1];
+      const browserLang = (navigator.language || 'it').slice(0, 2).toLowerCase();
+      const lang = translations[cookieLang] ? cookieLang
+        : (translations[browserLang] ? browserLang : 'it');
+      const t = translations[lang];
+
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.dataset.i18n;
+        if (t[key]) el.textContent = t[key];
+      });
+    })();
+
+    // Riprova automaticamente quando torna la connessione
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
