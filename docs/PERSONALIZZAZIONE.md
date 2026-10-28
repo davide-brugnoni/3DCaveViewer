@@ -22,8 +22,9 @@ comuni:
    descrizione e **logo** (PNG, JPEG o WebP, fino a 5 MB e 4000 px di
    lato); in un blocco avanzato, titolo, sottotitolo e intestazione
    dell'elenco della homepage;
-3. **Colori** — accento, sfondo, pannelli, testo, barra del browser e
-   splash della PWA, con anteprima dal vivo;
+3. **Colori** — accento (e il suo colore al passaggio del mouse),
+   sfondo, pannelli, testo, barra del browser e splash della PWA, con
+   anteprima dal vivo;
 4. **Mappa** — il **centro**, scelto trascinando la mappa o cercando un
    indirizzo, e i tre livelli di zoom provati sulla mappa stessa; in un
    blocco avanzato, velocità di camminata, unità della barra di scala e
@@ -216,8 +217,8 @@ nomi:
 custom/logo.png   (oppure .jpg, .jpeg, .svg, .webp)
 ```
 
-Viene rilevato automaticamente e **vince sempre** sul logo di default di
-default in `img/`. Le icone quadrate della PWA (`icon-192.png`,
+Viene rilevato automaticamente e **vince sempre** sul logo di default in
+`img/`. Le icone quadrate della PWA (`icon-192.png`,
 `icon-512.png`, quelle che appaiono sulla home screen del telefono quando
 l'app è installata) sono **opzionali**: se non le fornisci, l'applicazione
 le genera da sola a partire dal logo — ridimensionato in "contain" (senza
@@ -269,8 +270,9 @@ icon512 = "custom/mia-icona-512.png"
 
 Un percorso che non esiste viene ignorato e si passa al file successivo
 (`custom/logo.*`, poi `img/`), invece di mostrare un'immagine rotta. Le
-icone generate si rigenerano quando cambia il logo, non quando cambi
-`iconBackground`: in quel caso cancella `custom/generated/`.
+icone generate si rigenerano da sole quando cambia il logo e anche quando
+cambi `iconBackground` (o qualsiasi altra riga di `settings.ini`): non
+serve cancellare `custom/generated/`.
 
 > ℹ️ Dettagli completi (formati supportati, ordine di precedenza tra i
 > file) nella sezione "🎨 Personalizzare Loghi e Icone" del `README.md`
@@ -474,8 +476,10 @@ Non richiede alcuna configurazione. Nel visualizzatore:
 2. Apri **Condividi → Incorpora**.
 3. Scegli cosa mostrare: proporzioni del riquadro, se partire dalla vista
    attuale, se includere la sezione, quali strumenti lasciare (barra di
-   scala, nome del modello, schermo intero, misure, sezioni…).
-4. Premi **Copia codice** e incolla il risultato in un blocco *HTML
+   scala, nome del modello, schermo intero, informazioni, misure,
+   sezioni, screenshot, lingua, prima persona).
+4. Con **Anteprima** controlla il risultato in una nuova scheda, poi premi
+   **Copia codice** e incolla il risultato in un blocco *HTML
    personalizzato* dell'articolo.
 
 Il codice è un `<iframe>` dentro un contenitore responsive: si adatta alla

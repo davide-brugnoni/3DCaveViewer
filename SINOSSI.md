@@ -117,7 +117,7 @@ Il progetto è pensato per **abbattere le barriere tecniche** all'accesso ai ril
 
 ### Nessuna installazione, funziona ovunque — anche offline
 
-Non richiede installazioni, funziona su qualsiasi browser moderno — desktop e mobile — ed è installabile come **Progressive Web App**: i modelli già visitati restano disponibili **anche offline**, una caratteristica preziosa in zone montane con copertura di rete scarsa o assente. Una **pagina dedicata di gestione offline** permette di scegliere quali cavità scaricare in anticipo — anche tutte insieme, con un download in blocco che si mette in pausa da solo quando si sta guardando un modello — di vedere lo spazio occupato e di ripulire i dati. Anche la vista standard della mappa della homepage resta consultabile senza rete. Quando viene pubblicata una nuova versione dell'applicazione, un banner discreto avvisa l'utente e propone di aggiornare subito o di rimandare, senza mai forzare un riavvio.
+Non richiede installazioni, funziona su qualsiasi browser moderno — desktop e mobile — ed è installabile come **Progressive Web App**: i modelli già visitati restano disponibili **anche offline**, una caratteristica preziosa in zone montane con copertura di rete scarsa o assente. Il download di tutti i modelli per l'offline parte solo con il consenso di chi visita, chiesto con un banner discreto. Una **pagina dedicata di gestione offline** permette di scegliere quali cavità scaricare in anticipo — anche tutte insieme, con un download in blocco che si mette in pausa da solo quando si sta guardando un modello — di vedere lo spazio occupato e di ripulire i dati. Anche la vista standard della mappa della homepage resta consultabile senza rete. Quando viene pubblicata una nuova versione dell'applicazione, un banner discreto avvisa l'utente e propone di aggiornare subito o di rimandare, senza mai forzare un riavvio.
 
 ### Quattro lingue
 
@@ -141,7 +141,7 @@ Il **link di condivisione** del visualizzatore include la posizione esatta della
 
 ### Una grotta dentro l'articolo
 
-Dal pannello di condivisione, la scheda **"Incorpora"** genera il codice HTML da incollare in un articolo online (WordPress e simili): la cavità appare dentro la pagina come un riquadro navigabile e responsive, che parte esattamente dall'inquadratura scelta da chi l'ha preparato — eventualmente già sezionata — con un'interfaccia essenziale. Chi incorpora sceglie le proporzioni del riquadro e quali strumenti lasciare visibili (barra di scala, nome del modello, schermo intero, informazioni, misure, sezioni, screenshot, lingua), e vede un'anteprima prima di copiare il codice. Un giornale o un blog può così raccontare un'esplorazione mostrando la grotta vera, non una sua foto.
+Dal pannello di condivisione, la scheda **"Incorpora"** genera il codice HTML da incollare in un articolo online (WordPress e simili): la cavità appare dentro la pagina come un riquadro navigabile e responsive, che parte esattamente dall'inquadratura scelta da chi l'ha preparato — eventualmente già sezionata — con un'interfaccia essenziale. Chi incorpora sceglie le proporzioni del riquadro e quali strumenti lasciare visibili (barra di scala, nome del modello, schermo intero, informazioni, misure, sezioni, screenshot, lingua, prima persona), e può aprirne un'anteprima prima di copiare il codice. Un giornale o un blog può così raccontare un'esplorazione mostrando la grotta vera, non una sua foto.
 
 ---
 
