@@ -104,6 +104,7 @@
 - Pannelli flottanti trascinabili (misurazioni, sezioni, viste)
 - Pannelli mobile a bottom-sheet con minimizzazione a pill
 - Su telefono il layout mobile resta anche in orizzontale
+- Errori di caricamento con pulsante «Riprova», watchdog dopo 60 s e ripristino automatico del contesto WebGL perso
 
 </td>
 </tr>
@@ -142,8 +143,33 @@ Il visualizzatore include un sistema completo per misurare distanze all'interno 
 ```
 🎨 8 colori disponibili per misurazioni multiple simultanee
 📐 Precisione basata su coordinate world del modello
-🧲 Raggio di snap configurabile (default 0.15 unità modello)
+🧲 Raggio di snap fisso di 0.15 unità modello
 ```
+
+### 📍 Annotazioni (Punti di Interesse)
+
+<table>
+<tr>
+<td width="50%">
+
+**🎯 Funzionamento**
+- Pulsante **POI** nella toolbar per aprire il pannello
+- **+** e poi click sul modello per aggiungere un punto
+- Marker 3D con etichetta sempre leggibile sullo schermo
+- Con un piano di sezione attivo si possono aggiungere punti solo sulla parte visibile del modello
+
+</td>
+<td width="50%">
+
+**📋 Pannello POI**
+- Lista dei punti con **Vai al punto** (volo animato della camera)
+- **Rinomina** (`Invio` conferma, `Esc` annulla) ed elimina
+- Salvataggio automatico nel browser (`localStorage`), separato per modello
+- **Export/Import JSON** (`poi_<cartella>.json`) per condividerli: l'import aggiunge i punti a quelli esistenti
+
+</td>
+</tr>
+</table>
 
 ### 🌍 Internazionalizzazione (i18n)
 
@@ -209,7 +235,8 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 - Genera un `<iframe>` responsive da incollare in un blocco HTML
 - Parte dalla vista corrente e dal piano di sezione attivo, per raccontare un punto preciso della grotta
 - Proporzioni a scelta (16:9, 4:3, 1:1, 21:9)
-- Interfaccia ridotta configurabile (barra di scala, nome del modello, schermo intero, informazioni, misure, sezioni, screenshot, lingua)
+- Interfaccia ridotta configurabile (barra di scala, nome del modello, schermo intero, informazioni, misure, sezioni, screenshot, lingua, prima persona)
+- Pulsante «Anteprima» che apre la pagina incorporata in una nuova scheda prima di copiare il codice
 - Pulsante «Apri nel visualizzatore» sempre presente
 - Domini autorizzati limitabili con `[security] allowedEmbedOrigins[]` (vuoto = qualsiasi sito)
 - In modalità incorporata non vengono generate anteprime social, né mostrati onboarding e service worker
@@ -272,9 +299,11 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 
 **💾 Gestione Cache**
 - Pagina dedicata (`status.php`)
-- Selezione asset da scaricare
-- Visualizzazione quota storage
-- Pulizia cache manuale
+- Elenco dei file con ricerca, filtri (in cache, mancanti, errori) e ordinamento per nome, dimensione o stato
+- Download di tutti i modelli o solo di quelli selezionati, con pausa/ripresa, velocità, tempo stimato e «Riprova falliti»
+- Interruttore del download automatico dei modelli (lo stesso consenso del banner)
+- Spazio usato e quota disponibile
+- Eliminazione dei file selezionati o pulizia completa della cache
 
 </td>
 <td width="50%">
@@ -1013,10 +1042,11 @@ pageTitle[en] = "Our caves"
 
 Il repository include due ottimizzatori GLB pronti all'uso, pensati per
 aiutare qualsiasi gruppo speleologico a ridurre il peso dei propri rilievi
-prima di pubblicarli nel visualizzatore. Entrambi applicano la stessa
-pipeline — compressione **Draco**, fusione di vertici duplicati (**weld**),
-rimozione risorse inutilizzate (**prune**), deduplicazione e compressione
-texture in **WebP/JPEG** — e producono file compatibili con il viewer.
+prima di pubblicarli nel visualizzatore. Entrambi applicano compressione
+**Draco**, fusione di vertici duplicati (**weld**), deduplicazione
+(**dedup**) e rimozione delle risorse inutilizzate (**prune**), e producono
+file compatibili con il viewer. Solo la versione server ricomprime inoltre
+le texture in **WebP/JPEG** (consigliate per il mobile).
 
 ### 🌐 `glb-optimizer/` — Server Node.js
 
@@ -1044,8 +1074,11 @@ npm start
 
 ### 💻 `glb-optimizer-static/` — Pagina HTML singola
 
-Un'unica pagina HTML che esegue l'intera pipeline **interamente nel
-browser**, senza server né dipendenze da installare. Ideale per chi vuole
+Un'unica pagina HTML che esegue l'ottimizzazione **interamente nel
+browser**, senza server né dipendenze da installare (le librerie vengono
+caricate da CDN, quindi serve una connessione a Internet; i file invece non
+lasciano il computer). Non ricomprime le texture: per quelle usa la
+versione server o convertile prima di esportare. Ideale per chi vuole
 ottimizzare occasionalmente un modello senza configurare Node.js, o per
 mantenere i file in locale per motivi di privacy.
 
@@ -1062,7 +1095,8 @@ Nessun upload verso server esterni.
 |----------|----------------------|
 | Ottimizzazione saltuaria, zero setup | `glb-optimizer-static/` |
 | Ambiente condiviso / batch ripetuti | `glb-optimizer/` (server Node) |
-| Massima privacy (nessun upload) | `glb-optimizer-static/` |
+| Massima privacy (nessun upload) | Entrambi: anche il server Node gira in locale |
+| Ricompressione texture WebP/JPEG | `glb-optimizer/` (server Node) |
 | File molto grandi (fino a 5 GB) | `glb-optimizer/` (server Node) |
 | Integrazione in workflow automatizzati | `glb-optimizer/` (API HTTP) |
 
@@ -1219,15 +1253,21 @@ map: {
 | `tapStepDistance` | 1.0 | Passo avanti con doppio tap su mobile |
 | `lookSensitivity` | 0.004 | Sensibilità dello sguardo touch |
 | `collisionPadding` | 0.05 | Margine collisioni |
+| `pinchLockThresholdPx` | 10 | Pixel per distinguere pinch (zoom) da pan nel gesto a due dita |
 | `vrMoveSpeed` / `vrYawSpeed` | 2.0 / 1.8 | Velocità di movimento e rotazione in VR |
 | `vrDeadZone` | 0.15 | Zona morta degli stick VR |
+| `vrDoubleClickThreshold` | 400 | Millisecondi entro cui due grilletti contano come doppio click (ritorno al punto di partenza) |
+| `vrVignetteMaxIntensity` / `vrVignetteFadeSpeed` | 0.6 / 3.0 | Intensità e velocità della vignetta comfort in VR |
 | `scaleBarWidth` | 150 | Larghezza barra scala (px) |
 | `scaleBarUnit` | `m` | Unità della barra di scala (`m` o `ft`) |
+| `defaultNear` / `defaultFar` | 0.1 / 2000 | Piani di clip vicino/lontano della camera |
 | `skyDomeEnabled` | true | Attiva la cupola del cielo a gradiente |
 | `skyDomeRadius` | 1000 | Raggio cupola in metri (deve restare < `defaultFar` in VR) |
+| `pixelRatioMax` / `pixelRatioMaxMobile` | 2 / 1.5 | Tetto della densità di pixel del rendering (desktop / touch) |
 | `textureMaxSizeMobile` | 4096 | Lato massimo delle texture su telefoni/tablet (px, 0 = nessun limite) |
 | `textureBudgetMPMobile` | 24 | Budget complessivo texture per modello su mobile (megapixel) |
 | `textureMaxSize` / `textureBudgetMP` | 0 / 0 | Stessi limiti su desktop (0 = solo il limite della GPU) |
+| `debug` | false | Helper di debug nella console del browser |
 
 ### 🌐 Social Network
 

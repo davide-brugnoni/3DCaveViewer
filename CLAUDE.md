@@ -12,7 +12,7 @@ Core capabilities:
 - Interactive map (Leaflet + OpenStreetMap) listing available cave models with search/filter
 - WebGL 3D viewer (Three.js) with orbit and first-person navigation modes
 - WebXR (VR headset) support
-- Distance/height measurement tools
+- Distance measurement tools (vertex snap, point editing, CSV export)
 - Section (clipping) planes for X/Y/Z axis analysis
 - Searchable model dropdown selector in the viewer
 - Persistent point-of-interest (POI) annotations with JSON export/import
@@ -463,8 +463,9 @@ exists, they use PHP GD (already a prerequisite; same procedural style as
 cropping), center it on a transparent canvas (or the color from the optional
 `pwa.iconBackground` hex config key), and write it atomically (temp file +
 `rename()`) to `custom/generated/icon-<size>.png`, gitignored. The generated
-file is cached and only regenerated when the source logo's `filemtime()` is
-newer — same mtime-comparison pattern `logoWebpPath()` already uses. If GD is
+file is cached and only regenerated when the source logo's `filemtime()` —
+or that of `custom/settings.ini`/`config.local.php`, where `pwa.iconBackground`
+comes from — is newer: same mtime-comparison pattern `logoWebpPath()` uses. If GD is
 unavailable or the logo is a format GD can't decode (e.g. SVG),
 `generatedIconPath()` returns `''` and `iconPath()` falls through to the
 `img/` default icons, same graceful-empty-string contract as everywhere else. A

@@ -40,8 +40,9 @@ un'installazione fornisce solo il proprio logo, `iconPath()` in
 il logo in "contain" (senza ritagliarlo) e centrandolo su sfondo
 trasparente — o sul colore `iconBackground` della sezione `[pwa]` di
 `custom/settings.ini`. Le icone generate stanno in `custom/generated/` e
-vengono rigenerate quando il logo è più recente di loro. Serve l'estensione
-PHP GD (già un prerequisito del progetto); se manca, o se il logo è in un
+vengono rigenerate quando il logo o un file di impostazioni
+(`custom/settings.ini`, `custom/config.local.php`, da cui arriva
+`iconBackground`) è più recente di loro. Serve l'estensione PHP GD (già un prerequisito del progetto); se manca, o se il logo è in un
 formato che GD non sa decodificare (es. SVG), si ricade sulle icone di
 questa cartella, senza errori.
 
