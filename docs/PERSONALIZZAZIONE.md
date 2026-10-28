@@ -216,7 +216,7 @@ nomi:
 custom/logo.png   (oppure .jpg, .jpeg, .svg, .webp)
 ```
 
-Viene rilevato automaticamente e **vince sempre** sul placeholder di
+Viene rilevato automaticamente e **vince sempre** sul logo di default di
 default in `img/`. Le icone quadrate della PWA (`icon-192.png`,
 `icon-512.png`, quelle che appaiono sulla home screen del telefono quando
 l'app è installata) sono **opzionali**: se non le fornisci, l'applicazione
@@ -240,7 +240,7 @@ accetta PNG, JPEG o WebP (fino a 5 MB e 4000 px di lato), lo salva come
 
 La generazione delle icone richiede l'estensione PHP GD. Un logo **SVG**
 funziona nell'header ma non può essere convertito: in quel caso, o senza
-GD, la PWA usa le icone segnaposto di `img/` finché non fornisci
+GD, la PWA usa le icone di 3DCaveViewer in `img/` finché non fornisci
 `custom/icon-192.png` e `custom/icon-512.png`.
 
 ### Icone fatte a mano (opzionale)
@@ -629,7 +629,7 @@ viewer — è pensato per essere completamente tuo.
   installazione, struttura file, procedura di aggiornamento
 - [`custom/README.md`](../custom/README.md) — cosa contiene la cartella
   `custom/`, precedenza dei file e chiave dell'installazione guidata
-- [`img/README.md`](../img/README.md) — dettaglio sui loghi placeholder e
+- [`img/README.md`](../img/README.md) — dettaglio sui loghi di default e
   sull'ordine di precedenza delle icone
 - [`custom/settings.example.ini`](../custom/settings.example.ini) —
   riferimento commentato con **ogni** opzione disponibile

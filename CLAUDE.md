@@ -82,8 +82,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │
 ├── img/                        # Project default images (app code, overwritten by updates)
 │   ├── README.md                   # Explains img/ vs custom/ (Italian)
-│   ├── logo.png                    # Default logo — temporary placeholder
-│   └── icon-192.png / icon-512.png # Default PWA icons — temporary placeholders
+│   ├── logo.png / logo.webp        # 3DCaveViewer crystal symbol (transparent, for dark UI)
+│   └── icon-192.png / icon-512.png # PWA icons: symbol on #0b0d10, inside the maskable safe zone
 │
 ├── css/
 │   ├── index.css               # Homepage styles
@@ -149,7 +149,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   └── index.html
 │
 ├── docs/
-│   └── PERSONALIZZAZIONE.md    # Step-by-step customization guide for deployers (Italian)
+│   ├── PERSONALIZZAZIONE.md    # Step-by-step customization guide for deployers (Italian)
+│   └── img/                    # Wordmark logos (dark/light) used by README.md only
 ├── README.md                   # End-user documentation (Italian)
 ├── CHANGELOG.md                # Release notes; version is APP_VERSION in config.php
 ├── LICENSE                     # GNU GPL v3 full text
@@ -466,7 +467,7 @@ file is cached and only regenerated when the source logo's `filemtime()` is
 newer — same mtime-comparison pattern `logoWebpPath()` already uses. If GD is
 unavailable or the logo is a format GD can't decode (e.g. SVG),
 `generatedIconPath()` returns `''` and `iconPath()` falls through to the
-`img/` placeholder, same graceful-empty-string contract as everywhere else. A
+`img/` default icons, same graceful-empty-string contract as everywhere else. A
 dedicated `custom/icon-<size>.*` file always wins over generation.
 
 So dropping `custom/logo.png` overrides the default with zero configuration, and

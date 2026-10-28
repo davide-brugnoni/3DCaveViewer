@@ -11,13 +11,18 @@ indietro.
 | File | Dimensioni | Uso |
 |---|---|---|
 | `logo.png` | quadrato, ≥ 512×512 | Logo nell'header, nella pagina cache, nel viewer 3D e nella filigrana degli screenshot |
+| `logo.webp` | come `logo.png` | Stesso logo, più leggero, servito ai browser che lo supportano |
 | `icon-192.png` | 192×192 | Icona PWA piccola |
 | `icon-512.png` | 512×512 | Icona PWA grande (anche splash screen) |
 
-> ⚠️ **I tre file attuali sono segnaposto temporanei** (il cubo del badge
-> 3DCaveViewer), in attesa dei loghi definitivi del progetto. Chi sviluppa il
-> progetto li sostituisce mantenendo lo stesso nome; chi gestisce
-> un'installazione mette invece il proprio logo in `custom/`.
+Sono il simbolo di **3DCaveViewer** (il cristallo), nella versione per fondo
+scuro come il tema dell'app: il logo è trasparente, le icone PWA hanno lo
+sfondo pieno `#0b0d10` e il simbolo dentro la zona sicura delle icone
+"maskable". Chi gestisce un'installazione non li modifica: mette il proprio
+logo in `custom/` (o lo carica dall'installazione guidata) e vince lui.
+
+Le versioni con la scritta, per fondo chiaro e scuro, stanno in `docs/img/`
+e servono solo alla documentazione.
 
 I percorsi di default sono quelli della sezione `pwa` di `config.php`
 (`img/logo.png`, `img/icon-192.png`, `img/icon-512.png`); se mancano si

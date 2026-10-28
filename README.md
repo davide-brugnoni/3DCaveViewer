@@ -1,6 +1,11 @@
 <div align="center">
 
-# 🏔️ 3D Cave Viewer
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/logo-dark.png">
+  <img src="docs/img/logo-light.png" alt="3DCaveViewer by Buio Verticale" width="420">
+</picture>
+
+# 3D Cave Viewer
 
 ### Visualizzatore Interattivo di Cavità Sotterranee
 
@@ -364,10 +369,10 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   └── loader.php                 # Loader PHP con auto-discovery
 │
 ├── 🚩 img/                         # Immagini di default del progetto (aggiornabili)
-│   ├── README.md                  # Spiegazione dei placeholder e dell'ordine di precedenza
-│   ├── logo.png                   # Logo di default (segnaposto temporaneo)
-│   ├── icon-192.png               # Icona PWA di default (segnaposto)
-│   └── icon-512.png               # Icona PWA di default (segnaposto)
+│   ├── README.md                  # Loghi di default e ordine di precedenza
+│   ├── logo.png / logo.webp       # Logo di 3DCaveViewer (default)
+│   ├── icon-192.png               # Icona PWA di default
+│   └── icon-512.png               # Icona PWA di default
 │
 ├── 🗿 modelli/                     # Solo dati — MAI toccata da un aggiornamento
 │   ├── catalogo.cache.json        # Cache auto-generata (non modificare)
@@ -805,8 +810,8 @@ non serve configurare niente.
 | `custom/logo.png` | Variabili | Logo principale nell'interfaccia — **l'unico file davvero necessario** | PNG/JPG/SVG/WebP |
 | `custom/logo.webp` | Variabili | Versione WebP del logo (opzionale) | WebP |
 
-> ℹ️ I file attualmente in `img/` sono **segnaposto temporanei** in attesa dei
-> loghi definitivi del progetto (vedi `img/README.md`).
+> ℹ️ I file in `img/` sono il logo di **3DCaveViewer**: compaiono finché
+> l'installazione non carica il proprio (vedi `img/README.md`).
 
 > 🪄 **Basta un solo file.** Se in `custom/` metti solo `logo.*` e non fornisci
 > `icon-192.png`/`icon-512.png`, l'applicazione genera da sola le due icone
@@ -815,7 +820,7 @@ non serve configurare niente.
 > `custom/generated/`, rigenerandole automaticamente ogni volta che sostituisci
 > il logo. Richiede l'estensione PHP GD (già tra i prerequisiti). Se il logo è
 > in un formato che GD non decodifica (es. SVG) o GD non è installata, si
-> ricade sul placeholder generico — nessun errore, nessuna immagine rotta.
+> ricade sulle icone di 3DCaveViewer in `img/` — nessun errore, nessuna immagine rotta.
 > Fornire `icon-192.png`/`icon-512.png` resta utile solo se vuoi un ritaglio o
 > un artwork diverso da quello generato automaticamente.
 

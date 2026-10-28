@@ -68,7 +68,7 @@ chiave va caricata come `custom/.installed`).
 ## Loghi e icone
 
 Basta lasciare il tuo logo come `custom/logo.png` (o un altro formato tra
-quelli sopra): vince sempre sul segnaposto di `img/` e le icone PWA
+quelli sopra): vince sempre sul logo di default di `img/` e le icone PWA
 quadrate vengono generate da lì (serve PHP GD; un logo SVG non può essere
 convertito). Ordine di precedenza e dettagli in `img/README.md` e in
 [`docs/PERSONALIZZAZIONE.md`](../docs/PERSONALIZZAZIONE.md#-logo-e-icone).
