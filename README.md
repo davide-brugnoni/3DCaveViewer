@@ -467,34 +467,99 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 
 ## ⚙️ Installazione
 
-### 🔧 Setup Rapido
+Non serve saper programmare né usare la riga di comando: basta un hosting
+con PHP (quasi tutti quelli condivisi vanno bene, vedi [Requisiti
+Tecnici](#-requisiti-tecnici)) e un programma FTP come
+[FileZilla](https://filezilla-project.org/) (gratuito). Non c'è nessun passo
+di build: i file si caricano così come sono.
 
-Non c'è nessun passo di build: è PHP con moduli JavaScript ES6, si carica
-così com'è.
+### 🔧 Installazione in 5 passi (FTP)
 
-1️⃣ **Scarica il codice** — clonalo, oppure carica via FTP il contenuto
-dello ZIP nella cartella del sito
+1️⃣ **Scarica il programma**
+- Vai alla pagina
+  [Releases](https://github.com/davide-brugnoni/3DCaveViewer/releases) e
+  scarica lo ZIP dell'ultima versione;
+- se lì non c'è ancora nessuna versione pubblicata, dalla
+  [pagina del progetto](https://github.com/davide-brugnoni/3DCaveViewer)
+  clicca il pulsante verde **Code** → **Download ZIP**.
+
+Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
+`3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
+`css/`, `js/`, `lib/`, `custom/`, `modelli/` e così via.
+
+2️⃣ **Carica i file sul server via FTP**
+- Collegati al tuo spazio web con FileZilla (host, utente e password te li
+  dà il provider dell'hosting);
+- apri sul server la cartella del sito (di solito `public_html/`, `www/` o
+  `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
+  indirizzo tipo `https://tuodominio.it/grotte/`;
+- trascina lì **il contenuto** della cartella estratta (non la cartella
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-main/`).
+
+> ⚠️ Controlla che sia arrivato anche il file **`.htaccess`**: inizia con
+> un punto, quindi alcuni programmi lo nascondono. In FileZilla attiva
+> *Server → Forza la visualizzazione dei file nascosti*. Senza quel file il
+> sito non è protetto e alcuni indirizzi non funzionano.
+
+3️⃣ **Rendi scrivibili `custom/` e `modelli/`**
+
+Su molti hosting lo sono già, e il primo passo dell'installazione guidata
+te lo dice. Se segnala un problema: in FileZilla clic destro sulla cartella
+→ **Permessi file…** → valore `755` (se non basta, `775`), spunta
+*Ricorsione nelle sottocartelle* e conferma. Fallo per `custom/` e per
+`modelli/`.
+
+4️⃣ **Apri il sito: parte l'installazione guidata**
+
+Visita `https://tuodominio.it/` (o la sottocartella che hai scelto). Alla
+prima visita non compare la mappa ma un installer in cinque passi
+(benvenuto e requisiti tecnici, identità del gruppo con il logo, colori,
+mappa, riepilogo). A fine installazione il sito riparte normalmente dalla
+mappa. Dettagli in [🧭 Installazione
+guidata](#-installazione-guidata-setupphp).
+
+> 🔒 **Completa subito l'installazione guidata.** Finché non è conclusa,
+> chiunque raggiunga il sito può aprirla e configurarlo. Nell'ultima
+> schermata **scarica il file della chiave** e conservalo: serve per
+> rientrare nell'installer più avanti.
+
+5️⃣ **Aggiungi i tuoi modelli**
+
+Carica via FTP in `modelli/` una cartella per ogni cavità, con dentro il
+file `.glb` e il file `.json` dei dati — vedi [📦 Aggiungere un Nuovo
+Modello 3D](#-aggiungere-un-nuovo-modello-3d). Finché non ne aggiungi uno
+la mappa resta senza segnaposti e lo dice.
+
+Fatto. Gli indirizzi utili:
+- 🏠 Homepage: `https://tuodominio.it/`
+- 🎨 Viewer diretto: `https://tuodominio.it/viewer.php?m=nome_cartella`
+- 📊 Stato cache offline: `https://tuodominio.it/status.php`
+
+### 🧑‍💻 Per utenti esperti (git, server propri)
+
+<details>
+<summary>Installazione con git, permessi da terminale, nginx</summary>
+
+Clona il repository direttamente nella cartella del sito:
 ```bash
 git clone https://github.com/davide-brugnoni/3DCaveViewer.git
-cd 3DCaveViewer
 ```
 
-2️⃣ **Configura il server web**
-- Punta il document root alla cartella del progetto
-- Verifica che `.htaccess` sia abilitato (`AllowOverride All`) e che il sito sia in HTTPS
+Punta il document root alla cartella del progetto e verifica che
+`.htaccess` sia abilitato (`AllowOverride All`) e che il sito sia in HTTPS.
 
-3️⃣ **Verifica i permessi**: `custom/` e `modelli/` devono essere
-scrivibili dall'utente con cui gira il web server (su molti hosting
-condivisi lo sono già). Se i file appartengono a un altro utente (es.
-quello FTP), assegnali al web server oppure al suo gruppo:
+Se i file appartengono a un utente diverso da quello del web server,
+assegna le due cartelle scrivibili al web server oppure al suo gruppo:
 ```bash
 sudo chown -R www-data:www-data modelli/ custom/
 ```
 ```bash
 chmod -R g+rwX modelli/ custom/
 ```
-Il primo passo dell'installazione guidata controlla da solo che le due
-cartelle siano scrivibili e lo segnala se non lo sono.
+
+Per aggiornare basta `git pull`: `custom/settings.ini` è tracciato, quindi
+se l'hai modificato git fonderà le tue modifiche con quelle eventuali del
+progetto; il resto di `custom/` e `modelli/` è ignorato da git.
 
 > ⚠️ **Server senza `.htaccess`** (nginx, o Apache con `AllowOverride None`):
 > le regole che proteggono `custom/` non vengono applicate e file come
@@ -507,27 +572,7 @@ cartelle siano scrivibili e lo segnala se non lo sono.
 > location ~ \.(ini|bak|log|cache|hash|md)$ { deny all; }
 > ```
 
-4️⃣ **Apri il sito: parte l'installazione guidata**
-
-Alla prima visita l'applicazione non mostra la mappa ma un installer in
-cinque passi (benvenuto e requisiti tecnici, identità del gruppo con il
-logo, colori, mappa, riepilogo). Quello che scegli finisce in
-`custom/settings.ini`; a fine installazione l'installer si chiude da solo e
-il sito riparte normalmente dalla mappa. Vedi
-[🧭 Installazione guidata](#-installazione-guidata-setupphp).
-
-5️⃣ **Aggiungi i tuoi modelli** in `modelli/` — una cartella per cavità,
-vedi [📦 Aggiungere un Nuovo Modello 3D](#-aggiungere-un-nuovo-modello-3d).
-Il repository arriva con `modelli/` vuota: finché non aggiungi un modello
-la mappa resta senza segnaposti e lo dice.
-
-> 🔒 **Completa subito l'installazione guidata.** Finché non è conclusa,
-> chiunque raggiunga il sito può aprirla e configurarlo.
-
-6️⃣ **Accedi all'applicazione**
-- 🏠 Homepage: `https://tuodominio.it/`
-- 🎨 Viewer diretto: `https://tuodominio.it/viewer.php?m=nome_cartella`
-- 📊 Stato cache offline: `https://tuodominio.it/status.php`
+</details>
 
 ---
 
@@ -619,10 +664,15 @@ il resto**.
 
 ### 📝 Procedura
 
-1. Scarica/clona la nuova versione in una cartella separata
-2. Copia tutti i file e le cartelle **tranne** `modelli/` e `custom/` sopra
-   la tua installazione esistente, sovrascrivendo senza timori
-3. Svuota la cache del browser o attendi il banner di aggiornamento PWA
+1. Scarica lo ZIP della nuova versione (come al [passo 1
+   dell'installazione](#-installazione-in-5-passi-ftp)) ed estrailo sul
+   computer
+2. **Elimina** dalla cartella estratta `modelli/` e `custom/`, così non
+   rischi di caricarle per sbaglio
+3. Carica via FTP tutto il resto sopra la tua installazione esistente;
+   quando FileZilla chiede cosa fare con i file già presenti scegli
+   **Sovrascrivi** (spunta *Usa sempre questa azione*)
+4. Svuota la cache del browser o attendi il banner di aggiornamento PWA
 
 > 💡 **Nota**: la cartella `custom/` va sempre esclusa dalla copia, quindi
 > sopravvive intatta a ogni aggiornamento — il tuo `settings.ini` già
