@@ -150,14 +150,29 @@ export function readImageSize(buffer) {
 function planTargetSizes(sizes, { maxSize, maxPixels }) {
   const total = sizes.reduce((sum, s) => sum + (s ? s.width * s.height : 0), 0);
   const shared = maxPixels > 0 && total > maxPixels ? Math.sqrt(maxPixels / total) : 1;
+  const valid = (size) => size && size.width && size.height;
+  const scaleFor = (size, withFloor) => {
+    const longest = Math.max(size.width, size.height);
+    let scale = withFloor ? Math.max(shared, Math.min(1, MIN_BUDGET_SIDE / longest)) : shared;
+    if (maxSize > 0 && longest * scale > maxSize) scale = maxSize / longest;
+    return scale;
+  };
+
+  // Le texture piccole non sono il problema: il budget non le scende sotto
+  // MIN_BUDGET_SIDE, per non sfocare dettagli che costano poco. Ma con molte
+  // texture grandi quel pavimento sfora il budget da solo (26 immagini da
+  // 1024² sono già 26 MP) e rende inutile il nuovo tentativo a texture
+  // ridotte dopo un OUT_OF_MEMORY: in quel caso vale solo il fattore comune.
+  const flooredTotal = sizes.reduce((sum, s) => {
+    if (!valid(s)) return sum;
+    const k = Math.min(1, scaleFor(s, true));
+    return sum + s.width * s.height * k * k;
+  }, 0);
+  const useFloor = !(maxPixels > 0) || flooredTotal <= maxPixels * 1.001;
 
   return sizes.map((size) => {
-    if (!size || !size.width || !size.height) return null;
-    const longest = Math.max(size.width, size.height);
-    // Le texture piccole non sono il problema: il budget non le scende
-    // sotto MIN_BUDGET_SIDE, per non sfocare dettagli che costano poco
-    let scale = Math.max(shared, Math.min(1, MIN_BUDGET_SIDE / longest));
-    if (maxSize > 0 && longest * scale > maxSize) scale = maxSize / longest;
+    if (!valid(size)) return null;
+    const scale = scaleFor(size, useFloor);
     if (scale >= 0.999) return null;
     return {
       width: Math.max(1, Math.floor(size.width * scale)),
