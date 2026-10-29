@@ -7,6 +7,14 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+### Modificato
+- Rotazione col mouse come in CloudCompare: trackball virtuale centrata sul
+  punto cliccato, il modello segue il cursore senza blocchi in verticale
+  (`viewer.mouseRotation = "turntable"` ripristina la rotazione precedente,
+  `viewer.mouseRotateSpeed` ne regola la sensibilità). "Reset vista" e le
+  viste predefinite raddrizzano l'orizzonte; i link condivisi e il codice da
+  incorporare conservano l'inclinazione con il parametro `up`
+
 ## [1.0.0] — prima release pubblica
 
 Prima versione distribuita perché altri gruppi speleologici possano

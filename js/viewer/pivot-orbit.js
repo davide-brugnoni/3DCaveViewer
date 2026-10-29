@@ -11,6 +11,14 @@
 // insieme attorno al pivot, quindi il target resta sull'asse di vista e il
 // lookAt() di controls.update() ritrova lo stesso orientamento.
 //
+// La rotazione predefinita è una trackball virtuale come quella di
+// CloudCompare ('trackball'): il cursore "afferra" una sfera centrata sul
+// pivot proiettato a schermo e il modello segue la mano, senza un asse
+// verticale privilegiato né blocchi ai poli (la vista può quindi inclinarsi:
+// camera.up segue la camera, e "Reset vista" la raddrizza). Dal centro al
+// bordo della vista sono 90°. Con viewer.mouseRotation = 'turntable' resta
+// la rotazione a "piatto girevole" attorno alla verticale del mondo.
+//
 // Solo mouse: il touch e la penna mantengono i gesti di viewer.js.
 // Come gli altri moduli, lo stato del viewer arriva per iniezione
 // (initPivotOrbit(deps)) tramite getter.
@@ -30,14 +38,19 @@ const tmpLocal = new THREE.Vector3();
 const qYaw = new THREE.Quaternion();
 const qPitch = new THREE.Quaternion();
 const qRot = new THREE.Quaternion();
+const qInv = new THREE.Quaternion();
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const tbLast = new THREE.Vector3();
+const tbCur = new THREE.Vector3();
+const tbAxis = new THREE.Vector3();
+const tbCenter = new THREE.Vector3();
 
 // Margine dalla verticale: guardando esattamente in alto/basso lookAt()
 // degenera e la vista ruoterebbe su sé stessa
 const PITCH_EPS = 0.001;
 const DBLCLICK_DURATION = 350; // ms
 
-let drag = null;           // { pointerId, lastX, lastY, moved, prevAutoRotate }
+let drag = null;           // { pointerId, lastX, lastY, moved, prevAutoRotate, cx, cy }
 let modifierGesture = false;
 let marker = null;
 let recenterAnim = 0;
@@ -118,12 +131,24 @@ function alignTargetDepth(camera, controls) {
   }
 }
 
-function rotateAroundPivot(dx, dy) {
+/** Ruota camera e target attorno al pivot con un quaternione nel mondo. */
+function applyWorldRotation(q, camera, controls) {
+  camera.position.sub(pivot).applyQuaternion(q).add(pivot);
+  controls.target.sub(pivot).applyQuaternion(q).add(pivot);
+  camera.quaternion.premultiply(q);
+  // lookAt() di controls.update() ricostruisce l'orientamento da camera.up:
+  // deve essere il "su" attuale della camera, altrimenti annullerebbe
+  // l'inclinazione della trackball (e degenererebbe guardando in verticale)
+  camera.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+  controls.update();
+}
+
+function rotateTurntable(dx, dy) {
   const camera = deps.getCamera();
   const controls = deps.getControls();
   const h = deps.domElement.clientHeight || 1;
   // Stessa scala di OrbitControls (un'altezza di schermo = un giro)
-  const k = (2 * Math.PI * controls.rotateSpeed) / h;
+  const k = (2 * Math.PI * controls.rotateSpeed * rotateSpeed()) / h;
   const yaw = -dx * k;
   let pitch = -dy * k;
 
@@ -137,11 +162,75 @@ function rotateAroundPivot(dx, dy) {
   qPitch.setFromAxisAngle(tmpRight, pitch);
   qYaw.setFromAxisAngle(WORLD_UP, yaw);
   qRot.multiplyQuaternions(qYaw, qPitch);
+  applyWorldRotation(qRot, camera, controls);
+}
 
-  camera.position.sub(pivot).applyQuaternion(qRot).add(pivot);
-  controls.target.sub(pivot).applyQuaternion(qRot).add(pivot);
-  camera.quaternion.premultiply(qRot);
-  controls.update();
+/**
+ * Centro della sfera virtuale in pixel (relativi al canvas): il pivot
+ * proiettato, tenuto nella metà centrale della vista come fa CloudCompare,
+ * così anche un pivot vicino al bordo lascia spazio per ruotare.
+ */
+function trackballCenter(camera, w, h) {
+  tbCenter.copy(pivot).project(camera);
+  let cx = w / 2, cy = h / 2;
+  if (tbCenter.z > -1 && tbCenter.z < 1) {
+    cx = THREE.MathUtils.clamp((tbCenter.x + 1) / 2 * w, w / 4, 3 * w / 4);
+    cy = THREE.MathUtils.clamp((1 - tbCenter.y) / 2 * h, h / 4, 3 * h / 4);
+  }
+  return { cx, cy };
+}
+
+/**
+ * Punto della sfera virtuale sotto il cursore, nello spazio camera
+ * (x a destra, y in alto, z verso chi guarda). Raggio: mezza vista per
+ * asse; fuori dalla sfera il punto scivola sul suo bordo, e lì il
+ * trascinamento diventa una rotazione attorno all'asse di vista.
+ */
+function trackballVector(out, x, y, w, h) {
+  const s = rotateSpeed();
+  out.set(
+    THREE.MathUtils.clamp(((x - drag.cx) / (w / 2)) * s, -1, 1),
+    THREE.MathUtils.clamp((-(y - drag.cy) / (h / 2)) * s, -1, 1),
+    0
+  );
+  const d2 = out.x * out.x + out.y * out.y;
+  if (d2 > 1) out.multiplyScalar(1 / Math.sqrt(d2));
+  else out.z = Math.sqrt(1 - d2);
+  return out;
+}
+
+function rotateTrackball(x, y) {
+  const camera = deps.getCamera();
+  const controls = deps.getControls();
+  const w = deps.domElement.clientWidth || 1;
+  const h = deps.domElement.clientHeight || 1;
+  trackballVector(tbCur, x, y, w, h);
+  const dot = THREE.MathUtils.clamp(tbLast.dot(tbCur), -1, 1);
+  tbAxis.crossVectors(tbLast, tbCur);
+  const len = tbAxis.length();
+  tbLast.copy(tbCur);
+  if (len < 1e-9) return;
+  // Il modello ruota da tbLast a tbCur (segue il cursore): la camera fa la
+  // rotazione inversa attorno al pivot. Asse dallo spazio camera al mondo.
+  const angle = Math.atan2(len, dot);
+  tbAxis.multiplyScalar(1 / len).applyQuaternion(camera.quaternion);
+  qInv.setFromAxisAngle(tbAxis, -angle);
+  applyWorldRotation(qInv, camera, controls);
+}
+
+function rotateSpeed() {
+  const s = Number(deps.rotateSpeed);
+  return Number.isFinite(s) && s > 0 ? s : 1;
+}
+
+function isTrackball() {
+  return deps.rotationMode !== 'turntable';
+}
+
+/** Posizione del puntatore relativa al canvas. */
+function localXY(e) {
+  const rect = deps.domElement.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
 function onPointerDown(e) {
@@ -166,7 +255,20 @@ function onPointerDown(e) {
     lastY: e.clientY,
     moved: false,
     prevAutoRotate: controls.autoRotate,
+    cx: 0,
+    cy: 0,
   };
+  if (isTrackball()) {
+    const camera = deps.getCamera();
+    const el = deps.domElement;
+    const w = el.clientWidth || 1, h = el.clientHeight || 1;
+    // Il centro della sfera resta fisso per tutto il trascinamento: se
+    // seguisse il pivot a ogni passo, la rotazione non sarebbe reversibile
+    // (tornando al punto di partenza la vista non tornerebbe uguale)
+    Object.assign(drag, trackballCenter(camera, w, h));
+    const p = localXY(e);
+    trackballVector(tbLast, p.x, p.y, w, h);
+  }
   // L'autorotazione combatterebbe con il trascinamento
   controls.autoRotate = false;
 }
@@ -183,7 +285,12 @@ function onPointerMove(e) {
     drag.moved = true;
     showMarker(true);
   }
-  rotateAroundPivot(dx, dy);
+  if (isTrackball()) {
+    const p = localXY(e);
+    rotateTrackball(p.x, p.y);
+  } else {
+    rotateTurntable(dx, dy);
+  }
 }
 
 function endDrag() {
@@ -237,7 +344,9 @@ function onDblClick(e) {
  *   canOrbit()        — false in prima persona, in VR o durante un'animazione,
  *   isPickingTool()   — true se un clic sul modello serve a misure/POI,
  *   isSectionActive(), isPointVisible(localPoint),
- *   requestRender()
+ *   requestRender(),
+ *   rotationMode      — 'trackball' (default, come CloudCompare) o 'turntable',
+ *   rotateSpeed       — moltiplicatore della sensibilità (default 1)
  * }
  */
 export function initPivotOrbit(d) {
@@ -256,4 +365,28 @@ export function initPivotOrbit(d) {
   eventManager.add(window, 'pointerup', onPointerUp, false, 'renderer');
   eventManager.add(window, 'pointercancel', onPointerUp, false, 'renderer');
   eventManager.add(el, 'dblclick', onDblClick, false, 'renderer');
+}
+
+/**
+ * Riporta camera.up alla verticale del mondo (o a endUp) durante
+ * un'animazione già in corso (Reset vista, viste predefinite): da chiamare a
+ * ogni passo con k ∈ [0, 1], passando il "su" di partenza. Senza, la vista
+ * resterebbe inclinata.
+ */
+export function blendCameraUp(camera, startUp, k, endUp = WORLD_UP) {
+  qRot.setFromUnitVectors(startUp, endUp);
+  qYaw.identity().slerp(qRot, k);
+  camera.up.copy(startUp).applyQuaternion(qYaw).normalize();
+}
+
+/** Raddrizza subito la camera (prima persona, VR): niente rollio residuo. */
+export function levelCamera(camera, controls) {
+  if (camera.up.distanceToSquared(WORLD_UP) < 1e-12) return;
+  camera.up.copy(WORLD_UP);
+  if (controls) {
+    controls.update();
+  } else {
+    camera.getWorldDirection(tmpDir);
+    camera.lookAt(tmpRight.copy(camera.position).add(tmpDir));
+  }
 }

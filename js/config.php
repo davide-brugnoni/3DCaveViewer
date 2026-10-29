@@ -250,6 +250,11 @@ const CONFIG = {
     pixelRatioMax:         2,
     pixelRatioMaxMobile:   1.5,   // tetto DPR su touch/mobile (anti-throttling termico)
     pinchLockThresholdPx:  10,    // px per classificare il gesto a due dita: pinch (zoom) o pan
+    // Rotazione col mouse attorno al punto cliccato: 'trackball' (sfera
+    // virtuale libera, come CloudCompare) o 'turntable' (attorno alla
+    // verticale, orizzonte sempre dritto). mouseRotateSpeed la moltiplica.
+    mouseRotation:         'trackball',
+    mouseRotateSpeed:      1.0,
     // Texture dei modelli: lato massimo (px) e budget complessivo per modello
     // (megapixel). Su mobile evitano che una texture 8192×8192 (256 MB
     // decodificata) faccia chiudere la scheda; 0 = nessun limite.

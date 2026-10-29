@@ -64,6 +64,9 @@ function buildEmbedURL() {
     const target = deps?.getShareTarget?.();
     if (camera && target) {
       parts.push(`cam=${fmtVec(camera.position)}`, `tgt=${fmtVec(target)}`);
+      // Solo se la trackball ha inclinato la vista
+      const up = deps?.getShareUp?.() || '';
+      if (up) parts.push(`up=${up}`);
     }
   }
 
@@ -215,7 +218,7 @@ async function copySnippet() {
  *
  * @param {object} d Getter sullo stato del viewer:
  *   getModelFolder(), getModelName(), getCamera(), getShareTarget(),
- *   getSectionState(), getLang()
+ *   getShareUp(), getSectionState(), getLang()
  */
 export function initEmbedUI(d) {
   deps = d;
