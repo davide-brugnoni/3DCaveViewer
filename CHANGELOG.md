@@ -7,6 +7,8 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+## [1.1.0] — 2026-10-29
+
 ### Aggiunto
 - GLB optimizer (server e versione statica): opzione *Texture → Lato
   massimo* (default 4096 px) che riduce le texture da 8192 px, la causa più
@@ -15,6 +17,9 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 - `viewer.php?debug=1`: riquadro diagnostico (vertici, texture, limiti,
   errori GL, perdite del contesto) da fotografare sui telefoni, dove la
   console non è raggiungibile
+- Homepage: i modelli senza coordinate GPS compaiono nella lista laterale
+  con la nota "Posizione GPS non disponibile"; non hanno un marker sulla
+  mappa e il clic apre direttamente il viewer
 
 ### Migliorato
 - Rotazione col mouse attorno al punto cliccato: il trascinamento col tasto
@@ -26,6 +31,8 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   volta
 - Doppio clic su un punto del modello per portarlo al centro della vista
 - La rotella zooma verso il cursore invece che verso il centro
+- README: installazione semplice via ZIP + FTP, git spostato tra le opzioni
+  avanzate
 
 ### Corretto
 - Su iPhone un modello che la GPU non riesce a contenere non lascia più lo
