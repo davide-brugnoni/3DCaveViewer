@@ -107,7 +107,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   │   ├── embed.js            # Embed-code generator (share panel tab)
 │   │   ├── pivot-orbit.js      # Mouse orbit around the clicked point
 │   │   ├── model-loader.js     # Streaming GLB download (single-buffer, abortable)
-│   │   └── gltf-memory.js      # Lean GLB parse + texture downscaling plugin
+│   │   ├── gltf-memory.js      # Lean GLB parse + texture downscaling plugin
+│   │   └── diagnostics.js      # GPU upload check + ?debug=1 overlay
 │   ├── setup.js                # Setup wizard UI (steps, colours, mini-map)
 │   ├── status.js               # Cache management UI (~1,700 lines)
 │   ├── pwa-register.js         # Service worker registration
@@ -201,6 +202,9 @@ no import-map changes needed):
   GLB/GLTF download (see "Large models on mobile" below)
 - `gltf-memory.js` — `parseGltfLean(loader, buffer, path, textureLimits, …)`,
   the GLB parse without the BIN-chunk copy and with texture downscaling
+- `diagnostics.js` — `checkGpuUpload()` (one explicit render + `gl.getError()`
+  after each load) and the `?debug=1` overlay (`showDiagnostics()`,
+  `logDiagnostic()`), for problems that only show up on phones
 
 ### Large models on mobile
 A ~100 MB GLB used to make the browser tab die on phones, and only on the
@@ -253,6 +257,14 @@ size and then falls back to a 1×1 grey texture — never to the full-size image
 which is what crashed the tab in the first place. A parse superseded by a model
 switch (`modelLoadSeq` in `viewer.js`) skips its remaining textures and is
 disposed instead of becoming `currentModel`.
+
+On iOS a model the GPU cannot hold often does **not** lose the WebGL context:
+`bufferData`/`texImage2D` fail with `GL_OUT_OF_MEMORY`, Three.js never reads
+`gl.getError()`, and the scene stays black with no message.
+`verifyGpuUploadLater()` in `viewer.js` renders the first frame explicitly and
+reads the error once per load: on `OUT_OF_MEMORY` it reloads with
+`textureReduction` doubled (textured models, up to ×4), then shows the memory
+error. `viewer.php?debug=1` shows the numbers behind it on screen.
 
 **Embedded textures should be JPEG/WebP, not PNG**: browsers can't decode a PNG
 at reduced size, so an 8192² PNG costs 256 MB on every phone whatever the

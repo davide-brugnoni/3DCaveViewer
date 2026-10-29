@@ -24,6 +24,7 @@
 // Three.js è fissato alla r160 (lib/three/), di cui si replicano i contratti.
 
 import { Texture } from 'three';
+import { logDiagnostic } from './diagnostics.js';
 
 const GLB_MAGIC = 0x46546C67;       // 'glTF'
 const GLB_CHUNK_JSON = 0x4E4F534A;  // 'JSON'
@@ -230,6 +231,7 @@ async function decodeScaled(bytes, mimeType, width, height) {
     if (bitmap) {
       if (bitmap.width === width && bitmap.height === height) return bitmap;
       // Opzioni di ridimensionamento ignorate: si riduce a mano
+      logDiagnostic(`resize ignorato: ${bitmap.width}×${bitmap.height} → ${width}×${height}`);
       const full = bitmap;
       return drawScaled(full, width, height, () => full.close?.());
     }
@@ -347,11 +349,13 @@ function patchImages(parser, limits, glb, isStale) {
           // Tornare all'immagine intera, come si faceva prima, voleva dire
           // 256 MB di pixel proprio sul dispositivo che li aveva appena rifiutati.
           console.warn('Riduzione texture non riuscita, riprovo a metà risoluzione:', err);
+          logDiagnostic(`texture ${sourceIndex}: riduzione fallita (${err?.message || err}), riprovo a metà`);
           try {
             return await decodeScaled(bytes, mimeType,
               Math.max(1, target.width >> 1), Math.max(1, target.height >> 1));
           } catch (err2) {
             console.warn('Texture non caricabile su questo dispositivo:', err2);
+            logDiagnostic(`texture ${sourceIndex}: sostituita da grigio (${err2?.message || err2})`);
             return placeholderTexture();
           }
         }
