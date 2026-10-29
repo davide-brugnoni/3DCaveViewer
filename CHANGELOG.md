@@ -7,33 +7,6 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
-### Aggiunto
-- GLB optimizer (server e versione statica): opzione *Texture → Lato
-  massimo* (default 4096 px) che riduce le texture da 8192 px, la causa più
-  frequente dei modelli neri su iPhone. La versione statica converte anche le
-  PNG opache in JPEG
-- `viewer.php?debug=1`: riquadro diagnostico (vertici, texture, limiti,
-  errori GL, perdite del contesto) da fotografare sui telefoni, dove la
-  console non è raggiungibile
-
-### Migliorato
-- Rotazione col mouse attorno al punto cliccato: il trascinamento col tasto
-  sinistro ruota la camera attorno al punto del modello sotto il cursore
-  (rispettando la sezione attiva), con un segnaposto visibile durante la
-  rotazione; un clic nel vuoto ruota attorno al centro della vista. Prima il
-  trascinamento orizzontale ruotava il modello sul suo centro e quello
-  verticale la camera sul target, con due centri diversi e un solo asse alla
-  volta
-- Doppio clic su un punto del modello per portarlo al centro della vista
-- La rotella zooma verso il cursore invece che verso il centro
-
-### Corretto
-- Su iPhone un modello che la GPU non riesce a contenere non lascia più lo
-  schermo nero senza spiegazioni: dopo il primo frame il viewer legge
-  `gl.getError()` e, se trova `OUT_OF_MEMORY`, ricarica il modello con
-  texture più piccole (fino a ×4) e poi, se non basta, mostra il messaggio
-  di memoria insufficiente
-
 ## [1.0.0] — prima release pubblica
 
 Prima versione distribuita perché altri gruppi speleologici possano
@@ -52,6 +25,15 @@ installarla senza modificare il codice.
   di stato della cache
 - Gestione della memoria per modelli e texture pesanti su smartphone
 - Installazione guidata al primo avvio (`setup.php`) con chiave per riaprirla
+- Rotazione col mouse attorno al punto del modello sotto il cursore
+  (rispettando la sezione attiva), doppio clic per centrare un punto, zoom
+  della rotella verso il cursore
+- I modelli senza coordinate GPS compaiono nella lista della homepage, senza
+  marker sulla mappa
+- GLB optimizer (server e versione statica) con riduzione delle texture a un
+  lato massimo (default 4096 px)
+- `viewer.php?debug=1`: riquadro diagnostico per i problemi visibili solo
+  sui telefoni
 
 ### Installazione pulita
 - Il repository non contiene più modelli 3D: `modelli/` arriva vuota
@@ -60,6 +42,7 @@ installarla senza modificare il codice.
   finché resta tale, il footer non mostra il link
 - Aggiunti `LICENSE` (GPL v3), `THIRD_PARTY_LICENSES.md` e la licenza OFL
   del font Poppins; rimossi i file del font mai usati
+- README: installazione semplice via ZIP + FTP
 
 ### Correzioni
 - Catalogo: una cartella `modelli/` assente dà un catalogo vuoto invece di
@@ -80,3 +63,6 @@ installarla senza modificare il codice.
 - Il wizard non va più in errore senza `mbstring`/`fileinfo` e, se non può
   scrivere `custom/.installed`, offre il file della chiave da caricare
 - `.htaccess`: impostazioni PHP applicate anche con `mod_php7`
+- Su iPhone un modello troppo grande per la GPU non lascia più lo schermo
+  nero: il viewer ricarica con texture più piccole e, se non basta, mostra
+  il messaggio di memoria insufficiente
