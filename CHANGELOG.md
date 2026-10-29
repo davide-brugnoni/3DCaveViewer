@@ -5,17 +5,7 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 [Semantic Versioning](https://semver.org/lang/it/). La versione in uso è
 `APP_VERSION` in `config.php`, mostrata in fondo a `status.php`.
 
-## [Non rilasciato]
-
-### Modificato
-- Rotazione col mouse come in CloudCompare: trackball virtuale centrata sul
-  punto cliccato, il modello segue il cursore senza blocchi in verticale
-  (`viewer.mouseRotation = "turntable"` ripristina la rotazione precedente,
-  `viewer.mouseRotateSpeed` ne regola la sensibilità). "Reset vista" e le
-  viste predefinite raddrizzano l'orizzonte; i link condivisi e il codice da
-  incorporare conservano l'inclinazione con il parametro `up`
-
-## [1.0.0] — prima release pubblica
+## [1.0.0] — 2026-10-29 — prima release pubblica
 
 Prima versione distribuita perché altri gruppi speleologici possano
 installarla senza modificare il codice.
@@ -33,9 +23,14 @@ installarla senza modificare il codice.
   di stato della cache
 - Gestione della memoria per modelli e texture pesanti su smartphone
 - Installazione guidata al primo avvio (`setup.php`) con chiave per riaprirla
-- Rotazione col mouse attorno al punto del modello sotto il cursore
-  (rispettando la sezione attiva), doppio clic per centrare un punto, zoom
-  della rotella verso il cursore
+- Rotazione col mouse come in CloudCompare: trackball virtuale centrata sul
+  punto del modello sotto il cursore (rispettando la sezione attiva), senza
+  blocchi in verticale; doppio clic per centrare un punto, zoom della rotella
+  verso il cursore. `viewer.mouseRotation = "turntable"` ripristina la
+  rotazione attorno all'asse verticale, `viewer.mouseRotateSpeed` ne regola
+  la sensibilità. "Reset vista" e le viste predefinite raddrizzano
+  l'orizzonte; link condivisi e codice da incorporare conservano
+  l'inclinazione con il parametro `up`
 - I modelli senza coordinate GPS compaiono nella lista della homepage, senza
   marker sulla mappa
 - GLB optimizer (server e versione statica) con riduzione delle texture a un
