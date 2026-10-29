@@ -127,6 +127,18 @@
     .opt-label { font-size: 0.8rem; font-weight: 600; color: #e2e8f0; line-height: 1.2; }
     .opt-desc  { font-size: 0.7rem; color: #6b7280; margin-top: 0.1rem; }
 
+    .select-row {
+      display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem;
+      background: #12152a; border: 1px solid #2d3250;
+      border-radius: 0.5rem; padding: 0.55rem 0.7rem;
+    }
+    .select-row label { font-size: 0.8rem; font-weight: 600; color: #e2e8f0; flex: 1; }
+    .select-row select {
+      background: #1a1d2e; border: 1px solid #3b4166; border-radius: 0.4rem;
+      color: #e2e8f0; font-size: 0.8rem; padding: 0.3rem 0.5rem; cursor: pointer;
+    }
+    .tex-hint { font-size: 0.7rem; color: #6b7280; margin-top: 0.35rem; line-height: 1.35; }
+
     .draco-badge {
       font-size: 0.65rem; font-weight: 600; padding: 0.12rem 0.35rem;
       border-radius: 0.2rem; margin-top: 0.25rem; display: inline-block;
@@ -245,6 +257,31 @@
 
   </div>
 
+  <div class="section-title">Texture</div>
+  <div class="select-row">
+    <label for="optTexMax">Lato massimo</label>
+    <select id="optTexMax">
+      <option value="0">Originale</option>
+      <option value="8192">8192 px</option>
+      <option value="4096" selected>4096 px — consigliato</option>
+      <option value="2048">2048 px — telefoni datati</option>
+    </select>
+  </div>
+  <div class="options-grid" style="margin-top:0.5rem">
+    <label class="opt-item">
+      <input type="checkbox" id="optPngToJpeg" checked>
+      <div>
+        <div class="opt-label">PNG → JPEG</div>
+        <div class="opt-desc">Tranne le texture con trasparenza</div>
+      </div>
+    </label>
+  </div>
+  <div class="tex-hint">
+    Le texture da 8192 px pesano 256 MB in memoria per ciascuna e sui telefoni
+    lasciano il modello nero. Una PNG grande, inoltre, non si può ridurre
+    durante il caricamento: il JPEG sì.
+  </div>
+
   <button class="btn" id="mainBtn" disabled>Scegli i file per iniziare</button>
 
   <div class="status" id="status"></div>
@@ -280,6 +317,8 @@ const optDraco    = document.getElementById('optDraco');
 const optWeld     = document.getElementById('optWeld');
 const optDedup    = document.getElementById('optDedup');
 const optPrune    = document.getElementById('optPrune');
+const optTexMax   = document.getElementById('optTexMax');
+const optPngToJpeg = document.getElementById('optPngToJpeg');
 const tabGLB      = document.getElementById('tabGLB');
 const tabOBJ      = document.getElementById('tabOBJ');
 const sizeInEl    = document.getElementById('sizeIn');
@@ -598,7 +637,65 @@ async function optimizeGLB(inputU8) {
 
   if (transforms.length > 0) await gltfDoc.transform(...transforms);
 
+  // Dopo prune/dedup: si lavorano solo le texture rimaste
+  const maxSide = parseInt(optTexMax.value) || 0;
+  if (maxSide > 0 || optPngToJpeg.checked) {
+    setStatus('Elaborazione texture…', 'processing');
+    await processTextures(gltfDoc, maxSide, optPngToJpeg.checked);
+  }
+
   return io.writeBinary(gltfDoc);
+}
+
+// ── Texture: lato massimo e PNG → JPEG ────────────────────────────────────
+// Stesso scopo dell'opzione "Lato massimo" del server (glb-optimizer/), ma
+// con il canvas del browser al posto di sharp. Una texture alla volta: una
+// 8192² decodificata occupa 256 MB.
+const TEX_QUALITY = { 'image/jpeg': 0.9, 'image/webp': 0.9 };
+
+async function processTextures(gltfDoc, maxSide, pngToJpeg) {
+  for (const texture of gltfDoc.getRoot().listTextures()) {
+    const mime  = texture.getMimeType();
+    const bytes = texture.getImage();
+    if (!bytes || !['image/jpeg', 'image/png', 'image/webp'].includes(mime)) continue;
+
+    // Una PNG letta come colore da un materiale non opaco può contenere la
+    // trasparenza che serve: quella resta PNG
+    const usesAlpha = texture.listParents().some(
+      (p) => p.propertyType === 'Material' && p.getAlphaMode() !== 'OPAQUE'
+    );
+    const toJpeg = pngToJpeg && mime === 'image/png' && !usesAlpha;
+
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: mime }),
+      { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+    const srcW = bitmap.width, srcH = bitmap.height;
+    const longest = Math.max(srcW, srcH);
+    const scale = maxSide > 0 && longest > maxSide ? maxSide / longest : 1;
+    if (scale === 1 && !toJpeg) { bitmap.close(); continue; }
+
+    const w = Math.max(1, Math.round(srcW * scale));
+    const h = Math.max(1, Math.round(srcH * scale));
+    const canvas = typeof OffscreenCanvas === 'function'
+      ? new OffscreenCanvas(w, h)
+      : Object.assign(document.createElement('canvas'), { width: w, height: h });
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+
+    const outMime = toJpeg ? 'image/jpeg' : mime;
+    const blob = canvas.convertToBlob
+      ? await canvas.convertToBlob({ type: outMime, quality: TEX_QUALITY[outMime] })
+      : await new Promise((resolve) => canvas.toBlob(resolve, outMime, TEX_QUALITY[outMime]));
+    // Safari non codifica WebP e restituisce una PNG: si tiene l'originale
+    if (!blob || blob.type !== outMime) continue;
+
+    texture.setImage(new Uint8Array(await blob.arrayBuffer())).setMimeType(outMime);
+    const uri = texture.getURI();
+    if (toJpeg && uri) texture.setURI(uri.replace(/\.png$/i, '.jpg'));
+    console.log(`Texture ${texture.getName() || uri || ''}: ${srcW}×${srcH} ${mime} → ${w}×${h} ${outMime}`);
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────

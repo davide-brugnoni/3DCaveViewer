@@ -13,7 +13,8 @@ Trasformazioni disponibili (basate su [glTF Transform](https://gltf-transform.de
 | **Unisci vertici** (weld) | disattiva | Fonde i vertici duplicati. Slider *Tolleranza* da 1e-6 a 1e-1 (default 1e-4). |
 | **Deduplica** (dedup) | attiva | Rimuove mesh, texture e materiali identici. |
 | **Prune** | attiva | Elimina nodi, accessor e dati inutilizzati. |
-| **Texture** | Originali | *WebP* (massima compressione) o *JPEG* (massima compatibilità), con slider *Qualità* 1–100 (default 80). Ricomprime le immagini, **non** le ridimensiona. |
+| **Texture → Formato output** | Stesso formato | *WebP* (massima compressione) o *JPEG* (massima compatibilità), con slider *Qualità* 1–100 (default 80). Le texture usate per la trasparenza non diventano JPEG. |
+| **Texture → Lato massimo** | 4096 px | Riduce le texture più grandi mantenendo le proporzioni (*Originale*, 8192, 4096, 2048 px); quelle già entro il limite non vengono toccate. Vale anche con *Stesso formato*. |
 
 ## Avvio
 
@@ -74,9 +75,9 @@ configurabili con `textureMaxSizeMobile` e `textureBudgetMPMobile` in
   memoria su ogni telefono, qualunque limite sia impostato. Scegli
   *Texture → WebP* o *JPEG* qui (salvo texture con trasparenza, per cui serve
   il PNG).
-- **Lato massimo 8192 px**, meglio 4096 se il modello deve girare bene anche
-  su mobile: il tool non ridimensiona le immagini, quindi riduci le texture
-  troppo grandi prima di esportare (Blender, GIMP, ecc.).
+- **Lato massimo 4096 px** se il modello deve girare bene anche su mobile:
+  è il default di *Texture → Lato massimo*. Le texture da 8192 px sono la
+  causa più frequente dei modelli che su iPhone si caricano ma restano neri.
 - Per le conversioni da OBJ usa texture **JPEG/PNG/WebP**: BMP e TGA vengono
   accettati in upload ma non sono formati glTF validi e la ricompressione
   WebP/JPEG non li legge.
@@ -117,11 +118,13 @@ librerie vengono caricate da CDN, quindi serve la connessione la prima volta).
 Rispetto alla versione server:
 
 - accetta `.glb` oppure `.obj` + `.mtl` + texture (non `.gltf`);
-- offre Draco, Unisci vertici, Deduplica e Prune, **senza** ricompressione
-  delle texture né slider di velocità/tolleranza;
+- offre Draco, Unisci vertici, Deduplica e Prune, senza slider di
+  velocità/tolleranza;
+- per le texture offre *Lato massimo* (default 4096 px) e *PNG → JPEG*
+  (attivo; le PNG usate per la trasparenza restano PNG), ma non WebP né lo
+  slider di qualità (JPEG al 90%);
 - nella conversione da OBJ le texture vengono incorporate come **PNG**
-  (comportamento di `GLTFExporter`): per i modelli destinati al mobile
-  preferisci la versione server con *Texture → WebP/JPEG*;
+  (comportamento di `GLTFExporter`): lascia attivo *PNG → JPEG*;
 - è limitata dalla memoria del browser: oltre ~100 MB l'elaborazione è lenta,
   e gli OBJ oltre ~500 MB possono fallire. Per i file grandi usa il server.
 

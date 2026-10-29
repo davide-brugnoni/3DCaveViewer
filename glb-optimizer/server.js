@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { NodeIO } from '@gltf-transform/core';
+import { ImageUtils, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, KHRDracoMeshCompression } from '@gltf-transform/extensions';
 import { draco, dedup, prune, textureCompress, weld } from '@gltf-transform/functions';
 import draco3d from 'draco3d';
@@ -155,6 +155,17 @@ function handleWasmAbort(err) {
   );
 }
 
+const TEXTURE_MAX_SIDES = [2048, 4096, 8192];
+
+function describeTextures(document) {
+  return document.getRoot().listTextures().map((t) => {
+    const image = t.getImage();
+    const size = image ? ImageUtils.getSize(image, t.getMimeType()) : null;
+    const format = (t.getMimeType() || '?').replace('image/', '');
+    return size ? `${size[0]}×${size[1]} ${format}` : format;
+  });
+}
+
 async function applyTransforms(document, opts, fileSizeBytes = 0) {
   const isLarge = fileSizeBytes > LARGE_FILE_THRESHOLD;
   const skipped = [];
@@ -177,10 +188,21 @@ async function applyTransforms(document, opts, fileSizeBytes = 0) {
     else { transforms.push(prune()); applied.push('prune'); }
   }
 
+  // Lato massimo delle texture. Su un telefono una 8192×8192 decodificata
+  // occupa 256 MB di RAM più ~340 MB di GPU: è la causa più frequente dei
+  // modelli che restano neri o chiudono la scheda. Le proporzioni restano
+  // quelle originali e le texture più piccole del limite non vengono toccate.
+  const maxSide = TEXTURE_MAX_SIDES.includes(parseInt(opts.textureMaxSize)) ? parseInt(opts.textureMaxSize) : 0;
+  const resize = maxSide > 0 ? [maxSide, maxSide] : undefined;
+
   if (opts.texture === 'webp' || opts.texture === 'jpeg') {
     const quality = Math.max(1, Math.min(100, parseInt(opts.textureQuality) || (opts.texture === 'webp' ? 80 : 85)));
-    transforms.push(textureCompress({ encoder: sharp, targetFormat: opts.texture, quality }));
-    applied.push(`texture(${opts.texture} q${quality})`);
+    transforms.push(textureCompress({ encoder: sharp, targetFormat: opts.texture, quality, resize }));
+    applied.push(`texture(${opts.texture} q${quality}${maxSide ? `, max ${maxSide}px` : ''})`);
+  } else if (resize) {
+    // Solo ridimensionamento: ogni texture resta nel formato di partenza
+    transforms.push(textureCompress({ encoder: sharp, resize }));
+    applied.push(`texture(max ${maxSide}px)`);
   }
 
   if (opts.draco === 'true') {
@@ -204,7 +226,11 @@ async function applyTransforms(document, opts, fileSizeBytes = 0) {
 
   if (transforms.length > 0) {
     console.log(`  Transforms: ${applied.join(', ')}`);
+    const texturesBefore = describeTextures(document);
     await document.transform(...transforms);
+    const texturesAfter = describeTextures(document);
+    if (texturesBefore.length > 0)
+      console.log(`  Texture: ${texturesBefore.join(', ')} → ${texturesAfter.join(', ')}`);
   }
 
   // L'encoder Draco (WASM a 32 bit) non riesce a codificare primitive con

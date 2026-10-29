@@ -15,6 +15,10 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   di memoria insufficiente
 
 ### Aggiunto
+- GLB optimizer (server e versione statica): opzione *Texture → Lato
+  massimo* (default 4096 px) che riduce le texture da 8192 px, la causa più
+  frequente dei modelli neri su iPhone. La versione statica converte anche le
+  PNG opache in JPEG
 - `viewer.php?debug=1`: riquadro diagnostico (vertici, texture, limiti,
   errori GL, perdite del contesto) da fotografare sui telefoni, dove la
   console non è raggiungibile

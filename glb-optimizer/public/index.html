@@ -183,6 +183,7 @@
       border-radius: 0 0 0.5rem 0.5rem; padding: 0.55rem 0.75rem;
     }
     .tex-quality-row.visible { display: flex; }
+    .tex-hint { font-size: 0.7rem; color: #6b7280; margin-top: 0.35rem; line-height: 1.35; }
 
     /* ── Button ── */
     .btn {
@@ -336,7 +337,7 @@
   <div class="select-row" id="texFormatRow">
     <label for="optTexture">Formato output</label>
     <select id="optTexture">
-      <option value="none">Originali (nessuna modifica)</option>
+      <option value="none">Stesso formato</option>
       <option value="webp">WebP — max compressione</option>
       <option value="jpeg">JPEG — massima compatibilità</option>
     </select>
@@ -349,6 +350,20 @@
       <span class="setting-hint">Maggiore</span>
       <span class="setting-val" id="texQualVal">80</span>
     </div>
+  </div>
+  <div class="select-row standalone" id="texSizeRow">
+    <label for="optTextureMaxSize">Lato massimo</label>
+    <select id="optTextureMaxSize">
+      <option value="0">Originale</option>
+      <option value="8192">8192 px</option>
+      <option value="4096" selected>4096 px — consigliato</option>
+      <option value="2048">2048 px — telefoni datati</option>
+    </select>
+  </div>
+  <div class="tex-hint">
+    Le texture da 8192 px pesano 256 MB in memoria per ciascuna e sui telefoni
+    lasciano il modello nero. Meglio anche JPEG o WebP: una PNG grande non si
+    può ridurre durante il caricamento.
   </div>
 
   <button class="btn" id="actionBtn" disabled>Scegli un file per iniziare</button>
@@ -678,6 +693,7 @@
     fd.append('prune',          document.getElementById('optPrune').checked   ? 'true' : 'false');
     fd.append('texture',        document.getElementById('optTexture').value);
     fd.append('textureQuality', document.getElementById('textureQuality').value);
+    fd.append('textureMaxSize', document.getElementById('optTextureMaxSize').value);
     return fd;
   }
 
