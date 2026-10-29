@@ -484,7 +484,7 @@ di build: i file si caricano così come sono.
   clicca il pulsante verde **Code** → **Download ZIP**.
 
 Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
-`3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
+`3DCaveViewer-1.0.0` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
 `css/`, `js/`, `lib/`, `custom/`, `modelli/` e così via.
 
 2️⃣ **Carica i file sul server via FTP**
@@ -494,7 +494,7 @@ Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
   `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
   indirizzo tipo `https://tuodominio.it/grotte/`;
 - trascina lì **il contenuto** della cartella estratta (non la cartella
-  stessa, altrimenti il sito finisce in `…/3DCaveViewer-main/`).
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.0.0/`).
 
 > ⚠️ Controlla che sia arrivato anche il file **`.htaccess`**: inizia con
 > un punto, quindi alcuni programmi lo nascondono. In FileZilla attiva
