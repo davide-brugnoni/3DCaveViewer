@@ -160,6 +160,7 @@ const CONFIG = {
     // Testi esclusivamente frontend (non presenti in config.php)
     popupLinkText:   'Apri Modello 3D',
     noModelsMessage: 'Nessun modello con coordinate GPS trovato.',
+    noCoordinatesText: 'Posizione GPS non disponibile',
     emptyCatalogMessage: 'Non ci sono ancora modelli 3D. Per aggiungerne uno crea una cartella in modelli/ con il file .glb e il suo .json (vedi README).',
     loadErrorMessage:'Impossibile caricare i dati dei modelli. Controlla i file JSON nelle cartelle di `modelli/` e la console per errori.',
     loadingText:     'Caricamento modello…',

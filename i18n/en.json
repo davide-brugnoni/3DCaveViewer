@@ -39,6 +39,7 @@
     "sidebarTitle": "Available Caves",
     "popupLinkText": "Open 3D Model",
     "noModelsMessage": "No models with GPS coordinates found.",
+    "noCoordinates": "GPS location not available",
     "emptyCatalogMessage": "There are no 3D models yet. To add one, create a folder in modelli/ with the .glb file and its .json (see README).",
     "loadErrorMessage": "Unable to load model data. Check the JSON files in `models/` folders and the console for errors.",
     "searchPlaceholder": "Search caves...",

@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Testi con supporto i18n
     const popupLinkText = getText('homepage.popupLinkText', 'texts.popupLinkText', 'Apri Modello 3D');
-    const noModelsMessage = getText('homepage.noModelsMessage', 'texts.noModelsMessage', 'Nessun modello con coordinate GPS trovato.');
     const emptyCatalogMessage = getText('homepage.emptyCatalogMessage', 'texts.emptyCatalogMessage', 'Non ci sono ancora modelli 3D.');
+    const noCoordinatesText = getText('homepage.noCoordinates', 'texts.noCoordinatesText', 'Posizione GPS non disponibile');
     const loadErrorMessage = getText('homepage.loadErrorMessage', 'texts.loadErrorMessage', 'Impossibile caricare i dati dei modelli.');
 
     // 1. Inizializzazione della mappa Leaflet
@@ -195,29 +195,59 @@ document.addEventListener('DOMContentLoaded', async function() {
             })
             .then(data => {
                 poiList.textContent = '';
-                // Filtra solo i modelli che hanno coordinate GPS valide
-                const poisWithCoords = data.filter(poi => poi && typeof poi.lat === 'number' && typeof poi.lon === 'number');
+                // Nella lista entrano tutti i modelli; solo quelli con
+                // coordinate GPS valide hanno anche un marker sulla mappa.
+                const pois = (Array.isArray(data) ? data : [])
+                    .filter(poi => poi && typeof poi.folder === 'string' && poi.folder !== '')
+                    .map(poi => ({ ...poi, name: String(poi.name || poi.folder) }));
                 // Ordina le cavità in ordine alfabetico per nome
-                poisWithCoords.sort((a, b) => a.name.localeCompare(b.name));
+                pois.sort((a, b) => a.name.localeCompare(b.name));
 
-                if (poisWithCoords.length === 0) {
+                if (pois.length === 0) {
                     poiList.textContent = '';
                     const emptyWrapper = document.createElement('div');
                     emptyWrapper.className = 'poi-item';
                     const emptyMsg = document.createElement('p');
-                    // Catalogo vuoto (installazione nuova) o modelli tutti
-                    // senza coordinate: due situazioni, due messaggi.
-                    emptyMsg.textContent = data.length === 0 ? emptyCatalogMessage : noModelsMessage;
+                    emptyMsg.textContent = emptyCatalogMessage;
                     emptyWrapper.appendChild(emptyMsg);
                     poiList.appendChild(emptyWrapper);
                     return;
                 }
 
-                poisWithCoords.forEach(poi => {
-                    const position = [poi.lat, poi.lon];
+                pois.forEach(poi => {
+                    const hasCoords = Number.isFinite(poi.lat) && Number.isFinite(poi.lon);
 
                     // Link per aprire il viewer 3D con il modello corretto
                     const viewerLink = `viewer.php?m=${encodeURIComponent(poi.folder)}`;
+
+                    if (!hasCoords) {
+                        // Senza coordinate: niente marker, il click apre
+                        // direttamente il viewer.
+                        const listItem = document.createElement('a');
+                        listItem.className = 'poi-item poi-item-no-coords';
+                        listItem.href = viewerLink;
+                        listItem.setAttribute('data-folder', poi.folder);
+
+                        const listTitle = document.createElement('h3');
+                        listTitle.textContent = poi.name;
+                        listItem.appendChild(listTitle);
+
+                        const listNote = document.createElement('p');
+                        listNote.textContent = noCoordinatesText;
+                        listItem.appendChild(listNote);
+
+                        poiList.appendChild(listItem);
+                        poiEntries.push({
+                            name: poi.name.toLowerCase(),
+                            description: (poi.description || '').toLowerCase(),
+                            folder: poi.folder,
+                            element: listItem,
+                            marker: null
+                        });
+                        return;
+                    }
+
+                    const position = [poi.lat, poi.lon];
 
                     // 4. Creazione sicura del contenuto per il popup del marker (XSS protection)
                     const popupDiv = document.createElement('div');
@@ -315,12 +345,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Mostra/nascondi elemento nella lista
             entry.element.style.display = matches ? '' : 'none';
 
-            // Mostra/nascondi marker sulla mappa
+            if (matches) visibleCount++;
+
+            // Mostra/nascondi marker sulla mappa (i modelli senza
+            // coordinate non ne hanno)
+            if (!entry.marker) return;
             if (matches) {
                 if (!map.hasLayer(entry.marker)) {
                     entry.marker.addTo(map);
                 }
-                visibleCount++;
             } else {
                 if (map.hasLayer(entry.marker)) {
                     map.removeLayer(entry.marker);

@@ -39,6 +39,7 @@
     "sidebarTitle": "Cavidades Disponibles",
     "popupLinkText": "Abrir Modelo 3D",
     "noModelsMessage": "No se encontraron modelos con coordenadas GPS.",
+    "noCoordinates": "Ubicaci\u00f3n GPS no disponible",
     "emptyCatalogMessage": "Todavía no hay modelos 3D. Para añadir uno, crea una carpeta en modelli/ con el archivo .glb y su .json (ver README).",
     "loadErrorMessage": "No se pudieron cargar los datos de los modelos. Verifica los archivos JSON en las carpetas de `modelli/` y la consola para errores.",
     "searchPlaceholder": "Buscar cavidades...",
