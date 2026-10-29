@@ -1682,10 +1682,15 @@ const manager = new THREE.LoadingManager();
       return camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(dist).add(camera.position);
     }
 
-    // "Su" della camera da condividere, "x,y,z" a 3 decimali, o '' quando è
-    // la verticale del mondo (il caso normale: il link resta com'era)
+    // "Su" della camera da condividere, "x,y,z" a 3 decimali, o '' quando
+    // l'orizzonte è dritto (il caso normale: il link resta com'era). Conta il
+    // vettore "destra" della camera: dopo una semplice inclinazione in
+    // verticale camera.up non è più la Y del mondo, ma con up=Y la vista si
+    // ricostruisce identica finché la camera non è capovolta.
+    const shareRight = new THREE.Vector3();
     function getShareUp(){
-      if (isFP || (Math.abs(camera.up.x) < 1e-3 && Math.abs(camera.up.z) < 1e-3 && camera.up.y > 0)) return '';
+      shareRight.set(1, 0, 0).applyQuaternion(camera.quaternion);
+      if (isFP || (Math.abs(shareRight.y) < 1e-3 && camera.up.y > 1e-3)) return '';
       return [camera.up.x, camera.up.y, camera.up.z].map(n => n.toFixed(3)).join(',');
     }
 
@@ -1714,7 +1719,10 @@ const manager = new THREE.LoadingManager();
       // reso perpendicolare all'asse di vista (i decimali del link lo
       // spostano appena), scartato se nullo o parallelo
       const viewDir = tmpVecA.subVectors(pending.tgt, pending.cam).normalize();
-      const up = pending.up ? pending.up.clone().addScaledVector(viewDir, -pending.up.dot(viewDir)) : null;
+      // (prima riportato a componenti ≤ 1: con 1e308 lengthSq() traboccherebbe)
+      const upScale = pending.up ? Math.max(Math.abs(pending.up.x), Math.abs(pending.up.y), Math.abs(pending.up.z)) : 0;
+      const up = upScale > 0 ? pending.up.clone().divideScalar(upScale) : null;
+      if (up) up.addScaledVector(viewDir, -up.dot(viewDir));
       camera.up.set(0, 1, 0);
       if (up && up.lengthSq() > 1e-4) camera.up.copy(up.normalize());
       // Nella pagina incorporata l'inquadratura scelta per l'articolo diventa
