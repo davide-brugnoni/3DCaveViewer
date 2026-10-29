@@ -59,6 +59,7 @@
       joystick, stickEl, embedFullscreenBtn, poiPanel, poiPanelClose
     } from './viewer/dom.js';
     import { initEmbedUI, refreshEmbedCode, resetShareTabs } from './viewer/embed.js';
+    import { initPivotOrbit } from './viewer/pivot-orbit.js';
 
     // Carica configurazione (con fallback ai valori di default)
     const cfg = window.APP_CONFIG || {};
@@ -813,6 +814,8 @@ const manager = new THREE.LoadingManager();
       controls.autoRotate = false;
       controls.autoRotateSpeed = -2.0; // rotazione verso sinistra
       controls.minDistance = 0.0001;
+      // Rotella e pinch zoomano verso il punto indicato, non verso il target
+      controls.zoomToCursor = true;
       controls.target.set(0, 0, 0);
       // Rendering on-demand: tiene vivo il loop finché la camera si muove
       // davvero (inerzia del damping inclusa, anche oltre il grace period)
@@ -834,6 +837,9 @@ const manager = new THREE.LoadingManager();
       const onRendererPointerDown = (e) => {
         activePointers.add(e.pointerId);
         if (isFP) return;
+        // Col mouse la rotazione è un'orbita della camera attorno al punto
+        // cliccato (./viewer/pivot-orbit.js), non una rotazione del modello
+        if (e.pointerType === 'mouse') return;
         if (activePointers.size > 1) {
           // Secondo dito: il gesto è un pinch/pan di OrbitControls. Annulla
           // l'eventuale rotazione modello in corso e riabilita i controls,
@@ -907,6 +913,19 @@ const manager = new THREE.LoadingManager();
       eventManager.add(window, 'pointerup', endDrag, false, 'renderer');
       eventManager.add(window, 'pointerleave', endDrag, false, 'renderer');
       eventManager.add(window, 'pointercancel', endDrag, false, 'renderer');
+
+      initPivotOrbit({
+        domElement: domEl,
+        scene,
+        getCamera:   () => camera,
+        getControls: () => controls,
+        getModel:    () => currentModel,
+        canOrbit:    () => !!currentModel && !isFP && !isFraming && !renderer.xr.isPresenting && controls.enabled,
+        isPickingTool: () => document.body.classList.contains('measure-mode') || document.body.classList.contains('adding-poi'),
+        isSectionActive: () => !!(sectionEnabled && sectionLocalPlane),
+        isPointVisible: (localPoint) => isPointVisibleWithSection(localPoint),
+        requestRender,
+      });
 
       // Gesture-lock a due dita: OrbitControls di default esegue zoom e pan
       // insieme (TOUCH.DOLLY_PAN), quindi un pinch non perfettamente simmetrico
@@ -2268,8 +2287,8 @@ const manager = new THREE.LoadingManager();
       const desktopContent =
         makeSection('orbit', '🌐',
           `${_t('help.sections.orbit', 'Vista Orbitale')}`,
-          `<li>${_t('help.desktop.orbit1', '<strong>Trascina</strong> con il mouse per ruotare il modello')}</li>
-           <li>${_t('help.desktop.orbit2', 'Usa la <strong>rotella</strong> per zoomare')}</li>
+          `<li>${_t('help.desktop.orbit1', '<strong>Trascina</strong> con il mouse per ruotare attorno al punto cliccato; <strong>doppio clic</strong> per centrarlo')}</li>
+           <li>${_t('help.desktop.orbit2', 'Usa la <strong>rotella</strong> per zoomare verso il cursore')}</li>
            <li>${_t('help.desktop.orbit3', '<strong>Tasto destro</strong> o <kbd>Ctrl</kbd>+trascina per traslare')}</li>`,
           true
         ) +

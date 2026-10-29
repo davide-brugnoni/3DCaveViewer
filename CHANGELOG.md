@@ -7,13 +7,6 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
-### Corretto
-- Su iPhone un modello che la GPU non riesce a contenere non lascia più lo
-  schermo nero senza spiegazioni: dopo il primo frame il viewer legge
-  `gl.getError()` e, se trova `OUT_OF_MEMORY`, ricarica il modello con
-  texture più piccole (fino a ×4) e poi, se non basta, mostra il messaggio
-  di memoria insufficiente
-
 ### Aggiunto
 - GLB optimizer (server e versione statica): opzione *Texture → Lato
   massimo* (default 4096 px) che riduce le texture da 8192 px, la causa più
@@ -22,6 +15,24 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 - `viewer.php?debug=1`: riquadro diagnostico (vertici, texture, limiti,
   errori GL, perdite del contesto) da fotografare sui telefoni, dove la
   console non è raggiungibile
+
+### Migliorato
+- Rotazione col mouse attorno al punto cliccato: il trascinamento col tasto
+  sinistro ruota la camera attorno al punto del modello sotto il cursore
+  (rispettando la sezione attiva), con un segnaposto visibile durante la
+  rotazione; un clic nel vuoto ruota attorno al centro della vista. Prima il
+  trascinamento orizzontale ruotava il modello sul suo centro e quello
+  verticale la camera sul target, con due centri diversi e un solo asse alla
+  volta
+- Doppio clic su un punto del modello per portarlo al centro della vista
+- La rotella zooma verso il cursore invece che verso il centro
+
+### Corretto
+- Su iPhone un modello che la GPU non riesce a contenere non lascia più lo
+  schermo nero senza spiegazioni: dopo il primo frame il viewer legge
+  `gl.getError()` e, se trova `OUT_OF_MEMORY`, ricarica il modello con
+  texture più piccole (fino a ×4) e poi, se non basta, mostra il messaggio
+  di memoria insufficiente
 
 ## [1.0.0] — prima release pubblica
 

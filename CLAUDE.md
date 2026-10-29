@@ -105,6 +105,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   │   ├── measure.js          # Measurement system + CSV export
 │   │   ├── annotations.js      # Persistent POI annotations
 │   │   ├── embed.js            # Embed-code generator (share panel tab)
+│   │   ├── pivot-orbit.js      # Mouse orbit around the clicked point
 │   │   ├── model-loader.js     # Streaming GLB download (single-buffer, abortable)
 │   │   ├── gltf-memory.js      # Lean GLB parse + texture downscaling plugin
 │   │   └── diagnostics.js      # GPU upload check + ?debug=1 overlay
@@ -191,6 +192,12 @@ no import-map changes needed):
 - `embed.js` — "Incorpora" tab of the share panel: builds the
   `viewer.php?…&embed=1` URL and the responsive `<iframe>` snippet; viewer
   state is injected via getter deps in `initEmbedUI(deps)`
+- `pivot-orbit.js` — left-mouse drag orbits the camera around the point
+  under the cursor (raycast on press, section-aware; empty space falls back
+  to `controls.target`), double-click centres that point. It sets
+  `controls.mouseButtons.LEFT = null` so OrbitControls keeps only pan/zoom
+  for the mouse (Ctrl/Shift/Cmd+left still pans). Mouse only: touch keeps
+  the one-finger model rotation in `viewer.js`. `controls.zoomToCursor` is on.
 - `model-loader.js` — `fetchBinaryModel(url, {onProgress, signal})`, the
   GLB/GLTF download (see "Large models on mobile" below)
 - `gltf-memory.js` — `parseGltfLean(loader, buffer, path, textureLimits, …)`,
