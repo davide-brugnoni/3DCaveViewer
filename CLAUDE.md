@@ -200,7 +200,7 @@ no import-map changes needed):
   view, centre-to-edge = 90°, no up axis): the view can roll, so it keeps
   `camera.up` equal to the camera's own up before `controls.update()`.
   Reset/preset views and `frameObjectAnimated()` blend it back with
-  `cameraUpBlend()`, first person and VR call `levelCamera()`, and share and
+  `cameraUpBlend()`, desktop first person calls `levelCamera()` (VR and touch are deliberately untouched), and share and
   embed links carry an optional `up=x,y,z`. `'turntable'` keeps the old
   rotation around world Y; `mouseRotateSpeed` scales either.
   A drag starts only after 4 px, and the `click` that ends it is swallowed

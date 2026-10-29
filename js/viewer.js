@@ -843,10 +843,6 @@ const manager = new THREE.LoadingManager();
         // Col mouse la rotazione è un'orbita della camera attorno al punto
         // cliccato (./viewer/pivot-orbit.js), non una rotazione del modello
         if (e.pointerType === 'mouse') return;
-        // I gesti touch ruotano attorno alla verticale del mondo: una vista
-        // inclinata (link condiviso, mouse su un dispositivo ibrido) li
-        // farebbe andare di traverso
-        if (isCameraRolled(camera)) levelCamera(camera, controls);
         if (activePointers.size > 1) {
           // Secondo dito: il gesto è un pinch/pan di OrbitControls. Annulla
           // l'eventuale rotazione modello in corso e riabilita i controls,
@@ -1023,8 +1019,6 @@ const manager = new THREE.LoadingManager();
 
       renderer.xr.addEventListener('sessionstart', () => {
         document.body.classList.add('vr');
-        // Al rientro lookAt() e OrbitControls devono ritrovare la verticale
-        levelCamera(camera, controls);
         vrPrevTarget.copy(controls.target);
         camera.getWorldPosition(vrPrevCameraPos);
         controls.autoRotate = false;
@@ -2183,7 +2177,6 @@ const manager = new THREE.LoadingManager();
       closeMobileMenu();
       isFP = true;
       tapStepRemaining = 0; lastTapTime = 0;
-      levelCamera(camera, controls);
       document.body.classList.add('fp'); // mostra joystick
       crosshair.style.opacity = '1';
       controls.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;
