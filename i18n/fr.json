@@ -39,6 +39,7 @@
     "sidebarTitle": "Cavit\u00e9s Disponibles",
     "popupLinkText": "Ouvrir le mod\u00e8le 3D",
     "noModelsMessage": "Aucun mod\u00e8le avec coordonn\u00e9es GPS trouv\u00e9.",
+    "noCoordinates": "Position GPS non disponible",
     "emptyCatalogMessage": "Il n'y a encore aucun modèle 3D. Pour en ajouter un, créez un dossier dans modelli/ avec le fichier .glb et son .json (voir README).",
     "loadErrorMessage": "Impossible de charger les donn\u00e9es des mod\u00e8les. V\u00e9rifiez les fichiers JSON dans les dossiers `modelli/` et la console pour les erreurs.",
     "searchPlaceholder": "Rechercher des cavit\u00e9s...",

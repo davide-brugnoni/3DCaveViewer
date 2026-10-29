@@ -36,6 +36,7 @@
     "sidebarTitle": "",
     "popupLinkText": "",
     "noModelsMessage": "",
+    "noCoordinates": "",
     "emptyCatalogMessage": "",
     "loadErrorMessage": "",
     "searchPlaceholder": "",
