@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-offline-v60';
+const CACHE_VERSION = 'pwa-offline-v61';
 const CACHE_PREFIX = 'pwa-offline-'; // Prefisso per identificare le cache dell'app
 const FETCH_TIMEOUT = 15000; // 15 secondi (aumentato per connessioni lente)
 // I modelli 3D (GLB/GLTF) possono superare i 100MB: con FETCH_TIMEOUT il download

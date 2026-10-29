@@ -194,7 +194,19 @@ no import-map changes needed):
   state is injected via getter deps in `initEmbedUI(deps)`
 - `pivot-orbit.js` — left-mouse drag orbits the camera around the point
   under the cursor (raycast on press, section-aware; empty space falls back
-  to `controls.target`), double-click centres that point. It sets
+  to `controls.target`), double-click centres that point. The default
+  `viewer.mouseRotation = 'trackball'` is CloudCompare's virtual trackball
+  (sphere centred on the projected pivot, clamped to the central half of the
+  view, centre-to-edge = 90°, no up axis): the view can roll, so it keeps
+  `camera.up` equal to the camera's own up before `controls.update()`.
+  Reset/preset views and `frameObjectAnimated()` blend it back with
+  `cameraUpBlend()`, desktop first person calls `levelCamera()` (VR and touch are deliberately untouched), and share and
+  embed links carry an optional `up=x,y,z`. `'turntable'` keeps the old
+  rotation around world Y; `mouseRotateSpeed` scales either.
+  A drag starts only after 4 px, and the `click` that ends it is swallowed
+  (window capture) so measure/POI picking never fires on a rotation; with
+  no hit and `controls.target` outside the model's box the pivot is the box
+  centre. It sets
   `controls.mouseButtons.LEFT = null` so OrbitControls keeps only pan/zoom
   for the mouse (Ctrl/Shift/Cmd+left still pans). Mouse only: touch keeps
   the one-finger model rotation in `viewer.js`. `controls.zoomToCursor` is on.

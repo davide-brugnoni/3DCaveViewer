@@ -139,7 +139,7 @@ if ($isEmbed) {
     if (is_string($modelFolder) && $modelFolder !== '') {
         $fullParams['m'] = $modelFolder;
     }
-    foreach (['cam', 'tgt'] as $vecParam) {
+    foreach (['cam', 'tgt', 'up'] as $vecParam) {
         $vecValue = isset($_GET[$vecParam]) ? (string) $_GET[$vecParam] : '';
         if (preg_match('/^-?\d+(\.\d+)?(,-?\d+(\.\d+)?){2}$/', $vecValue) === 1) {
             $fullParams[$vecParam] = $vecValue;

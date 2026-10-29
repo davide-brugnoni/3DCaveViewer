@@ -59,7 +59,7 @@
       joystick, stickEl, embedFullscreenBtn, poiPanel, poiPanelClose
     } from './viewer/dom.js';
     import { initEmbedUI, refreshEmbedCode, resetShareTabs } from './viewer/embed.js';
-    import { initPivotOrbit } from './viewer/pivot-orbit.js';
+    import { initPivotOrbit, cameraUpBlend, isCameraRolled, autoRotateAroundUp, levelCamera } from './viewer/pivot-orbit.js';
 
     // Carica configurazione (con fallback ai valori di default)
     const cfg = window.APP_CONFIG || {};
@@ -109,6 +109,9 @@
     const skyDomeTmpVec = new THREE.Vector3();
 
     // Posizione iniziale della vista e orientamento del modello
+    // initialUp: "su" della camera di "Reset vista" (la trackball del mouse può
+    // inclinarla; un link condiviso può portarne uno con il parametro up)
+    const initialUp = new THREE.Vector3(0, 1, 0);
     let initialCamPos = null, initialTarget = null, initialNear = viewerCfg.defaultNear || 0.1, initialFar = viewerCfg.defaultFar || 2000, initialModelQuat = null;
 
     let gltfLoader;
@@ -925,6 +928,8 @@ const manager = new THREE.LoadingManager();
         isSectionActive: () => !!(sectionEnabled && sectionLocalPlane),
         isPointVisible: (localPoint) => isPointVisibleWithSection(localPoint),
         requestRender,
+        rotationMode: viewerCfg.mouseRotation,
+        rotateSpeed: viewerCfg.mouseRotateSpeed,
       });
 
       // Gesture-lock a due dita: OrbitControls di default esegue zoom e pan
@@ -997,6 +1002,8 @@ const manager = new THREE.LoadingManager();
       fpControls.addEventListener('change', requestRender);
       fpControls.addEventListener('lock', ()=>{ 
         isFP = true; 
+        // PointerLockControls conserva il rollio: si cammina a orizzonte dritto
+        levelCamera(camera, controls);
         controls.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;
         crosshair.style.opacity = '1';
         enterFPToggle.checked = true; enterFPToggle.setAttribute('aria-checked','true');
@@ -1446,6 +1453,7 @@ const manager = new THREE.LoadingManager();
         getModelName:   () => modelSelectorValue || '',
         getCamera:      () => (currentModel ? camera : null),
         getShareTarget: () => (currentModel ? getShareTarget() : null),
+        getShareUp:     () => (currentModel ? getShareUp() : ''),
         getSectionState,
         getLang:        () => document.documentElement.lang || '',
       });
@@ -1607,7 +1615,8 @@ const manager = new THREE.LoadingManager();
               // Vista condivisa via link: ripristinata dopo il caricamento del modello
               const cam = parseVec3Param(params.get('cam'));
               const tgt = parseVec3Param(params.get('tgt'));
-              pendingCameraFromURL = (cam && tgt) ? { cam, tgt, folder: folderParam } : null;
+              const up = parseVec3Param(params.get('up'));
+              pendingCameraFromURL = (cam && tgt) ? { cam, tgt, up, folder: folderParam } : null;
               const sec = parseSectionParam(params.get('sec'));
               pendingSectionFromURL = sec ? { ...sec, folder: folderParam } : null;
               selectModelByName(m.name);
@@ -1650,6 +1659,8 @@ const manager = new THREE.LoadingManager();
         if (includeCamera && currentModel) {
           const fmt = v => [v.x, v.y, v.z].map(n => n.toFixed(2)).join(',');
           url += `&cam=${fmt(camera.position)}&tgt=${fmt(getShareTarget())}`;
+          const up = getShareUp();
+          if (up) url += `&up=${up}`;
         }
       }
       // In un iframe l'URL non è visibile e riscriverlo perderebbe i
@@ -1663,6 +1674,18 @@ const manager = new THREE.LoadingManager();
     function getShareTarget(){
       const dist = Math.max(0.5, camera.position.distanceTo(controls.target));
       return camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(dist).add(camera.position);
+    }
+
+    // "Su" della camera da condividere, "x,y,z" a 3 decimali, o '' quando
+    // l'orizzonte è dritto (il caso normale: il link resta com'era). Conta il
+    // vettore "destra" della camera: dopo una semplice inclinazione in
+    // verticale camera.up non è più la Y del mondo, ma con up=Y la vista si
+    // ricostruisce identica finché la camera non è capovolta.
+    const shareRight = new THREE.Vector3();
+    function getShareUp(){
+      shareRight.set(1, 0, 0).applyQuaternion(camera.quaternion);
+      if (isFP || (Math.abs(shareRight.y) < 1e-3 && camera.up.y > 1e-3)) return '';
+      return [camera.up.x, camera.up.y, camera.up.z].map(n => n.toFixed(3)).join(',');
     }
 
     // Parsa un parametro URL nel formato "x,y,z" in Vector3 (null se non valido)
@@ -1686,6 +1709,16 @@ const manager = new THREE.LoadingManager();
       if (pending.cam.distanceTo(frame.center) > maxDist) return false;
       camera.position.copy(pending.cam);
       controls.target.copy(pending.tgt);
+      // up facoltativo: la vista inclinata con la trackball del mouse. Va
+      // reso perpendicolare all'asse di vista (i decimali del link lo
+      // spostano appena), scartato se nullo o parallelo
+      const viewDir = tmpVecA.subVectors(pending.tgt, pending.cam).normalize();
+      // (prima riportato a componenti ≤ 1: con 1e308 lengthSq() traboccherebbe)
+      const upScale = pending.up ? Math.max(Math.abs(pending.up.x), Math.abs(pending.up.y), Math.abs(pending.up.z)) : 0;
+      const up = upScale > 0 ? pending.up.clone().divideScalar(upScale) : null;
+      if (up) up.addScaledVector(viewDir, -up.dot(viewDir));
+      camera.up.set(0, 1, 0);
+      if (up && up.lengthSq() > 1e-4) camera.up.copy(up.normalize());
       // Nella pagina incorporata l'inquadratura scelta per l'articolo diventa
       // anche il punto di ritorno di "Reset vista": chi ha ruotato il modello
       // deve poter tornare a ciò di cui parla l'articolo, non alla vista
@@ -1694,6 +1727,7 @@ const manager = new THREE.LoadingManager();
       if (isEmbed) {
         initialCamPos = pending.cam.clone();
         initialTarget = pending.tgt.clone();
+        initialUp.copy(camera.up);
       }
       camera.near = Math.min(frame.near, viewerCfg.defaultNear || 0.1);
       camera.far = frame.far;
@@ -2848,7 +2882,7 @@ const manager = new THREE.LoadingManager();
       unloadPois();
 
       // azzera la vista iniziale
-      initialCamPos = null; initialTarget = null; initialModelQuat = null;
+      initialCamPos = null; initialTarget = null; initialModelQuat = null; initialUp.set(0, 1, 0);
       initialNear = viewerCfg.defaultNear || 0.1; initialFar = viewerCfg.defaultFar || 2000;
 
 
@@ -3123,6 +3157,7 @@ const manager = new THREE.LoadingManager();
       const targetPos = center.clone().add(dir.multiplyScalar(distance));
       const startCamPos = camera.position.clone();
       const startTarget = controls.target.clone();
+      const blendUp = cameraUpBlend(camera);
       const startNear = camera.near, startFar = camera.far;
       const start = performance.now();
       const ease = t => t<0.5 ? 2*t*t : -1+(4-2*t)*t;
@@ -3131,6 +3166,7 @@ const manager = new THREE.LoadingManager();
         const k = ease(t);
         camera.position.lerpVectors(startCamPos, targetPos, k);
         controls.target.lerpVectors(startTarget, center, k);
+        blendUp(k);
         camera.near = THREE.MathUtils.lerp(startNear, near, k);
         camera.far  = THREE.MathUtils.lerp(startFar,  far,  k);
         camera.updateProjectionMatrix();
@@ -3158,6 +3194,7 @@ const manager = new THREE.LoadingManager();
       if (isFraming) return; isFraming = true;
       const startCamPos = camera.position.clone();
       const startTarget = controls.target.clone();
+      const blendUp = cameraUpBlend(camera, initialUp);
       const startNear = camera.near, startFar = camera.far;
       const targetPos = initialCamPos.clone();
       const targetTarget = initialTarget.clone();
@@ -3170,6 +3207,7 @@ const manager = new THREE.LoadingManager();
         const k = ease(t);
         camera.position.lerpVectors(startCamPos, targetPos, k);
         controls.target.lerpVectors(startTarget, targetTarget, k);
+        blendUp(k);
         camera.near = THREE.MathUtils.lerp(startNear, initialNear, k);
         camera.far  = THREE.MathUtils.lerp(startFar,  initialFar,  k);
         currentModel.quaternion.copy(startQuat).slerp(targetQuat, k);
@@ -3209,6 +3247,7 @@ const manager = new THREE.LoadingManager();
       // Stato iniziale
       const startCamPos = camera.position.clone();
       const startTarget = controls.target.clone();
+      const blendUp = cameraUpBlend(camera);
       const startNear = camera.near, startFar = camera.far;
       const startQuat = currentModel.quaternion.clone();
       const targetQuat = initialModelQuat.clone();
@@ -3224,6 +3263,7 @@ const manager = new THREE.LoadingManager();
         // Anima camera
         camera.position.lerpVectors(startCamPos, targetCamPos, k);
         controls.target.lerpVectors(startTarget, center, k);
+        blendUp(k);
         camera.near = THREE.MathUtils.lerp(startNear, near, k);
         camera.far = THREE.MathUtils.lerp(startFar, far, k);
 
@@ -3355,6 +3395,12 @@ const manager = new THREE.LoadingManager();
         if (currentModel) collideMove(camera.position, fpMove, currentModel);
         camera.position.add(fpMove);
         if (!fpControls || !fpControls.isLocked) controls.target.add(fpMove);
+      } else if (controls.autoRotate && isCameraRolled(camera)) {
+        // Vista inclinata dalla trackball: si gira attorno al suo "su",
+        // stesso passo per frame dell'autorotazione di OrbitControls
+        controls.autoRotate = false;
+        autoRotateAroundUp(camera, controls, -(2 * Math.PI / 3600) * controls.autoRotateSpeed);
+        controls.autoRotate = true;
       } else {
         controls.update();
       }

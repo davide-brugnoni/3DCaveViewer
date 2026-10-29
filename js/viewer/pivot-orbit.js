@@ -11,12 +11,21 @@
 // insieme attorno al pivot, quindi il target resta sull'asse di vista e il
 // lookAt() di controls.update() ritrova lo stesso orientamento.
 //
+// La rotazione predefinita è una trackball virtuale come quella di
+// CloudCompare ('trackball'): il cursore "afferra" una sfera centrata sul
+// pivot proiettato a schermo e il modello segue la mano, senza un asse
+// verticale privilegiato né blocchi ai poli (la vista può quindi inclinarsi:
+// camera.up segue la camera, e "Reset vista" la raddrizza). Dal centro al
+// bordo della vista sono 90°. Con viewer.mouseRotation = 'turntable' resta
+// la rotazione a "piatto girevole" attorno alla verticale del mondo.
+//
 // Solo mouse: il touch e la penna mantengono i gesti di viewer.js.
 // Come gli altri moduli, lo stato del viewer arriva per iniezione
 // (initPivotOrbit(deps)) tramite getter.
 
 import * as THREE from 'three';
 import { eventManager } from './utils.js';
+import { isMeasureObject } from './measure.js';
 
 // Dipendenze dallo stato del viewer (impostate da initPivotOrbit)
 let deps = null;
@@ -30,14 +39,26 @@ const tmpLocal = new THREE.Vector3();
 const qYaw = new THREE.Quaternion();
 const qPitch = new THREE.Quaternion();
 const qRot = new THREE.Quaternion();
+const qInv = new THREE.Quaternion();
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const tbLast = new THREE.Vector3();
+const tbCur = new THREE.Vector3();
+const tbAxis = new THREE.Vector3();
+const tbCenter = new THREE.Vector3();
 
 // Margine dalla verticale: guardando esattamente in alto/basso lookAt()
 // degenera e la vista ruoterebbe su sé stessa
 const PITCH_EPS = 0.001;
 const DBLCLICK_DURATION = 350; // ms
+// Movimento minimo (px) prima che il trascinamento ruoti: sotto è un clic,
+// che con misure o POI attivi deve solo posare il punto
+const DRAG_THRESHOLD = 4;
+// Il click che chiude una rotazione non deve arrivare a misure/POI
+const CLICK_SUPPRESS_MS = 400;
 
-let drag = null;           // { pointerId, lastX, lastY, moved, prevAutoRotate }
+let drag = null;           // { pointerId, startX, startY, lastX, lastY, moved, prevAutoRotate, cx, cy }
+let suppressClickUntil = 0;
+const modelBox = new THREE.Box3();
 let modifierGesture = false;
 let marker = null;
 let recenterAnim = 0;
@@ -60,7 +81,8 @@ function pickPoint(event) {
   pickRaycaster.firstHitOnly = !sectioned;
   const hits = pickRaycaster.intersectObject(model, true);
   for (const hit of hits) {
-    if (!hit.object.isMesh) continue; // linee delle misure, sprite
+    // Linee e sprite, marker di misure e POI, mesh nascoste
+    if (!hit.object.isMesh || !hit.object.visible || isMeasureObject(hit.object)) continue;
     if (sectioned) {
       tmpLocal.copy(hit.point);
       model.worldToLocal(tmpLocal);
@@ -118,12 +140,24 @@ function alignTargetDepth(camera, controls) {
   }
 }
 
-function rotateAroundPivot(dx, dy) {
+/** Ruota camera e target attorno a center con un quaternione nel mondo. */
+function applyWorldRotation(q, camera, controls, center = pivot) {
+  camera.position.sub(center).applyQuaternion(q).add(center);
+  controls.target.sub(center).applyQuaternion(q).add(center);
+  camera.quaternion.premultiply(q);
+  // lookAt() di controls.update() ricostruisce l'orientamento da camera.up:
+  // deve essere il "su" attuale della camera, altrimenti annullerebbe
+  // l'inclinazione della trackball (e degenererebbe guardando in verticale)
+  camera.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+  controls.update();
+}
+
+function rotateTurntable(dx, dy) {
   const camera = deps.getCamera();
   const controls = deps.getControls();
   const h = deps.domElement.clientHeight || 1;
   // Stessa scala di OrbitControls (un'altezza di schermo = un giro)
-  const k = (2 * Math.PI * controls.rotateSpeed) / h;
+  const k = (2 * Math.PI * controls.rotateSpeed * rotateSpeed()) / h;
   const yaw = -dx * k;
   let pitch = -dy * k;
 
@@ -137,10 +171,95 @@ function rotateAroundPivot(dx, dy) {
   qPitch.setFromAxisAngle(tmpRight, pitch);
   qYaw.setFromAxisAngle(WORLD_UP, yaw);
   qRot.multiplyQuaternions(qYaw, qPitch);
+  applyWorldRotation(qRot, camera, controls);
+}
 
-  camera.position.sub(pivot).applyQuaternion(qRot).add(pivot);
-  controls.target.sub(pivot).applyQuaternion(qRot).add(pivot);
-  camera.quaternion.premultiply(qRot);
+/**
+ * Centro della sfera virtuale in pixel (relativi al canvas): il pivot
+ * proiettato, tenuto nella metà centrale della vista come fa CloudCompare,
+ * così anche un pivot vicino al bordo lascia spazio per ruotare.
+ */
+function trackballCenter(camera, w, h) {
+  tbCenter.copy(pivot).project(camera);
+  let cx = w / 2, cy = h / 2;
+  if (tbCenter.z > -1 && tbCenter.z < 1) {
+    cx = THREE.MathUtils.clamp((tbCenter.x + 1) / 2 * w, w / 4, 3 * w / 4);
+    cy = THREE.MathUtils.clamp((1 - tbCenter.y) / 2 * h, h / 4, 3 * h / 4);
+  }
+  return { cx, cy };
+}
+
+/**
+ * Punto della sfera virtuale sotto il cursore, nello spazio camera
+ * (x a destra, y in alto, z verso chi guarda). Raggio: mezza vista per
+ * asse; fuori dalla sfera il punto scivola sul suo bordo, e lì il
+ * trascinamento diventa una rotazione attorno all'asse di vista.
+ */
+function trackballVector(out, x, y, w, h) {
+  out.set(
+    THREE.MathUtils.clamp((x - drag.cx) / (w / 2), -1, 1),
+    THREE.MathUtils.clamp(-(y - drag.cy) / (h / 2), -1, 1),
+    0
+  );
+  const d2 = out.x * out.x + out.y * out.y;
+  if (d2 > 1) out.multiplyScalar(1 / Math.sqrt(d2));
+  else out.z = Math.sqrt(1 - d2);
+  return out;
+}
+
+function rotateTrackball(x, y) {
+  const camera = deps.getCamera();
+  const controls = deps.getControls();
+  const w = deps.domElement.clientWidth || 1;
+  const h = deps.domElement.clientHeight || 1;
+  trackballVector(tbCur, x, y, w, h);
+  const dot = THREE.MathUtils.clamp(tbLast.dot(tbCur), -1, 1);
+  tbAxis.crossVectors(tbLast, tbCur);
+  const len = tbAxis.length();
+  tbLast.copy(tbCur);
+  if (len < 1e-9) return;
+  // Il modello ruota da tbLast a tbCur (segue il cursore): la camera fa la
+  // rotazione inversa attorno al pivot. Asse dallo spazio camera al mondo.
+  // mouseRotateSpeed scala l'angolo, non la sfera: cambiarne il raggio
+  // sposterebbe il bordo (dove il trascinamento diventa rollio)
+  const angle = Math.atan2(len, dot) * rotateSpeed();
+  tbAxis.multiplyScalar(1 / len).applyQuaternion(camera.quaternion);
+  qInv.setFromAxisAngle(tbAxis, -angle);
+  applyWorldRotation(qInv, camera, controls);
+}
+
+function rotateSpeed() {
+  const s = Number(deps.rotateSpeed);
+  return Number.isFinite(s) && s > 0 ? s : 1;
+}
+
+function isTrackball() {
+  return deps.rotationMode !== 'turntable';
+}
+
+/** Posizione del puntatore relativa al canvas. */
+function localXY(e) {
+  const rect = deps.domElement.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+/**
+ * Esaurisce l'inerzia di OrbitControls (pan o rotazione touch appena
+ * finiti): controls.update() la applicherebbe a ogni passo della trackball
+ * e il punto afferrato scivolerebbe via dal cursore.
+ */
+function stopInertia(camera, controls) {
+  if (!controls.enableDamping) return;
+  tmpLocal.copy(camera.position);
+  tmpRight.copy(controls.target);
+  const autoRotate = controls.autoRotate;
+  controls.enableDamping = false;
+  controls.autoRotate = false;
+  controls.update(); // consuma e azzera i delta residui
+  controls.enableDamping = true;
+  controls.autoRotate = autoRotate;
+  camera.position.copy(tmpLocal);
+  controls.target.copy(tmpRight);
   controls.update();
 }
 
@@ -155,35 +274,76 @@ function onPointerDown(e) {
     controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
     return;
   }
+  if (modifierGesture) {
+    // Un Ctrl+trascina finito senza pointerup (finestra che perde il fuoco)
+    modifierGesture = false;
+    controls.mouseButtons.LEFT = null;
+  }
+  stopInertia(deps.getCamera(), controls);
   const hit = pickPoint(e);
-  pivot.copy(hit || controls.target);
-  if (hit) alignTargetDepth(deps.getCamera(), controls);
+  if (hit) {
+    pivot.copy(hit);
+    alignTargetDepth(deps.getCamera(), controls);
+  } else {
+    // Clic nel vuoto: il target, finché sta nel modello. Lo zoom verso il
+    // cursore sullo sfondo lo porta lontano, e il modello uscirebbe dalla
+    // vista: allora, come CloudCompare, si ruota attorno al suo centro
+    pivot.copy(controls.target);
+    const model = deps.getModel();
+    if (model) {
+      modelBox.setFromObject(model);
+      if (!modelBox.isEmpty() && !modelBox.containsPoint(pivot)) modelBox.getCenter(pivot);
+    }
+  }
   // Anche fuori dal canvas il trascinamento continua ad arrivare qui
   try { deps.domElement.setPointerCapture(e.pointerId); } catch (_) { /* puntatore già rilasciato */ }
   drag = {
     pointerId: e.pointerId,
+    startX: e.clientX,
+    startY: e.clientY,
     lastX: e.clientX,
     lastY: e.clientY,
     moved: false,
     prevAutoRotate: controls.autoRotate,
+    cx: 0,
+    cy: 0,
   };
+  if (isTrackball()) {
+    const camera = deps.getCamera();
+    const el = deps.domElement;
+    const w = el.clientWidth || 1, h = el.clientHeight || 1;
+    // Il centro della sfera resta fisso per tutto il trascinamento: se
+    // seguisse il pivot a ogni passo, la rotazione non sarebbe reversibile
+    // (tornando al punto di partenza la vista non tornerebbe uguale)
+    Object.assign(drag, trackballCenter(camera, w, h));
+    const p = localXY(e);
+    trackballVector(tbLast, p.x, p.y, w, h);
+  }
   // L'autorotazione combatterebbe con il trascinamento
   controls.autoRotate = false;
 }
 
 function onPointerMove(e) {
   if (!drag || e.pointerId !== drag.pointerId) return;
-  if (!deps.canOrbit()) { endDrag(); return; }
+  // Sinistro già rilasciato: con un altro tasto premuto Chrome lo segnala
+  // con un pointermove, non con pointerup; o il pointerup è andato perso
+  if (!deps.canOrbit() || !(e.buttons & 1)) { endDrag(); return; }
+  if (!drag.moved) {
+    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+    drag.moved = true;
+    showMarker(true);
+  }
   const dx = e.clientX - drag.lastX;
   const dy = e.clientY - drag.lastY;
   drag.lastX = e.clientX;
   drag.lastY = e.clientY;
   if (!dx && !dy) return;
-  if (!drag.moved) {
-    drag.moved = true;
-    showMarker(true);
+  if (isTrackball()) {
+    const p = localXY(e);
+    rotateTrackball(p.x, p.y);
+  } else {
+    rotateTurntable(dx, dy);
   }
-  rotateAroundPivot(dx, dy);
 }
 
 function endDrag() {
@@ -194,6 +354,7 @@ function endDrag() {
   }
   if (!drag) return;
   if (drag.prevAutoRotate) controls.autoRotate = true;
+  if (drag.moved) suppressClickUntil = performance.now() + CLICK_SUPPRESS_MS;
   drag = null;
   showMarker(false);
 }
@@ -201,6 +362,13 @@ function endDrag() {
 function onPointerUp(e) {
   if (drag && e.pointerId !== drag.pointerId) return;
   endDrag();
+}
+
+/** Il click di fine rotazione non posa punti di misura o POI. */
+function onClickCapture(e) {
+  if (performance.now() > suppressClickUntil) return;
+  suppressClickUntil = 0;
+  if (e.target === deps.domElement) e.stopImmediatePropagation();
 }
 
 /** Doppio clic: il punto sotto il cursore va al centro, stessa distanza. */
@@ -237,7 +405,9 @@ function onDblClick(e) {
  *   canOrbit()        — false in prima persona, in VR o durante un'animazione,
  *   isPickingTool()   — true se un clic sul modello serve a misure/POI,
  *   isSectionActive(), isPointVisible(localPoint),
- *   requestRender()
+ *   requestRender(),
+ *   rotationMode      — 'trackball' (default, come CloudCompare) o 'turntable',
+ *   rotateSpeed       — moltiplicatore della sensibilità (default 1)
  * }
  */
 export function initPivotOrbit(d) {
@@ -255,5 +425,61 @@ export function initPivotOrbit(d) {
   eventManager.add(el, 'pointermove', onPointerMove, false, 'renderer');
   eventManager.add(window, 'pointerup', onPointerUp, false, 'renderer');
   eventManager.add(window, 'pointercancel', onPointerUp, false, 'renderer');
+  eventManager.add(el, 'lostpointercapture', onPointerUp, false, 'renderer');
+  eventManager.add(window, 'blur', endDrag, false, 'renderer');
+  // Sulla window in capture: arriva prima dei listener click di misure e POI
+  eventManager.add(window, 'click', onClickCapture, { capture: true }, 'renderer');
   eventManager.add(el, 'dblclick', onDblClick, false, 'renderer');
+}
+
+/**
+ * Riporta camera.up alla verticale del mondo (o a endUp) durante
+ * un'animazione (Reset vista, viste predefinite): chiamata all'inizio,
+ * restituisce la funzione da chiamare a ogni passo con k ∈ [0, 1]. Senza,
+ * la vista resterebbe inclinata.
+ */
+export function cameraUpBlend(camera, endUp = WORLD_UP) {
+  const startUp = camera.up.clone();
+  const q = new THREE.Quaternion();
+  const step = new THREE.Quaternion();
+  if (startUp.dot(endUp) < -0.999) {
+    // Vista capovolta: setFromUnitVectors sceglierebbe un asse qualsiasi e
+    // la vista girerebbe di traverso; si raddrizza attorno all'asse di vista
+    q.setFromAxisAngle(camera.getWorldDirection(new THREE.Vector3()), Math.PI);
+  } else {
+    q.setFromUnitVectors(startUp, endUp);
+  }
+  return (k) => {
+    step.identity().slerp(q, k);
+    camera.up.copy(startUp).applyQuaternion(step).normalize();
+  };
+}
+
+/** true se la vista è inclinata rispetto alla verticale del mondo. */
+export function isCameraRolled(camera) {
+  return camera.up.distanceToSquared(WORLD_UP) > 1e-6;
+}
+
+/**
+ * Un passo di autorotazione attorno al "su" della camera, passante per il
+ * target. OrbitControls ruoterebbe sempre attorno alla Y del mondo: con la
+ * vista inclinata l'orizzonte oscillerebbe e, oltre 90°, lookAt() la
+ * capovolgerebbe di colpo.
+ */
+export function autoRotateAroundUp(camera, controls, angle) {
+  qRot.setFromAxisAngle(tmpDir.copy(camera.up), angle);
+  tbCenter.copy(controls.target);
+  applyWorldRotation(qRot, camera, controls, tbCenter);
+}
+
+/** Raddrizza subito la camera (prima persona, VR): niente rollio residuo. */
+export function levelCamera(camera, controls) {
+  if (camera.up.distanceToSquared(WORLD_UP) < 1e-12) return;
+  camera.up.copy(WORLD_UP);
+  if (controls) {
+    controls.update();
+  } else {
+    camera.getWorldDirection(tmpDir);
+    camera.lookAt(tmpRight.copy(camera.position).add(tmpDir));
+  }
 }
