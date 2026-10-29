@@ -23,7 +23,7 @@ if (!defined('CONFIG_LOADED')) {
 
 // Versione dell'applicazione (Semantic Versioning, vedi CHANGELOG.md).
 // Va aggiornata a ogni release insieme al tag git corrispondente.
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.0.0';
 
 /**
  * Configurazione dell'applicazione
