@@ -20,6 +20,7 @@
     } from './viewer/loader-ui.js';
     import { fetchBinaryModel } from './viewer/model-loader.js';
     import { parseGltfLean } from './viewer/gltf-memory.js';
+    import { checkGpuUpload, collectModelStats, showDiagnostics, logDiagnostic } from './viewer/diagnostics.js';
     import {
       registerPanel, showPanelBackdrop, hidePanelBackdrop, anyPanelOpen,
       minimizePanelMobile, restoreMinimizedPanel, clearMinimizedState,
@@ -708,6 +709,7 @@ const manager = new THREE.LoadingManager();
       renderer.domElement.addEventListener('webglcontextlost', (e) => {
         e.preventDefault();
         contextLossCount++;
+        logDiagnostic(`webglcontextlost #${contextLossCount}`);
         showLoader(0, { isIndeterminate: true });
         showToast(_t('loader.contextLost', 'Contesto grafico perso: ripristino in corso…'));
         clearTimeout(contextLostTimer);
@@ -717,6 +719,7 @@ const manager = new THREE.LoadingManager();
       });
       renderer.domElement.addEventListener('webglcontextrestored', () => {
         clearTimeout(contextLostTimer);
+        logDiagnostic('webglcontextrestored');
         showToast(_t('loader.contextRestored', 'Contesto grafico ripristinato.'));
         if (contextLossCount >= 2 && lastRequestedModelName) {
           textureReduction = Math.min(textureReduction * 2, 8);
@@ -2715,6 +2718,7 @@ const manager = new THREE.LoadingManager();
             // Auto-generate social preview in background
             autoGenerateSocialPreview();
             closeItem(false);
+            verifyGpuUploadLater(loadSeq, buffer.byteLength);
           } catch (err) {
             console.error('Errore elaborazione GLB/GLTF:', err);
             closeItem(true);
@@ -2735,6 +2739,45 @@ const manager = new THREE.LoadingManager();
       requestAnimationFrame(() => requestAnimationFrame(() => {
         setTimeout(() => notifyServiceWorker({ type: 'MODEL_LOAD_END', url: modelUrl }), 3000);
       }));
+    }
+
+    // Primo frame del modello appena caricato, con lettura di gl.getError().
+    // Su iPhone una GPU senza memoria sufficiente non sempre perde il contesto:
+    // bufferData/texImage2D falliscono con OUT_OF_MEMORY e la scena resta nera
+    // senza alcun messaggio. In quel caso si riprova una volta con texture più
+    // piccole (se il modello ne ha), poi si spiega all'utente cosa succede.
+    function verifyGpuUploadLater(loadSeq, fileBytes) {
+      requestAnimationFrame(() => {
+        if (loadSeq !== modelLoadSeq || !currentModel) return;
+        const stats = collectModelStats(currentModel);
+        const result = checkGpuUpload(renderer, scene, camera);
+        const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
+        const limits = textureLimits();
+        const info = renderer.info;
+        showDiagnostics([
+          `${currentModelInfo?.name || ''} (${currentModelInfo?.folder || ''})`,
+          fileBytes ? `file ${mb(fileBytes)}` : '',
+          `mesh ${stats.meshes} · vertici ${stats.vertices.toLocaleString()} · triangoli ${stats.triangles.toLocaleString()}`,
+          `geometrie ${mb(stats.geometryBytes)} · buffer max ${mb(stats.largestBuffer)}`,
+          `texture ${stats.textures.length}: ${stats.textures.join(', ') || '—'}`,
+          `limiti texture ${limits.maxSize || '∞'} px, ${limits.maxPixels ? (limits.maxPixels / 1e6).toFixed(0) + ' MP' : '∞'} (riduzione ×${textureReduction})`,
+          `GPU maxTexture ${renderer.capabilities.maxTextureSize} · WebGL${renderer.capabilities.isWebGL2 ? '2' : '1'} · DPR ${renderer.getPixelRatio()}`,
+          `render: ${info.render.calls} draw, ${info.render.triangles.toLocaleString()} tri · GPU geo ${info.memory.geometries}, tex ${info.memory.textures}`,
+          `deviceMemory ${navigator.deviceMemory ?? '?'} · touch ${isTouch} · iOS ${isIOS}`,
+          `errori GL: ${result.errors.join(', ') || 'nessuno'}`,
+          navigator.userAgent
+        ]);
+        if (!result.outOfMemory) return;
+        console.error('GPU senza memoria per il modello:', result.errors, stats);
+        if (stats.textures.length > 0 && textureReduction < 4 && lastRequestedModelName) {
+          textureReduction = Math.min(textureReduction * 2, 8);
+          logDiagnostic(`OUT_OF_MEMORY: ricarico con texture ridotte ×${textureReduction}`);
+          loadModelByName(lastRequestedModelName);
+          return;
+        }
+        logDiagnostic('OUT_OF_MEMORY: modello troppo grande per la GPU');
+        showLoaderError(_t('loader.errorMemory', 'Il modello è troppo grande per la memoria di questo dispositivo. Chiudi le altre schede e riprova.'));
+      });
     }
 
     function loadModelByName(modelName) {
@@ -2820,6 +2863,7 @@ const manager = new THREE.LoadingManager();
             loadPoisForModel(currentModelInfo?.folder);
             // Auto-generate social preview in background
             autoGenerateSocialPreview();
+            verifyGpuUploadLater(loadSeq, 0);
           }, () => resetLoaderWatchdog(), (err) => {
             console.error('Errore OBJ:', err);
             showLoaderError(modelLoadErrorMessage(err));

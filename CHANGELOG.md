@@ -5,6 +5,20 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 [Semantic Versioning](https://semver.org/lang/it/). La versione in uso è
 `APP_VERSION` in `config.php`, mostrata in fondo a `status.php`.
 
+## [Non rilasciato]
+
+### Corretto
+- Su iPhone un modello che la GPU non riesce a contenere non lascia più lo
+  schermo nero senza spiegazioni: dopo il primo frame il viewer legge
+  `gl.getError()` e, se trova `OUT_OF_MEMORY`, ricarica il modello con
+  texture più piccole (fino a ×4) e poi, se non basta, mostra il messaggio
+  di memoria insufficiente
+
+### Aggiunto
+- `viewer.php?debug=1`: riquadro diagnostico (vertici, texture, limiti,
+  errori GL, perdite del contesto) da fotografare sui telefoni, dove la
+  console non è raggiungibile
+
 ## [1.0.0] — prima release pubblica
 
 Prima versione distribuita perché altri gruppi speleologici possano
