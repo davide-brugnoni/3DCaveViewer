@@ -59,7 +59,7 @@
       joystick, stickEl, embedFullscreenBtn, poiPanel, poiPanelClose
     } from './viewer/dom.js';
     import { initEmbedUI, refreshEmbedCode, resetShareTabs } from './viewer/embed.js';
-    import { initPivotOrbit, blendCameraUp, levelCamera } from './viewer/pivot-orbit.js';
+    import { initPivotOrbit, cameraUpBlend, isCameraRolled, autoRotateAroundUp, levelCamera } from './viewer/pivot-orbit.js';
 
     // Carica configurazione (con fallback ai valori di default)
     const cfg = window.APP_CONFIG || {};
@@ -843,6 +843,10 @@ const manager = new THREE.LoadingManager();
         // Col mouse la rotazione è un'orbita della camera attorno al punto
         // cliccato (./viewer/pivot-orbit.js), non una rotazione del modello
         if (e.pointerType === 'mouse') return;
+        // I gesti touch ruotano attorno alla verticale del mondo: una vista
+        // inclinata (link condiviso, mouse su un dispositivo ibrido) li
+        // farebbe andare di traverso
+        if (isCameraRolled(camera)) levelCamera(camera, controls);
         if (activePointers.size > 1) {
           // Secondo dito: il gesto è un pinch/pan di OrbitControls. Annulla
           // l'eventuale rotazione modello in corso e riabilita i controls,
@@ -3152,7 +3156,7 @@ const manager = new THREE.LoadingManager();
       const targetPos = center.clone().add(dir.multiplyScalar(distance));
       const startCamPos = camera.position.clone();
       const startTarget = controls.target.clone();
-      const startUp = camera.up.clone();
+      const blendUp = cameraUpBlend(camera);
       const startNear = camera.near, startFar = camera.far;
       const start = performance.now();
       const ease = t => t<0.5 ? 2*t*t : -1+(4-2*t)*t;
@@ -3161,7 +3165,7 @@ const manager = new THREE.LoadingManager();
         const k = ease(t);
         camera.position.lerpVectors(startCamPos, targetPos, k);
         controls.target.lerpVectors(startTarget, center, k);
-        blendCameraUp(camera, startUp, k);
+        blendUp(k);
         camera.near = THREE.MathUtils.lerp(startNear, near, k);
         camera.far  = THREE.MathUtils.lerp(startFar,  far,  k);
         camera.updateProjectionMatrix();
@@ -3189,7 +3193,7 @@ const manager = new THREE.LoadingManager();
       if (isFraming) return; isFraming = true;
       const startCamPos = camera.position.clone();
       const startTarget = controls.target.clone();
-      const startUp = camera.up.clone();
+      const blendUp = cameraUpBlend(camera, initialUp);
       const startNear = camera.near, startFar = camera.far;
       const targetPos = initialCamPos.clone();
       const targetTarget = initialTarget.clone();
@@ -3202,7 +3206,7 @@ const manager = new THREE.LoadingManager();
         const k = ease(t);
         camera.position.lerpVectors(startCamPos, targetPos, k);
         controls.target.lerpVectors(startTarget, targetTarget, k);
-        blendCameraUp(camera, startUp, k, initialUp);
+        blendUp(k);
         camera.near = THREE.MathUtils.lerp(startNear, initialNear, k);
         camera.far  = THREE.MathUtils.lerp(startFar,  initialFar,  k);
         currentModel.quaternion.copy(startQuat).slerp(targetQuat, k);
@@ -3242,7 +3246,7 @@ const manager = new THREE.LoadingManager();
       // Stato iniziale
       const startCamPos = camera.position.clone();
       const startTarget = controls.target.clone();
-      const startUp = camera.up.clone();
+      const blendUp = cameraUpBlend(camera);
       const startNear = camera.near, startFar = camera.far;
       const startQuat = currentModel.quaternion.clone();
       const targetQuat = initialModelQuat.clone();
@@ -3258,7 +3262,7 @@ const manager = new THREE.LoadingManager();
         // Anima camera
         camera.position.lerpVectors(startCamPos, targetCamPos, k);
         controls.target.lerpVectors(startTarget, center, k);
-        blendCameraUp(camera, startUp, k);
+        blendUp(k);
         camera.near = THREE.MathUtils.lerp(startNear, near, k);
         camera.far = THREE.MathUtils.lerp(startFar, far, k);
 
@@ -3390,6 +3394,12 @@ const manager = new THREE.LoadingManager();
         if (currentModel) collideMove(camera.position, fpMove, currentModel);
         camera.position.add(fpMove);
         if (!fpControls || !fpControls.isLocked) controls.target.add(fpMove);
+      } else if (controls.autoRotate && isCameraRolled(camera)) {
+        // Vista inclinata dalla trackball: si gira attorno al suo "su",
+        // stesso passo per frame dell'autorotazione di OrbitControls
+        controls.autoRotate = false;
+        autoRotateAroundUp(camera, controls, -(2 * Math.PI / 3600) * controls.autoRotateSpeed);
+        controls.autoRotate = true;
       } else {
         controls.update();
       }

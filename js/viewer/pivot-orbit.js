@@ -131,10 +131,10 @@ function alignTargetDepth(camera, controls) {
   }
 }
 
-/** Ruota camera e target attorno al pivot con un quaternione nel mondo. */
-function applyWorldRotation(q, camera, controls) {
-  camera.position.sub(pivot).applyQuaternion(q).add(pivot);
-  controls.target.sub(pivot).applyQuaternion(q).add(pivot);
+/** Ruota camera e target attorno a center con un quaternione nel mondo. */
+function applyWorldRotation(q, camera, controls, center = pivot) {
+  camera.position.sub(center).applyQuaternion(q).add(center);
+  controls.target.sub(center).applyQuaternion(q).add(center);
   camera.quaternion.premultiply(q);
   // lookAt() di controls.update() ricostruisce l'orientamento da camera.up:
   // deve essere il "su" attuale della camera, altrimenti annullerebbe
@@ -233,6 +233,26 @@ function localXY(e) {
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
+/**
+ * Esaurisce l'inerzia di OrbitControls (pan o rotazione touch appena
+ * finiti): controls.update() la applicherebbe a ogni passo della trackball
+ * e il punto afferrato scivolerebbe via dal cursore.
+ */
+function stopInertia(camera, controls) {
+  if (!controls.enableDamping) return;
+  tmpLocal.copy(camera.position);
+  tmpRight.copy(controls.target);
+  const autoRotate = controls.autoRotate;
+  controls.enableDamping = false;
+  controls.autoRotate = false;
+  controls.update(); // consuma e azzera i delta residui
+  controls.enableDamping = true;
+  controls.autoRotate = autoRotate;
+  camera.position.copy(tmpLocal);
+  controls.target.copy(tmpRight);
+  controls.update();
+}
+
 function onPointerDown(e) {
   if (e.pointerType !== 'mouse' || e.button !== 0 || !deps.canOrbit()) return;
   const controls = deps.getControls();
@@ -244,6 +264,12 @@ function onPointerDown(e) {
     controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
     return;
   }
+  if (modifierGesture) {
+    // Un Ctrl+trascina finito senza pointerup (finestra che perde il fuoco)
+    modifierGesture = false;
+    controls.mouseButtons.LEFT = null;
+  }
+  stopInertia(deps.getCamera(), controls);
   const hit = pickPoint(e);
   pivot.copy(hit || controls.target);
   if (hit) alignTargetDepth(deps.getCamera(), controls);
@@ -369,14 +395,42 @@ export function initPivotOrbit(d) {
 
 /**
  * Riporta camera.up alla verticale del mondo (o a endUp) durante
- * un'animazione già in corso (Reset vista, viste predefinite): da chiamare a
- * ogni passo con k ∈ [0, 1], passando il "su" di partenza. Senza, la vista
- * resterebbe inclinata.
+ * un'animazione (Reset vista, viste predefinite): chiamata all'inizio,
+ * restituisce la funzione da chiamare a ogni passo con k ∈ [0, 1]. Senza,
+ * la vista resterebbe inclinata.
  */
-export function blendCameraUp(camera, startUp, k, endUp = WORLD_UP) {
-  qRot.setFromUnitVectors(startUp, endUp);
-  qYaw.identity().slerp(qRot, k);
-  camera.up.copy(startUp).applyQuaternion(qYaw).normalize();
+export function cameraUpBlend(camera, endUp = WORLD_UP) {
+  const startUp = camera.up.clone();
+  const q = new THREE.Quaternion();
+  const step = new THREE.Quaternion();
+  if (startUp.dot(endUp) < -0.999) {
+    // Vista capovolta: setFromUnitVectors sceglierebbe un asse qualsiasi e
+    // la vista girerebbe di traverso; si raddrizza attorno all'asse di vista
+    q.setFromAxisAngle(camera.getWorldDirection(new THREE.Vector3()), Math.PI);
+  } else {
+    q.setFromUnitVectors(startUp, endUp);
+  }
+  return (k) => {
+    step.identity().slerp(q, k);
+    camera.up.copy(startUp).applyQuaternion(step).normalize();
+  };
+}
+
+/** true se la vista è inclinata rispetto alla verticale del mondo. */
+export function isCameraRolled(camera) {
+  return camera.up.distanceToSquared(WORLD_UP) > 1e-6;
+}
+
+/**
+ * Un passo di autorotazione attorno al "su" della camera, passante per il
+ * target. OrbitControls ruoterebbe sempre attorno alla Y del mondo: con la
+ * vista inclinata l'orizzonte oscillerebbe e, oltre 90°, lookAt() la
+ * capovolgerebbe di colpo.
+ */
+export function autoRotateAroundUp(camera, controls, angle) {
+  qRot.setFromAxisAngle(tmpDir.copy(camera.up), angle);
+  tbCenter.copy(controls.target);
+  applyWorldRotation(qRot, camera, controls, tbCenter);
 }
 
 /** Raddrizza subito la camera (prima persona, VR): niente rollio residuo. */
