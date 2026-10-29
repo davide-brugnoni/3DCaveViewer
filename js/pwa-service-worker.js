@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-offline-v58';
+const CACHE_VERSION = 'pwa-offline-v59';
 const CACHE_PREFIX = 'pwa-offline-'; // Prefisso per identificare le cache dell'app
 const FETCH_TIMEOUT = 15000; // 15 secondi (aumentato per connessioni lente)
 // I modelli 3D (GLB/GLTF) possono superare i 100MB: con FETCH_TIMEOUT il download
@@ -41,6 +41,7 @@ const LOCAL_ASSETS = [
   'js/viewer/measure.js',
   'js/viewer/annotations.js',
   'js/viewer/embed.js',
+  'js/viewer/pivot-orbit.js',
   'js/viewer/model-loader.js',
   'js/viewer/gltf-memory.js',
   'api/catalogo.php',

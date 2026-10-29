@@ -5,6 +5,19 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 [Semantic Versioning](https://semver.org/lang/it/). La versione in uso è
 `APP_VERSION` in `config.php`, mostrata in fondo a `status.php`.
 
+## [Non rilasciato]
+
+### Migliorato
+- Rotazione col mouse attorno al punto cliccato: il trascinamento col tasto
+  sinistro ruota la camera attorno al punto del modello sotto il cursore
+  (rispettando la sezione attiva), con un segnaposto visibile durante la
+  rotazione; un clic nel vuoto ruota attorno al centro della vista. Prima il
+  trascinamento orizzontale ruotava il modello sul suo centro e quello
+  verticale la camera sul target, con due centri diversi e un solo asse alla
+  volta
+- Doppio clic su un punto del modello per portarlo al centro della vista
+- La rotella zooma verso il cursore invece che verso il centro
+
 ## [1.0.0] — prima release pubblica
 
 Prima versione distribuita perché altri gruppi speleologici possano
