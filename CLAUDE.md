@@ -202,7 +202,11 @@ no import-map changes needed):
   Reset/preset views and `frameObjectAnimated()` blend it back with
   `blendCameraUp()`, first person and VR call `levelCamera()`, and share and
   embed links carry an optional `up=x,y,z`. `'turntable'` keeps the old
-  rotation around world Y; `mouseRotateSpeed` scales either. It sets
+  rotation around world Y; `mouseRotateSpeed` scales either.
+  A drag starts only after 4 px, and the `click` that ends it is swallowed
+  (window capture) so measure/POI picking never fires on a rotation; with
+  no hit and `controls.target` outside the model's box the pivot is the box
+  centre. It sets
   `controls.mouseButtons.LEFT = null` so OrbitControls keeps only pan/zoom
   for the mouse (Ctrl/Shift/Cmd+left still pans). Mouse only: touch keeps
   the one-finger model rotation in `viewer.js`. `controls.zoomToCursor` is on.

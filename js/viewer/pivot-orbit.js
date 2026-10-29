@@ -25,6 +25,7 @@
 
 import * as THREE from 'three';
 import { eventManager } from './utils.js';
+import { isMeasureObject } from './measure.js';
 
 // Dipendenze dallo stato del viewer (impostate da initPivotOrbit)
 let deps = null;
@@ -49,8 +50,15 @@ const tbCenter = new THREE.Vector3();
 // degenera e la vista ruoterebbe su sé stessa
 const PITCH_EPS = 0.001;
 const DBLCLICK_DURATION = 350; // ms
+// Movimento minimo (px) prima che il trascinamento ruoti: sotto è un clic,
+// che con misure o POI attivi deve solo posare il punto
+const DRAG_THRESHOLD = 4;
+// Il click che chiude una rotazione non deve arrivare a misure/POI
+const CLICK_SUPPRESS_MS = 400;
 
-let drag = null;           // { pointerId, lastX, lastY, moved, prevAutoRotate, cx, cy }
+let drag = null;           // { pointerId, startX, startY, lastX, lastY, moved, prevAutoRotate, cx, cy }
+let suppressClickUntil = 0;
+const modelBox = new THREE.Box3();
 let modifierGesture = false;
 let marker = null;
 let recenterAnim = 0;
@@ -73,7 +81,8 @@ function pickPoint(event) {
   pickRaycaster.firstHitOnly = !sectioned;
   const hits = pickRaycaster.intersectObject(model, true);
   for (const hit of hits) {
-    if (!hit.object.isMesh) continue; // linee delle misure, sprite
+    // Linee e sprite, marker di misure e POI, mesh nascoste
+    if (!hit.object.isMesh || !hit.object.visible || isMeasureObject(hit.object)) continue;
     if (sectioned) {
       tmpLocal.copy(hit.point);
       model.worldToLocal(tmpLocal);
@@ -272,12 +281,26 @@ function onPointerDown(e) {
   }
   stopInertia(deps.getCamera(), controls);
   const hit = pickPoint(e);
-  pivot.copy(hit || controls.target);
-  if (hit) alignTargetDepth(deps.getCamera(), controls);
+  if (hit) {
+    pivot.copy(hit);
+    alignTargetDepth(deps.getCamera(), controls);
+  } else {
+    // Clic nel vuoto: il target, finché sta nel modello. Lo zoom verso il
+    // cursore sullo sfondo lo porta lontano, e il modello uscirebbe dalla
+    // vista: allora, come CloudCompare, si ruota attorno al suo centro
+    pivot.copy(controls.target);
+    const model = deps.getModel();
+    if (model) {
+      modelBox.setFromObject(model);
+      if (!modelBox.isEmpty() && !modelBox.containsPoint(pivot)) modelBox.getCenter(pivot);
+    }
+  }
   // Anche fuori dal canvas il trascinamento continua ad arrivare qui
   try { deps.domElement.setPointerCapture(e.pointerId); } catch (_) { /* puntatore già rilasciato */ }
   drag = {
     pointerId: e.pointerId,
+    startX: e.clientX,
+    startY: e.clientY,
     lastX: e.clientX,
     lastY: e.clientY,
     moved: false,
@@ -302,16 +325,19 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   if (!drag || e.pointerId !== drag.pointerId) return;
-  if (!deps.canOrbit()) { endDrag(); return; }
+  // Sinistro già rilasciato: con un altro tasto premuto Chrome lo segnala
+  // con un pointermove, non con pointerup; o il pointerup è andato perso
+  if (!deps.canOrbit() || !(e.buttons & 1)) { endDrag(); return; }
+  if (!drag.moved) {
+    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+    drag.moved = true;
+    showMarker(true);
+  }
   const dx = e.clientX - drag.lastX;
   const dy = e.clientY - drag.lastY;
   drag.lastX = e.clientX;
   drag.lastY = e.clientY;
   if (!dx && !dy) return;
-  if (!drag.moved) {
-    drag.moved = true;
-    showMarker(true);
-  }
   if (isTrackball()) {
     const p = localXY(e);
     rotateTrackball(p.x, p.y);
@@ -328,6 +354,7 @@ function endDrag() {
   }
   if (!drag) return;
   if (drag.prevAutoRotate) controls.autoRotate = true;
+  if (drag.moved) suppressClickUntil = performance.now() + CLICK_SUPPRESS_MS;
   drag = null;
   showMarker(false);
 }
@@ -335,6 +362,13 @@ function endDrag() {
 function onPointerUp(e) {
   if (drag && e.pointerId !== drag.pointerId) return;
   endDrag();
+}
+
+/** Il click di fine rotazione non posa punti di misura o POI. */
+function onClickCapture(e) {
+  if (performance.now() > suppressClickUntil) return;
+  suppressClickUntil = 0;
+  if (e.target === deps.domElement) e.stopImmediatePropagation();
 }
 
 /** Doppio clic: il punto sotto il cursore va al centro, stessa distanza. */
@@ -391,6 +425,10 @@ export function initPivotOrbit(d) {
   eventManager.add(el, 'pointermove', onPointerMove, false, 'renderer');
   eventManager.add(window, 'pointerup', onPointerUp, false, 'renderer');
   eventManager.add(window, 'pointercancel', onPointerUp, false, 'renderer');
+  eventManager.add(el, 'lostpointercapture', onPointerUp, false, 'renderer');
+  eventManager.add(window, 'blur', endDrag, false, 'renderer');
+  // Sulla window in capture: arriva prima dei listener click di misure e POI
+  eventManager.add(window, 'click', onClickCapture, { capture: true }, 'renderer');
   eventManager.add(el, 'dblclick', onDblClick, false, 'renderer');
 }
 
