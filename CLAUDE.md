@@ -251,8 +251,9 @@ because of their **textures**, not their file size. An 8 MB GLB with one
 and Three.js keeps both. `js/viewer/gltf-memory.js` fixes this with a
 GLTFLoader plugin that patches, on the current parser instance only:
 - `loadImageSource()` — reads each embedded image's size from its header,
-  plans a target size (per-model megapixel budget, then a max side; images
-  never shrink below 1024 px because of the budget) and decodes straight to
+  plans a target size (per-model megapixel budget, then a max side; the
+  budget spares images below 1024 px, unless that floor alone would exceed
+  the budget — many large textures — so the `OUT_OF_MEMORY` retry still shrinks them) and decodes straight to
   it with `createImageBitmap(blob, {resizeWidth, resizeHeight})`, falling
   back to a canvas when the resize options are ignored or unsupported.
   `textureLimits()` in `viewer.js` picks the limits: on touch/iOS/low-memory

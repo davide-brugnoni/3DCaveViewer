@@ -5,6 +5,14 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 [Semantic Versioning](https://semver.org/lang/it/). La versione in uso è
 `APP_VERSION` in `config.php`, mostrata in fondo a `status.php`.
 
+## [Non rilasciato]
+
+### Corretto
+- Modelli con molte texture grandi (es. 26 × 4096²) su smartphone: il lato
+  minimo di 1024 px non fa più sforare il budget di pixel per modello, e il
+  nuovo tentativo dopo `GL_OUT_OF_MEMORY` riduce davvero le texture invece di
+  ricaricarle identiche
+
 ## [1.0.0] — 2026-10-29 — prima release pubblica
 
 Prima versione distribuita perché altri gruppi speleologici possano
