@@ -187,10 +187,9 @@ function trackballCenter(camera, w, h) {
  * trascinamento diventa una rotazione attorno all'asse di vista.
  */
 function trackballVector(out, x, y, w, h) {
-  const s = rotateSpeed();
   out.set(
-    THREE.MathUtils.clamp(((x - drag.cx) / (w / 2)) * s, -1, 1),
-    THREE.MathUtils.clamp((-(y - drag.cy) / (h / 2)) * s, -1, 1),
+    THREE.MathUtils.clamp((x - drag.cx) / (w / 2), -1, 1),
+    THREE.MathUtils.clamp(-(y - drag.cy) / (h / 2), -1, 1),
     0
   );
   const d2 = out.x * out.x + out.y * out.y;
@@ -212,7 +211,9 @@ function rotateTrackball(x, y) {
   if (len < 1e-9) return;
   // Il modello ruota da tbLast a tbCur (segue il cursore): la camera fa la
   // rotazione inversa attorno al pivot. Asse dallo spazio camera al mondo.
-  const angle = Math.atan2(len, dot);
+  // mouseRotateSpeed scala l'angolo, non la sfera: cambiarne il raggio
+  // sposterebbe il bordo (dove il trascinamento diventa rollio)
+  const angle = Math.atan2(len, dot) * rotateSpeed();
   tbAxis.multiplyScalar(1 / len).applyQuaternion(camera.quaternion);
   qInv.setFromAxisAngle(tbAxis, -angle);
   applyWorldRotation(qInv, camera, controls);
