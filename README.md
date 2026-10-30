@@ -9,6 +9,7 @@
 
 ### Visualizzatore Interattivo di Cavità Sotterranee
 
+[![Versione](https://img.shields.io/badge/versione-1.0.0-2ea44f)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Three.js](https://img.shields.io/badge/Three.js-v0.160.0-000000?logo=three.js)](https://threejs.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
@@ -54,6 +55,34 @@
 
 ---
 
+## 🎉 Versione 1.0.0 — prima release pubblica
+
+La 1.0.0 è la prima versione pensata perché **qualunque gruppo speleologico**
+possa installare il proprio catalogo di grotte 3D senza toccare il codice:
+
+- 🧭 **Installazione guidata** al primo avvio: nome, logo, colori, lingua e
+  centro della mappa si scelgono da un wizard, senza modificare file
+- 🔒 **Aggiornamenti sicuri**: modelli (`modelli/`) e personalizzazioni
+  (`custom/`) non vengono mai toccati quando si carica una nuova versione
+- 📦 **Installazione pulita**: il pacchetto arriva senza modelli e senza dati
+  personali; si carica via FTP così com'è, senza build
+- 🖱️ **Rotazione attorno al punto sotto il cursore** (o sotto il dito),
+  con l'orizzonte sempre dritto, doppio clic per centrare un punto e zoom
+  verso il cursore
+- 📲 **Modelli pesanti su smartphone**: download a copia singola, texture
+  ridotte al volo, memoria liberata dopo il caricamento e ripresa automatica
+  con texture più leggere se il browser chiude la scheda
+- 📰 **Codice da incorporare**: `<iframe>` responsive per articoli e siti,
+  con vista e sezione congelate
+- 🛠️ **Ottimizzatore GLB** (server Node o pagina singola) con conversione
+  OBJ e riduzione delle texture
+
+L'elenco completo di funzionalità e correzioni è nel
+[CHANGELOG](CHANGELOG.md). La versione installata è indicata in fondo alla
+pagina `status.php`.
+
+---
+
 ## 💛 Supporta il Progetto
 
 ☕ Offri un caffè a Davide: potrebbe eliminare bug, aggiungere funzionalità e restare sveglio fino alle 3 di notte. Sui bug in meno non garantiamo nulla.
@@ -83,7 +112,8 @@
 <td width="50%">
 
 **🎮 Controlli**
-- Controlli orbitali (ruota, zoom, pan)
+- Controlli orbitali (ruota, zoom, pan) con rotazione attorno al punto del modello sotto il cursore o il dito, orizzonte sempre dritto
+- Doppio clic per centrare un punto, zoom della rotella verso il cursore
 - Modalità POV / prima persona (WASD + mouse) con crosshair e indicatore braccia
 - Joystick virtuale per mobile (joystick e sguardo seguiti in modo indipendente, uno per pollice)
 - Look-mode touch su desktop senza pointer-lock
@@ -1158,8 +1188,9 @@ Nessun upload verso server esterni.
 
 | Azione | Controllo | Tasto/Mouse |
 |--------|-----------|-------------|
-| 🔄 Ruota vista | Mouse | `Click sinistro + Trascina` |
-| 🔍 Zoom | Mouse | `Rotella` |
+| 🔄 Ruota vista | Mouse | `Click sinistro + Trascina` (attorno al punto sotto il cursore) |
+| 🎯 Centra un punto | Mouse | `Doppio clic` sul modello |
+| 🔍 Zoom | Mouse | `Rotella` (verso il cursore) |
 | ↔️ Pan | Mouse | `Click destro + Trascina` (o `Ctrl`/`Shift` + trascina) |
 | 🏠 Reset vista | Tastiera | `R` |
 | 📏 Misurazione | Tastiera | `M` (toggle, non in POV) |
@@ -1176,7 +1207,7 @@ Nessun upload verso server esterni.
 
 | Azione | Gesto | Descrizione |
 |--------|-------|-------------|
-| 🔄 Ruota vista | 👆 | 1 dito trascina |
+| 🔄 Ruota vista | 👆 | 1 dito trascina (attorno al punto toccato) |
 | 🔍 Zoom | 👆👆 | Pinch (2 dita avvicina/allontana) |
 | ↔️ Pan | 👆👆 | 2 dita trascina |
 | 🚶 Movimento FP | 🕹️ | Joystick virtuale (sinistra) |
@@ -1245,7 +1276,9 @@ In modalità POV (prima persona) vengono mostrati elementi UI dedicati per facil
 | `m` | `viewer.php?m=grotta_rossa` | Apre direttamente il modello della cartella indicata |
 | `cam`, `tgt` | `&cam=1.20,0.50,3.00&tgt=0.00,0.00,0.00` | Posizione della camera e punto osservato (generati dal pulsante Condividi) |
 | `sec` | `&sec=y,40,0` | Piano di sezione: asse `x`/`y`/`z`, posizione 0–100, lato invertito `0`/`1` |
+| `up` | `&up=0.00,1.00,0.00` | Verticale della camera, per le viste inclinate con la rotazione `trackball` (generato dal pulsante Condividi) |
 | `lang` | `&lang=en` | Lingua dell'interfaccia (memorizzata poi nel cookie `lang`) |
+| `debug` | `&debug=1` | Riquadro diagnostico a schermo (memoria, texture, GPU), utile per i problemi che compaiono solo sui telefoni |
 | `embed` | `&embed=1` | Modalità incorporata, con interfaccia ridotta, per gli `<iframe>` |
 | `ui` | `&ui=scale,title,fs,measure` | Solo con `embed=1`: strumenti visibili fra `scale`, `title`, `fs`, `info`, `measure`, `sections`, `screenshot`, `lang`, `pov` (default `scale,title,fs`; `none` = nessuno) |
 
@@ -1317,6 +1350,8 @@ map: {
 | `textureMaxSizeMobile` | 4096 | Lato massimo delle texture su telefoni/tablet (px, 0 = nessun limite) |
 | `textureBudgetMPMobile` | 24 | Budget complessivo texture per modello su mobile (megapixel) |
 | `textureMaxSize` / `textureBudgetMP` | 0 / 0 | Stessi limiti su desktop (0 = solo il limite della GPU) |
+| `mouseRotation` / `touchRotation` | `turntable` | Rotazione col mouse / col dito: `turntable` (orizzonte sempre dritto) o `trackball` (rotazione libera, come CloudCompare) |
+| `mouseRotateSpeed` / `touchRotateSpeed` | 1.0 | Sensibilità della rotazione col mouse / col dito |
 | `debug` | false | Helper di debug nella console del browser |
 
 ### 🌐 Social Network
