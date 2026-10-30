@@ -195,21 +195,29 @@ no import-map changes needed):
 - `pivot-orbit.js` — left-mouse drag orbits the camera around the point
   under the cursor (raycast on press, section-aware; empty space falls back
   to `controls.target`), double-click centres that point. The default
-  `viewer.mouseRotation = 'trackball'` is CloudCompare's virtual trackball
+  `viewer.mouseRotation = 'turntable'` (also the touch default) yaws around
+  world Y and pitches, with `camera.up` forced to world Y on every step: no
+  roll ever, and a view that arrives rolled is levelled on the first drag.
+  Opt-in `'trackball'` is CloudCompare's virtual trackball
   (sphere centred on the projected pivot, clamped to the central half of the
   view, centre-to-edge = 90°, no up axis): the view can roll, so it keeps
   `camera.up` equal to the camera's own up before `controls.update()`.
   Reset/preset views and `frameObjectAnimated()` blend it back with
   `cameraUpBlend()`, desktop first person calls `levelCamera()` (VR and touch are deliberately untouched), and share and
-  embed links carry an optional `up=x,y,z`. `'turntable'` keeps the old
-  rotation around world Y; `mouseRotateSpeed` scales either.
+  embed links carry an optional `up=x,y,z`. `mouseRotateSpeed` scales either.
   A drag starts only after 4 px, and the `click` that ends it is swallowed
   (window capture) so measure/POI picking never fires on a rotation; with
   no hit and `controls.target` outside the model's box the pivot is the box
   centre. It sets
   `controls.mouseButtons.LEFT = null` so OrbitControls keeps only pan/zoom
-  for the mouse (Ctrl/Shift/Cmd+left still pans). Mouse only: touch keeps
-  the one-finger model rotation in `viewer.js`. `controls.zoomToCursor` is on.
+  for the mouse (Ctrl/Shift/Cmd+left still pans). One-finger touch uses
+  the same pivot orbit (`controls.touches.ONE = null`), with its own
+  `viewer.touchRotation` (default `'turntable'`) and `touchRotateSpeed`;
+  a second finger cancels it and hands the gesture to OrbitControls'
+  pinch/pan until every finger is lifted. The model itself is never rotated
+  (the old touch code spun `currentModel.rotation.y` around the model
+  origin, which threw large models out of view and tumbled models with a
+  metadata `rotation.x`). `controls.zoomToCursor` is on.
 - `model-loader.js` — `fetchBinaryModel(url, {onProgress, signal})`, the
   GLB/GLTF download (see "Large models on mobile" below)
 - `gltf-memory.js` — `parseGltfLean(loader, buffer, path, textureLimits, …)`,

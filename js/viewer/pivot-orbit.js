@@ -11,15 +11,18 @@
 // insieme attorno al pivot, quindi il target resta sull'asse di vista e il
 // lookAt() di controls.update() ritrova lo stesso orientamento.
 //
-// La rotazione predefinita è una trackball virtuale come quella di
-// CloudCompare ('trackball'): il cursore "afferra" una sfera centrata sul
-// pivot proiettato a schermo e il modello segue la mano, senza un asse
-// verticale privilegiato né blocchi ai poli (la vista può quindi inclinarsi:
-// camera.up segue la camera, e "Reset vista" la raddrizza). Dal centro al
-// bordo della vista sono 90°. Con viewer.mouseRotation = 'turntable' resta
-// la rotazione a "piatto girevole" attorno alla verticale del mondo.
+// La rotazione predefinita è a "piatto girevole" ('turntable'): yaw attorno
+// alla verticale del mondo e inclinazione su/giù, senza rollio (l'orizzonte
+// resta sempre dritto). Con viewer.mouseRotation = 'trackball' si ha una
+// trackball virtuale come quella di CloudCompare: il cursore "afferra" una
+// sfera centrata sul pivot proiettato e la vista può inclinarsi (camera.up
+// segue la camera, e "Reset vista" la raddrizza). Dal centro al bordo della
+// vista sono 90°.
 //
-// Solo mouse: il touch e la penna mantengono i gesti di viewer.js.
+// Anche un dito su touch ruota attorno al punto toccato, di default a
+// 'turntable' (viewer.touchRotation): su telefono l'orizzonte dritto è più
+// prevedibile. Il secondo dito annulla la rotazione e il gesto passa a
+// OrbitControls (pinch/pan) fino a quando tutte le dita sono sollevate.
 // Come gli altri moduli, lo stato del viewer arriva per iniezione
 // (initPivotOrbit(deps)) tramite getter.
 
@@ -53,10 +56,13 @@ const DBLCLICK_DURATION = 350; // ms
 // Movimento minimo (px) prima che il trascinamento ruoti: sotto è un clic,
 // che con misure o POI attivi deve solo posare il punto
 const DRAG_THRESHOLD = 4;
+const TOUCH_DRAG_THRESHOLD = 6; // il dito trema più del mouse
 // Il click che chiude una rotazione non deve arrivare a misure/POI
 const CLICK_SUPPRESS_MS = 400;
 
-let drag = null;           // { pointerId, startX, startY, lastX, lastY, moved, prevAutoRotate, cx, cy }
+let drag = null;           // { pointerId, touch, startX, startY, lastX, lastY, moved, prevAutoRotate, cx, cy }
+const touchPointers = new Set();
+let touchBlocked = false;  // gesto a più dita in corso: niente rotazione
 let suppressClickUntil = 0;
 const modelBox = new THREE.Box3();
 let modifierGesture = false;
@@ -141,14 +147,21 @@ function alignTargetDepth(camera, controls) {
 }
 
 /** Ruota camera e target attorno a center con un quaternione nel mondo. */
-function applyWorldRotation(q, camera, controls, center = pivot) {
+function applyWorldRotation(q, camera, controls, center = pivot, level = false) {
   camera.position.sub(center).applyQuaternion(q).add(center);
   controls.target.sub(center).applyQuaternion(q).add(center);
   camera.quaternion.premultiply(q);
-  // lookAt() di controls.update() ricostruisce l'orientamento da camera.up:
-  // deve essere il "su" attuale della camera, altrimenti annullerebbe
-  // l'inclinazione della trackball (e degenererebbe guardando in verticale)
-  camera.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+  if (level) {
+    // Turntable: niente rollio. Con camera.up sulla verticale del mondo
+    // lookAt() tiene l'orizzonte dritto (l'elevazione è già limitata prima
+    // della verticale) e raddrizza anche una vista arrivata inclinata
+    camera.up.copy(WORLD_UP);
+  } else {
+    // lookAt() di controls.update() ricostruisce l'orientamento da camera.up:
+    // deve essere il "su" attuale della camera, altrimenti annullerebbe
+    // l'inclinazione della trackball (e degenererebbe guardando in verticale)
+    camera.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+  }
   controls.update();
 }
 
@@ -171,7 +184,7 @@ function rotateTurntable(dx, dy) {
   qPitch.setFromAxisAngle(tmpRight, pitch);
   qYaw.setFromAxisAngle(WORLD_UP, yaw);
   qRot.multiplyQuaternions(qYaw, qPitch);
-  applyWorldRotation(qRot, camera, controls);
+  applyWorldRotation(qRot, camera, controls, pivot, true);
 }
 
 /**
@@ -229,12 +242,13 @@ function rotateTrackball(x, y) {
 }
 
 function rotateSpeed() {
-  const s = Number(deps.rotateSpeed);
+  const s = Number(drag && drag.touch ? deps.touchRotateSpeed : deps.rotateSpeed);
   return Number.isFinite(s) && s > 0 ? s : 1;
 }
 
 function isTrackball() {
-  return deps.rotationMode !== 'turntable';
+  const mode = drag && drag.touch ? deps.touchRotationMode : deps.rotationMode;
+  return mode === 'trackball';
 }
 
 /** Posizione del puntatore relativa al canvas. */
@@ -264,12 +278,24 @@ function stopInertia(camera, controls) {
 }
 
 function onPointerDown(e) {
-  if (e.pointerType !== 'mouse' || e.button !== 0 || !deps.canOrbit()) return;
+  const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
+  if (touch) {
+    touchPointers.add(e.pointerId);
+    if (touchPointers.size > 1) {
+      // Secondo dito: pinch/pan di OrbitControls, la rotazione si ferma
+      touchBlocked = true;
+      endDrag();
+      return;
+    }
+    if (touchBlocked || !deps.canOrbit()) return;
+  } else if (e.pointerType !== 'mouse' || e.button !== 0 || !deps.canOrbit()) {
+    return;
+  }
   const controls = deps.getControls();
   cancelAnimationFrame(recenterAnim);
   // Ctrl/Shift/Cmd + sinistro: lascia a OrbitControls il pan di sempre
   // (con un modificatore la sua azione ROTATE diventa PAN)
-  if (e.ctrlKey || e.metaKey || e.shiftKey) {
+  if (!touch && (e.ctrlKey || e.metaKey || e.shiftKey)) {
     modifierGesture = true;
     controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
     return;
@@ -299,6 +325,7 @@ function onPointerDown(e) {
   try { deps.domElement.setPointerCapture(e.pointerId); } catch (_) { /* puntatore già rilasciato */ }
   drag = {
     pointerId: e.pointerId,
+    touch,
     startX: e.clientX,
     startY: e.clientY,
     lastX: e.clientX,
@@ -329,7 +356,8 @@ function onPointerMove(e) {
   // con un pointermove, non con pointerup; o il pointerup è andato perso
   if (!deps.canOrbit() || !(e.buttons & 1)) { endDrag(); return; }
   if (!drag.moved) {
-    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+    const threshold = drag.touch ? TOUCH_DRAG_THRESHOLD : DRAG_THRESHOLD;
+    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < threshold) return;
     drag.moved = true;
     showMarker(true);
   }
@@ -360,6 +388,11 @@ function endDrag() {
 }
 
 function onPointerUp(e) {
+  if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+    // lostpointercapture segue il pointerup: il dito è già stato tolto
+    if (e.type !== 'lostpointercapture') touchPointers.delete(e.pointerId);
+    if (touchPointers.size === 0) touchBlocked = false;
+  }
   if (drag && e.pointerId !== drag.pointerId) return;
   endDrag();
 }
@@ -406,8 +439,10 @@ function onDblClick(e) {
  *   isPickingTool()   — true se un clic sul modello serve a misure/POI,
  *   isSectionActive(), isPointVisible(localPoint),
  *   requestRender(),
- *   rotationMode      — 'trackball' (default, come CloudCompare) o 'turntable',
+ *   rotationMode      — 'turntable' (default, senza rollio) o 'trackball' (come CloudCompare),
  *   rotateSpeed       — moltiplicatore della sensibilità (default 1)
+ *   touchRotationMode — 'turntable' (default) o 'trackball', per un dito
+ *   touchRotateSpeed  — moltiplicatore della sensibilità touch (default 1)
  * }
  */
 export function initPivotOrbit(d) {
@@ -415,6 +450,9 @@ export function initPivotOrbit(d) {
   // Il sinistro non ruota più via OrbitControls: lo gestisce questo modulo.
   // Destro (pan) e rotella (zoom) restano a OrbitControls.
   deps.getControls().mouseButtons.LEFT = null;
+  // Un dito non ruota più via OrbitControls (orbita attorno a target, che
+  // può stare nel vuoto); due dita restano pinch/pan
+  deps.getControls().touches.ONE = null;
   marker = createMarker();
   deps.scene.add(marker);
 
@@ -426,7 +464,7 @@ export function initPivotOrbit(d) {
   eventManager.add(window, 'pointerup', onPointerUp, false, 'renderer');
   eventManager.add(window, 'pointercancel', onPointerUp, false, 'renderer');
   eventManager.add(el, 'lostpointercapture', onPointerUp, false, 'renderer');
-  eventManager.add(window, 'blur', endDrag, false, 'renderer');
+  eventManager.add(window, 'blur', () => { touchPointers.clear(); touchBlocked = false; endDrag(); }, false, 'renderer');
   // Sulla window in capture: arriva prima dei listener click di misure e POI
   eventManager.add(window, 'click', onClickCapture, { capture: true }, 'renderer');
   eventManager.add(el, 'dblclick', onDblClick, false, 'renderer');
