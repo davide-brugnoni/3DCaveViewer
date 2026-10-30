@@ -24,6 +24,7 @@
     "errorGeneric": "Se produjo un error al cargar el modelo.",
     "contextLost": "Contexto gráfico perdido: restaurando…",
     "contextRestored": "Contexto gráfico restaurado.",
+    "reducedAfterCrash": "El modelo había cerrado la página: lo reabro con texturas de menor resolución.",
     "retry": "Reintentar",
     "backToMap": "Volver al mapa"
   },

@@ -72,8 +72,9 @@ export function collectModelStats(root) {
     const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
     mats.forEach((m) => {
       ['map', 'lightMap', 'alphaMap'].forEach((key) => {
-        const img = m?.[key]?.image;
-        if (img && !textures.has(img)) textures.set(img, `${img.width}×${img.height}`);
+        const tex = m?.[key];
+        const img = tex?.image;
+        if (img && !textures.has(img)) textures.set(img, tex.userData?.decodedSize || `${img.width}×${img.height}`);
       });
     });
   });

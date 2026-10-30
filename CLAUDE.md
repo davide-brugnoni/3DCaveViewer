@@ -271,6 +271,23 @@ which is what crashed the tab in the first place. A parse superseded by a model
 switch (`modelLoadSeq` in `viewer.js`) skips its remaining textures and is
 disposed instead of becoming `currentModel`.
 
+Once Three.js has uploaded a reduced texture, `releaseAfterUpload()` in
+`gltf-memory.js` closes its `ImageBitmap` (`texture.onUpdate`), so the pixels
+no longer sit in RAM next to their GPU copy; images shared by several textures
+are kept. Such a texture cannot be re-uploaded, so `webglcontextrestored`
+reloads the model when `modelHasReleasedTextures()`. The `DRACOLoader` is
+likewise created per load (`createDracoLoader()`) and disposed when the parse
+ends, so its worker's WebAssembly heap does not outlive the load.
+
+When the OS kills the tab outright no event fires at all. `viewer.js` keeps
+a `caveviewer.modelLoad` marker in `localStorage` from parse start until the
+model has been on screen for `LOAD_SETTLE_MS` (cleared on `pagehide`, on any
+new load in the same page and on real errors). A marker still there at the
+next page load, for the same model, means the tab died loading it:
+`recoverTextureReduction()` doubles `textureReduction` and shows a toast, and
+the level that worked is remembered per model folder in
+`caveviewer.textureReduction` for 30 days.
+
 On iOS a model the GPU cannot hold often does **not** lose the WebGL context:
 `bufferData`/`texImage2D` fail with `GL_OUT_OF_MEMORY`, Three.js never reads
 `gl.getError()`, and the scene stays black with no message.

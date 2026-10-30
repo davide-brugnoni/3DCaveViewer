@@ -23,6 +23,7 @@
     "errorGeneric": "",
     "contextLost": "",
     "contextRestored": "",
+    "reducedAfterCrash": "",
     "retry": "",
     "backToMap": ""
   },

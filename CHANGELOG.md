@@ -12,6 +12,14 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   minimo di 1024 px non fa più sforare il budget di pixel per modello, e il
   nuovo tentativo dopo `GL_OUT_OF_MEMORY` riduce davvero le texture invece di
   ricaricarle identiche
+- Modelli che chiudevano la pagina sugli smartphone (es. sala_fossa_2):
+  - i pixel delle texture vengono liberati dalla RAM appena copiati sulla
+    GPU, e il decoder Draco viene chiuso a fine caricamento invece di restare
+    in memoria per tutta la visita
+  - se la scheda viene chiusa dal sistema durante il caricamento, alla
+    riapertura il modello riparte con texture a risoluzione più bassa (con un
+    avviso), e il livello che ha funzionato viene ricordato per quel modello
+    su quel dispositivo per 30 giorni
 
 ## [1.0.0] — 2026-10-29 — prima release pubblica
 
