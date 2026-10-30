@@ -728,6 +728,10 @@ const manager = new THREE.LoadingManager();
         if (contextLossCount >= 2 && lastRequestedModelName) {
           textureReduction = Math.min(textureReduction * 2, 8);
           loadModelByName(lastRequestedModelName);
+        } else if (modelHasReleasedTextures() && lastRequestedModelName) {
+          // Pixel già liberati dopo il primo upload (gltf-memory.js): Three.js
+          // non ha più nulla da ricaricare sulla GPU, serve il modello da capo
+          loadModelByName(lastRequestedModelName);
         } else {
           hideLoader();
         }
@@ -789,19 +793,11 @@ const manager = new THREE.LoadingManager();
         }
       } // fine blocco VR (saltato in modalità incorporata)
 
-      // GLTF toolchain
-      const dracoLoader = new DRACOLoader(manager);
-      dracoLoader.setDecoderPath('./lib/three/examples/jsm/libs/draco/');
-      // Ogni worker Draco ha il proprio heap WebAssembly, che cresce fino alla
-      // mesh più grande decodificata e non si restringe più: su mobile ne
-      // basta uno, che non moltiplica quella memoria per il numero di core.
-      const dracoWorkers = isTouch ? 1 : (navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 2);
-      try { dracoLoader.setWorkerLimit(dracoWorkers); } catch(e) { /* fallback al default */ }
+      // GLTF toolchain (il DRACOLoader è creato a ogni modello: createDracoLoader())
       const ktx2Loader = new KTX2Loader(manager)
         .setTranscoderPath('./lib/three/examples/jsm/libs/basis/')
         .detectSupport(renderer);
       gltfLoader = new GLTFLoader(manager)
-        .setDRACOLoader(dracoLoader)
         .setKTX2Loader(ktx2Loader)
         .setMeshoptDecoder(MeshoptDecoder);
 
@@ -2684,6 +2680,95 @@ const manager = new THREE.LoadingManager();
       return { maxSize: clampToGpu(maxSize), maxPixels: budgetMP * 1e6 };
     }
 
+    // ===== RIPRESA DOPO UN CRASH DELLA SCHEDA =====
+    // Quando il sistema operativo chiude la scheda per memoria (iOS la
+    // ricarica, Chrome su Android mostra "Oh, no!") non arriva nessun evento:
+    // né webglcontextlost né OUT_OF_MEMORY, quindi i tentativi a texture
+    // ridotte non scattano mai e il modello si richiude a ogni apertura.
+    // Durante il parse resta in localStorage un segno del caricamento in
+    // corso, tolto quando il modello è a schermo da qualche secondo (o se
+    // l'utente lascia la pagina). Se alla visita successiva il segno è ancora
+    // lì per lo stesso modello, la scheda è morta caricandolo: si riparte con
+    // texture dimezzate. Il livello che ha funzionato viene ricordato per quel
+    // modello su questo dispositivo, così il crash non si ripete a ogni visita.
+    const LOAD_MARKER_KEY = 'caveviewer.modelLoad';
+    const REDUCTION_KEY = 'caveviewer.textureReduction';
+    const LOAD_MARKER_MAX_AGE_MS = 60 * 60 * 1000;
+    // Dopo un mese si riprova a piena risoluzione: il crash poteva dipendere
+    // da altre schede aperte, o il browser può essere migliorato
+    const REDUCTION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+    const LOAD_SETTLE_MS = 5000;
+
+    function readStoredJson(key) {
+      try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; }
+    }
+    function writeStoredJson(key, value) {
+      try {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, JSON.stringify(value));
+      } catch { /* storage non disponibile (navigazione privata) */ }
+    }
+
+    // Segno lasciato dalla pagina precedente, letto una volta sola all'avvio:
+    // ogni nuovo caricamento in questa pagina lo cancella da localStorage
+    let interruptedLoad = readStoredJson(LOAD_MARKER_KEY);
+
+    // Riduzione da usare per il modello: quella ricordata e, se l'ultimo
+    // caricamento di questo modello non è mai finito, il doppio di quella
+    function recoverTextureReduction(folder) {
+      const entry = readStoredJson(REDUCTION_KEY)?.[folder];
+      const remembered = entry && Date.now() - entry.t < REDUCTION_MAX_AGE_MS ? Number(entry.reduction) || 1 : 1;
+      let reduction = Math.max(textureReduction, Math.min(remembered, 8));
+      const marker = interruptedLoad;
+      interruptedLoad = null;
+      if (marker && marker.folder === folder && Date.now() - marker.t < LOAD_MARKER_MAX_AGE_MS) {
+        const crashed = Math.max(reduction, Math.min((Number(marker.reduction) || 1) * 2, 8));
+        logDiagnostic(`caricamento precedente interrotto (texture ×${marker.reduction}): riprovo con ×${crashed}`);
+        if (crashed > reduction) {
+          showToast(_t('loader.reducedAfterCrash', 'Il modello aveva chiuso la pagina: lo riapro con texture a risoluzione più bassa.'), 5000);
+        }
+        reduction = crashed;
+      }
+      textureReduction = reduction;
+    }
+
+    function markModelLoadStart(folder) {
+      writeStoredJson(LOAD_MARKER_KEY, { folder, reduction: textureReduction, t: Date.now() });
+    }
+
+    function clearModelLoadMarker() {
+      writeStoredJson(LOAD_MARKER_KEY, null);
+    }
+
+    // Modello a schermo senza crash: niente più segno, e si ricorda il livello
+    // di riduzione che è servito (o si dimentica, se non ne è servito nessuno)
+    function markModelLoadSettled(loadSeq, folder) {
+      setTimeout(() => {
+        if (loadSeq !== modelLoadSeq) return;
+        clearModelLoadMarker();
+        const stored = readStoredJson(REDUCTION_KEY) || {};
+        if (textureReduction > 1) stored[folder] = { reduction: textureReduction, t: Date.now() };
+        else delete stored[folder];
+        writeStoredJson(REDUCTION_KEY, Object.keys(stored).length ? stored : null);
+      }, LOAD_SETTLE_MS);
+    }
+
+    // Uscita volontaria a metà caricamento: non è un crash
+    window.addEventListener('pagehide', clearModelLoadMarker);
+
+    // Decoder Draco nuovo per ogni modello, chiuso appena il parse finisce.
+    // Ogni worker Draco ha il proprio heap WebAssembly, che cresce fino alla
+    // mesh più grande decodificata e non si restringe più: lasciato vivo, resta
+    // occupato per tutta la visita accanto al modello. Su mobile basta un
+    // worker, che non moltiplica quella memoria per il numero di core.
+    function createDracoLoader() {
+      const dracoLoader = new DRACOLoader(manager);
+      dracoLoader.setDecoderPath('./lib/three/examples/jsm/libs/draco/');
+      const dracoWorkers = isTouch ? 1 : (navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 2);
+      try { dracoLoader.setWorkerLimit(dracoWorkers); } catch(e) { /* fallback al default */ }
+      return dracoLoader;
+    }
+
     function downloadAndParseGltf(modelUrl, basePath, modelInfo, loadSeq) {
       abortModelDownload();
       const isStale = () => loadSeq !== modelLoadSeq;
@@ -2711,6 +2796,8 @@ const manager = new THREE.LoadingManager();
         // al download che ha preso il posto di questo, e chiuderla lo lascerebbe
         // scoperto.
         if (err?.name === 'AbortError') { closeItem(false); return; }
+        // Errore vero, non un crash: la prossima visita non deve ridurre nulla
+        if (!isStale()) clearModelLoadMarker();
         notifyServiceWorker({ type: 'MODEL_LOAD_END', url: modelUrl });
         console.error('Errore GLB/GLTF:', err);
         // Prima si chiude l'item, poi si mostra l'errore: chiudendolo il
@@ -2753,7 +2840,16 @@ const manager = new THREE.LoadingManager();
         clearLoaderWatchdog();
         showLoader(100, { isProcessing: true });
 
+        // GLTFLoader passa il DRACOLoader al parser all'avvio del parse: un
+        // parse ancora in corso per il modello precedente tiene il suo
+        const dracoLoader = createDracoLoader();
+        // Il picco di memoria è qui (geometrie, texture, upload sulla GPU):
+        // il segno resta finché il modello non è a schermo da qualche secondo
+        recoverTextureReduction(modelInfo.folder);
+        markModelLoadStart(modelInfo.folder);
+        gltfLoader.setDRACOLoader(dracoLoader);
         parseGltfLean(gltfLoader, buffer, basePath, textureLimits(), (gltf) => {
+          dracoLoader.dispose();
           if (isStale()) {
             // Sostituito da un altro modello durante il parse
             (gltf.scenes || [gltf.scene]).forEach((s) => s && disposeThreeObject(s));
@@ -2771,16 +2867,20 @@ const manager = new THREE.LoadingManager();
             // Auto-generate social preview in background
             autoGenerateSocialPreview();
             closeItem(false);
-            verifyGpuUploadLater(loadSeq, buffer.byteLength);
+            verifyGpuUploadLater(loadSeq, buffer.byteLength, modelInfo.folder);
           } catch (err) {
             console.error('Errore elaborazione GLB/GLTF:', err);
+            clearModelLoadMarker();
             closeItem(true);
             showLoaderError(modelLoadErrorMessage(err));
           }
           // Solo ora il service worker può provare a mettere il modello in
           // cache: il parsing è finito e i buffer del download sono liberi
           notifyServiceWorkerLater(modelUrl);
-        }, fail, isStale);
+        }, (err) => {
+          dracoLoader.dispose();
+          fail(err);
+        }, isStale);
       }).catch(fail);
     }
 
@@ -2799,7 +2899,7 @@ const manager = new THREE.LoadingManager();
     // bufferData/texImage2D falliscono con OUT_OF_MEMORY e la scena resta nera
     // senza alcun messaggio. In quel caso si riprova una volta con texture più
     // piccole (se il modello ne ha), poi si spiega all'utente cosa succede.
-    function verifyGpuUploadLater(loadSeq, fileBytes) {
+    function verifyGpuUploadLater(loadSeq, fileBytes, folder) {
       requestAnimationFrame(() => {
         if (loadSeq !== modelLoadSeq || !currentModel) return;
         const stats = collectModelStats(currentModel);
@@ -2820,7 +2920,10 @@ const manager = new THREE.LoadingManager();
           `errori GL: ${result.errors.join(', ') || 'nessuno'}`,
           navigator.userAgent
         ]);
-        if (!result.outOfMemory) return;
+        if (!result.outOfMemory) {
+          markModelLoadSettled(loadSeq, folder);
+          return;
+        }
         console.error('GPU senza memoria per il modello:', result.errors, stats);
         if (stats.textures.length > 0 && textureReduction < 4 && lastRequestedModelName) {
           textureReduction = Math.min(textureReduction * 2, 8);
@@ -2829,6 +2932,7 @@ const manager = new THREE.LoadingManager();
           return;
         }
         logDiagnostic('OUT_OF_MEMORY: modello troppo grande per la GPU');
+        clearModelLoadMarker();
         showLoaderError(_t('loader.errorMemory', 'Il modello è troppo grande per la memoria di questo dispositivo. Chiudi le altre schede e riprova.'));
       });
     }
@@ -2838,6 +2942,11 @@ const manager = new THREE.LoadingManager();
       if (!modelInfo) return;
       lastRequestedModelName = modelName;
       const loadSeq = ++modelLoadSeq;
+      // Il segno di caricamento in corso conta solo tra una pagina e la
+      // successiva: un nuovo caricamento nella stessa pagina vuol dire che il
+      // precedente non l'ha fatta chiudere (cambio modello, nuovo tentativo
+      // dopo OUT_OF_MEMORY o dopo una perdita del contesto WebGL)
+      clearModelLoadMarker();
 
       // Store current model info globally for use by autoGenerateSocialPreview
       currentModelInfo = modelInfo;
@@ -3112,6 +3221,20 @@ const manager = new THREE.LoadingManager();
         mats.forEach(m=>{ if (!m) return; m.side = THREE.DoubleSide; m.needsUpdate = true; });
       });
     }
+
+    // Texture del modello a schermo i cui pixel sono già stati liberati
+    // dopo l'upload (gltf-memory.js): dopo una perdita del contesto non si
+    // possono ricaricare sulla GPU
+    function modelHasReleasedTextures(){
+      let released = false;
+      currentModel?.traverse((ch)=>{
+        if (released || !ch.isMesh) return;
+        const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+        released = mats.some((m) => m?.map?.userData?.pixelsReleased === true);
+      });
+      return released;
+    }
+
     // Tutti i materiali diventano MeshBasicMaterial, che non legge le normali:
     // ricalcolarle (come si faceva) costava CPU al caricamento e 12 byte per
     // vertice in RAM e altrettanti sulla GPU. Si eliminano.

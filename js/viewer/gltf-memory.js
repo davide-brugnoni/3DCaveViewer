@@ -289,12 +289,38 @@ function patchBuffer(parser, glb) {
   };
 }
 
+// Pixel della texture liberati appena Three.js li ha copiati sulla GPU. Dopo
+// l'upload l'ImageBitmap non serve più, ma Three.js la tiene in texture.image
+// finché il modello resta a schermo: 26 texture 960² sono 96 MB di RAM che si
+// sommano alla loro copia sulla GPU. Non si liberano le immagini condivise da
+// più texture (texture.clone() di loadImageSource): ogni clone con parametri
+// diversi ha il proprio upload, che le troverebbe vuote. Una texture liberata
+// non si può ricaricare sulla GPU: dopo una perdita del contesto WebGL il
+// viewer ricarica il modello (texture.userData.pixelsReleased).
+function releaseAfterUpload(texture, isShared) {
+  texture.onUpdate = () => {
+    texture.onUpdate = null;
+    if (isShared()) return;
+    const image = texture.image;
+    if (typeof image?.close === 'function') {
+      image.close();
+    } else if (image && 'getContext' in image) {
+      image.width = image.height = 0;
+    } else {
+      return;
+    }
+    texture.userData.pixelsReleased = true;
+  };
+}
+
 function patchImages(parser, limits, glb, isStale) {
   const images = parser.json.images || [];
   if (images.length === 0) return;
 
   const original = parser.loadImageSource;
   let plan = null;
+  // Sorgenti usate da più di una texture: i loro pixel restano in memoria
+  const sharedSources = new Set();
 
   // Le decodifiche ridotte vanno in fila, una alla volta. GLTFLoader chiede
   // tutte le texture insieme, e il browser (Chrome su Android, Safari quando
@@ -333,7 +359,10 @@ function patchImages(parser, limits, glb, isStale) {
 
   parser.loadImageSource = function (sourceIndex, loader) {
     const cached = this.sourceCache[sourceIndex];
-    if (cached !== undefined) return cached.then((texture) => texture.clone());
+    if (cached !== undefined) {
+      sharedSources.add(sourceIndex);
+      return cached.then((texture) => texture.clone());
+    }
 
     const def = this.json.images[sourceIndex];
     // KTX2/Basis (loader dedicato) e immagini esterne: percorso standard
@@ -379,6 +408,9 @@ function patchImages(parser, limits, glb, isStale) {
         const texture = new Texture(image);
         texture.needsUpdate = true;
         texture.userData.mimeType = def.mimeType;
+        // Le dimensioni restano leggibili (diagnostica) anche a pixel liberati
+        texture.userData.decodedSize = `${image.width}×${image.height}`;
+        releaseAfterUpload(texture, () => sharedSources.has(sourceIndex));
         return texture;
       });
     });

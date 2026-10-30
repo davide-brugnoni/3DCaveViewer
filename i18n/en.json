@@ -24,6 +24,7 @@
     "errorGeneric": "An error occurred while loading the model.",
     "contextLost": "Graphics context lost: restoring…",
     "contextRestored": "Graphics context restored.",
+    "reducedAfterCrash": "The model had closed the page: reopening it with lower-resolution textures.",
     "retry": "Retry",
     "backToMap": "Back to map"
   },
