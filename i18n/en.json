@@ -199,7 +199,7 @@
       "action1": "Tap <strong>Reset view</strong> in the menu to reset the view",
       "action2": "Tap <strong>POV</strong> to enter/exit first person",
       "action3": "Tap the <strong>i</strong> button for information",
-      "orbit1": "<strong>Drag</strong> with one finger to rotate the model",
+      "orbit1": "<strong>Drag</strong> with one finger to rotate around the touched point",
       "orbit2": "<strong>Pinch</strong> with two fingers to zoom",
       "orbit3": "<strong>Drag</strong> with two fingers to pan",
       "tools1": "Tap <strong>Measure</strong> to enable the measurement tool",

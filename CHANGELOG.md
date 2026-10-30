@@ -7,7 +7,20 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+### Modificato
+- Rotazione senza rollio, col mouse e col touch: il modello gira attorno
+  alla verticale e si inclina solo su/giù, l'orizzonte resta sempre dritto.
+  La rotazione libera (trackball) resta disponibile con
+  `viewer.mouseRotation = "trackball"` / `viewer.touchRotation = "trackball"`
+
 ### Corretto
+- Rotazione con un dito su smartphone e tablet: ora la camera ruota attorno
+  al punto toccato, come col mouse, con l'orizzonte dritto
+  (`viewer.touchRotation = "trackball"` per la rotazione libera). Prima il
+  trascinamento orizzontale ruotava il modello attorno alla sua origine e
+  quello verticale orbitava attorno a un altro punto: sui modelli grandi o
+  a più livelli la zona inquadrata usciva dalla vista, e i modelli con una
+  `rotation.x` nei metadati si ribaltavano
 - Modelli con molte texture grandi (es. 26 × 4096²) su smartphone: il lato
   minimo di 1024 px non fa più sforare il budget di pixel per modello, e il
   nuovo tentativo dopo `GL_OUT_OF_MEMORY` riduce davvero le texture invece di

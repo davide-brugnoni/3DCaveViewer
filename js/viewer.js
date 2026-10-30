@@ -823,95 +823,12 @@ const manager = new THREE.LoadingManager();
       autoRotateToggle.checked = controls.autoRotate;
       autoRotateToggle.setAttribute('aria-checked', controls.autoRotate ? 'true' : 'false');
 
-       // Allow vertical rotation only when dragging primarily up/down
-      let dragActive = false;
-      let dragLocked = false;
-      let startX = 0, startY = 0, initialPolar = 0;
-      let lastX = 0, rotatingModel = false;
-      let dragPointerId = null;
-      let multiTouch = false;
-      const activePointers = new Set();
+      // Rotazione a un dito e col mouse: orbita della camera attorno al punto
+      // toccato/cliccato (./viewer/pivot-orbit.js). Il modello non ruota più
+      // su sé stesso: attorno alla sua origine, su modelli grandi o a più
+      // livelli la zona inquadrata usciva dalla vista, e con una rotation.x
+      // nei metadati l'asse Y del modello era inclinato e lo ribaltava.
       const domEl = renderer.domElement;
-
-      const onRendererPointerDown = (e) => {
-        activePointers.add(e.pointerId);
-        if (isFP) return;
-        // Col mouse la rotazione è un'orbita della camera attorno al punto
-        // cliccato (./viewer/pivot-orbit.js), non una rotazione del modello
-        if (e.pointerType === 'mouse') return;
-        if (activePointers.size > 1) {
-          // Secondo dito: il gesto è un pinch/pan di OrbitControls. Annulla
-          // l'eventuale rotazione modello in corso e riabilita i controls,
-          // altrimenti il modello si sposta involontariamente durante lo zoom.
-          multiTouch = true;
-          dragActive = false;
-          dragLocked = false;
-          rotatingModel = false;
-          dragPointerId = null;
-          if (!renderer.xr.isPresenting) controls.enabled = true;
-          return;
-        }
-        if (multiTouch) return; // dita non ancora tutte sollevate dal gesto precedente
-        dragActive = true;
-        dragLocked = false;
-        rotatingModel = false;
-        dragPointerId = e.pointerId;
-        startX = e.clientX;
-        startY = e.clientY;
-        lastX = e.clientX;
-        initialPolar = controls.getPolarAngle();
-        controls.minPolarAngle = 0;
-        controls.maxPolarAngle = Math.PI;
-      };
-
-      const onRendererPointerMove = (e) => {
-        if (!dragActive || isFP || multiTouch) return;
-        if (e.pointerId !== dragPointerId) return;
-        if (rotatingModel) {
-          if (currentModel) {
-            const delta = e.clientX - lastX;
-            currentModel.rotation.y += delta * 0.01;
-            lastX = e.clientX;
-          }
-          return;
-        }
-        if (dragLocked) return;
-        const dx = Math.abs(e.clientX - startX);
-        const dy = Math.abs(e.clientY - startY);
-        if (dx > dy && dx > 2) {
-          controls.enabled = false;
-          rotatingModel = true;
-          dragLocked = true;
-        } else if (dy > dx && dy > 2) {
-          controls.minPolarAngle = 0;
-          controls.maxPolarAngle = Math.PI;
-          dragLocked = true;
-        }
-      };
-
-      const endDrag = (e) => {
-        if (e && e.pointerId !== undefined) activePointers.delete(e.pointerId);
-        if (activePointers.size === 0) multiTouch = false;
-        if (!dragActive) return;
-        dragActive = false;
-        rotatingModel = false;
-        dragPointerId = null;
-        if (!isFP && !renderer.xr.isPresenting) controls.enabled = true;
-        controls.minPolarAngle = 0;
-        controls.maxPolarAngle = Math.PI;
-      };
-
-      // Listener renderer - gruppo 'renderer'
-      // In capture: deve girare prima del pointerdown di OrbitControls. Dopo
-      // un trascinamento orizzontale i controls sono disattivati, e se il
-      // secondo dito di un pinch arrivava a OrbitControls prima che venissero
-      // riattivati, quello lo scartava e restava in rotazione a un dito:
-      // la camera scattava e girava invece di zoomare.
-      eventManager.add(domEl, 'pointerdown', onRendererPointerDown, { capture: true }, 'renderer');
-      eventManager.add(domEl, 'pointermove', onRendererPointerMove, false, 'renderer');
-      eventManager.add(window, 'pointerup', endDrag, false, 'renderer');
-      eventManager.add(window, 'pointerleave', endDrag, false, 'renderer');
-      eventManager.add(window, 'pointercancel', endDrag, false, 'renderer');
 
       initPivotOrbit({
         domElement: domEl,
@@ -926,6 +843,8 @@ const manager = new THREE.LoadingManager();
         requestRender,
         rotationMode: viewerCfg.mouseRotation,
         rotateSpeed: viewerCfg.mouseRotateSpeed,
+        touchRotationMode: viewerCfg.touchRotation,
+        touchRotateSpeed: viewerCfg.touchRotateSpeed,
       });
 
       // Gesture-lock a due dita: OrbitControls di default esegue zoom e pan
@@ -2359,7 +2278,7 @@ const manager = new THREE.LoadingManager();
       const mobileContent =
         makeSection('orbit', '🌐',
           `${_t('help.sections.orbit', 'Vista Orbitale')}`,
-          `<li>${_t('help.mobile.orbit1', '<strong>Trascina</strong> con un dito per ruotare il modello')}</li>
+          `<li>${_t('help.mobile.orbit1', '<strong>Trascina</strong> con un dito per ruotare attorno al punto toccato')}</li>
            <li>${_t('help.mobile.orbit2', '<strong>Pizzica</strong> con due dita per zoomare')}</li>
            <li>${_t('help.mobile.orbit3', '<strong>Trascina</strong> con due dita per traslare')}</li>`,
           true
