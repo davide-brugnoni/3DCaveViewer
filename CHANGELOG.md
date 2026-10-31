@@ -14,6 +14,12 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   `viewer.mouseRotation = "trackball"` / `viewer.touchRotation = "trackball"`
 
 ### Corretto
+- PWA su mobile: con il service worker attivo il modello 3D non viene più
+  letto due volte a ogni apertura del viewer. Il preload del GLB non veniva
+  mai riusato dalla fetch del viewer (Chrome non abbina un preload a una
+  richiesta servita dal worker), lasciava una copia intera del file
+  inutilizzata in memoria e, su rete lenta, poteva far partire un secondo
+  download: ora è emesso solo quando la pagina non è controllata dal worker
 - Rotazione con un dito su smartphone e tablet: ora la camera ruota attorno
   al punto toccato, come col mouse, con l'orizzonte dritto
   (`viewer.touchRotation = "trackball"` per la rotazione libera). Prima il

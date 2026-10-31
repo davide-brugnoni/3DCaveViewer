@@ -231,7 +231,28 @@ $linkTarget = $isEmbed ? ' target="_blank" rel="noopener"' : '';
   <link rel="modulepreload" href="lib/three/examples/jsm/libs/ktx-parse.module.js" />
   <link rel="modulepreload" href="lib/three/examples/jsm/libs/zstddec.module.js" />
 <?php if ($preloadModelUrl !== null): ?>
-  <link rel="preload" as="fetch" href="<?= e($preloadModelUrl); ?>" crossorigin="anonymous"<?= $preloadModelMedia !== null ? ' media="' . e($preloadModelMedia) . '"' : ''; ?> />
+  <?php
+  // Il preload si aggiunge solo se la pagina NON è controllata dal service
+  // worker. Con il worker attivo (ogni visita dopo la prima, sempre nella PWA
+  // installata) Chrome non abbina il preload alla fetch del viewer ("cross-world
+  // service worker resource mismatch"): il file veniva letto due volte e una
+  // copia intera restava inutilizzata nella memory cache, e se la cache del
+  // worker non era ancora scritta partiva anche un secondo download. Su un
+  // telefono è abbastanza memoria da bloccare o chiudere la scheda.
+  $preloadJson = json_encode(
+      ['href' => $preloadModelUrl, 'media' => $preloadModelMedia],
+      JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
+  );
+  ?>
+  <script>
+  (function (p) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) return;
+    if (p.media && window.matchMedia && !window.matchMedia(p.media).matches) return;
+    var l = document.createElement('link');
+    l.rel = 'preload'; l.as = 'fetch'; l.href = p.href; l.crossOrigin = 'anonymous';
+    document.head.appendChild(l);
+  })(<?= $preloadJson; ?>);
+  </script>
 <?php endif; ?>
 </head>
 <body<?= $isEmbed ? ' class="embed-mode" data-embed-ui="' . e(implode(' ', $embedUi)) . '"' : ''; ?>>
