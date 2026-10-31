@@ -24,6 +24,8 @@ Core capabilities:
 - Multilingual UI (Italian, English, French, Spanish) with an in-UI language selector
 - Server-side social preview image generation
 - Mobile-optimized bottom-sheet panels with minimize-to-pill feature
+- Admin panel (`admin.php`): multi-user model upload/editing, trash with
+  file-version restore, audit history of who changed what
 
 ---
 
@@ -54,6 +56,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 ├── status.php                  # PWA cache status/management dashboard
 ├── setup.php                   # First-run setup wizard (see below)
 ├── setup_lib.php               # Wizard field schema, validation, settings.ini writer
+├── admin.php                   # Admin panel: models, users, history, trash (see below)
+├── admin_lib.php               # Admin panel logic: accounts, audit log, uploads, trash
 ├── sitemap.php                 # Dynamic sitemap.xml (served via rewrite)
 ├── robots.php                  # Dynamic robots.txt (served via rewrite)
 ├── generate_social_preview.php # Server-side screenshot via PHP GD
@@ -66,7 +70,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │
 ├── api/
 │   ├── catalogo.php            # API endpoint: returns model list as JSON
-│   └── catalogo_assets.php     # API endpoint: model asset URLs (for PWA caching)
+│   ├── catalogo_assets.php     # API endpoint: model asset URLs (for PWA caching)
+│   └── admin_upload.php        # Chunked 3D-file upload for the admin panel
 │
 ├── custom/                     # 🔒 User customizations — NEVER touched by an update
 │   ├── README.md                   # Tracked, explains the folder to deployers (Italian)
@@ -78,7 +83,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── icon-192.png / icon-512.png # The deployment's PWA icons (gitignored)
 │   ├── .installed                  # Setup-completed marker + reopen key (gitignored)
 │   ├── settings.ini.bak            # Backup written by the wizard (gitignored)
-│   └── generated/                  # PWA icons generated from the logo (gitignored)
+│   ├── generated/                  # PWA icons generated from the logo (gitignored)
+│   └── admin/                      # Admin panel data: users, history, uploads, trash (gitignored)
 │
 ├── img/                        # Project default images (app code, overwritten by updates)
 │   ├── README.md                   # Explains img/ vs custom/ (Italian)
@@ -89,7 +95,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── index.css               # Homepage styles
 │   ├── viewer.css              # 3D viewer interface styles
 │   ├── status.css              # Status page styles
-│   └── setup.css               # Setup wizard styles (standalone, no js/config.php)
+│   ├── setup.css               # Setup wizard styles (standalone, no js/config.php)
+│   └── admin.css               # Admin panel styles
 │
 ├── js/
 │   ├── config.php              # Frontend config (PHP served as JS) + CSS vars
@@ -110,6 +117,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   │   ├── gltf-memory.js      # Lean GLB parse + texture downscaling plugin
 │   │   └── diagnostics.js      # GPU upload check + ?debug=1 overlay
 │   ├── setup.js                # Setup wizard UI (steps, colours, mini-map)
+│   ├── admin.js                # Admin panel UI (chunked upload, position map, filters)
 │   ├── status.js               # Cache management UI (~1,700 lines)
 │   ├── pwa-register.js         # Service worker registration
 │   ├── pwa-service-worker.js   # Offline caching, versioning, background sync
@@ -434,6 +442,55 @@ INI as a chosen value, and a UI text set there wins over every translation.
 before an installation exists, so it never loads `js/config.php`. `setup.php`
 is intentionally **absent** from `LOCAL_ASSETS` in the service worker — it
 must never be served from cache.
+
+### `admin.php` + `admin_lib.php` + `api/admin_upload.php` — admin panel
+Browser-side management of `modelli/`. `admin.php` is one controller with
+pages selected by `?p=` (`models`, `edit&m=…`, `new`, `history`, `trash`,
+`users`, `account`); every change is a POST with `action=…`, the session's
+CSRF token (`adminCheckRequest()`, which also runs the same Origin/Referer
+check as `save_social_preview.php`) and Post/Redirect/Get with flash
+messages. A model form with errors is re-rendered in place (HTTP 422)
+instead of redirecting. It calls `redirectToSetupIfNeeded()` like the other
+HTML pages, sends `Cache-Control: no-store` + `noindex`, and the service
+worker skips `admin.php` and `api/admin_*` entirely (they are deliberately
+**not** in `LOCAL_ASSETS`), as does `robots.php`.
+
+Everything the panel stores lives in `custom/admin/` (gitignored, user
+data): `users.php`, `history.php`, `throttle.php`, `uploads/`, `trash/`.
+Data files are `.php` and start with `ADMIN_GUARD`
+(`<?php http_response_code(404); exit; ?>`), so they stay private even where
+`.htaccess` is ignored (nginx); `adminEnsureDir()` also drops a
+`Require all denied` `.htaccess`. Read/write them only through
+`adminReadStore()`/`adminWriteStore()` (atomic temp+`rename()`), and wrap
+read-modify-write in `adminLocked()`. `history.php` is append-only JSON
+lines after the guard (`adminLog()`/`adminHistory()`); each entry stores
+user, display name at that time, action, target and `details.changes`
+(`field => [old, new]` from `adminDiffMeta()`).
+
+Accounts: roles `editor` (create/edit models, view history) and `admin`
+(also delete/restore, trash, users) — see `adminCan()`. The first admin is
+created with the install key from `custom/.installed`; at least one active
+admin always remains. Passwords use `password_hash()`; a session is tied to
+`passwordChanged`, so a password change, disable or deletion logs the user
+out everywhere. Login is throttled per hashed IP (5 failures / 15 min).
+
+Models: the panel writes the same `[folder]/[folder].json` documented in
+"Adding a New 3D Model", preserving keys it does not manage, and deletes
+`catalogo.cache.*` after each write. **A replaced 3D file always gets a new
+name** (`folder_YYYYmmdd_His.glb`, `adminInstallModelFile()`): GLBs are
+served `immutable` and cached cache-first by URL, so reusing the name would
+keep showing the old model. The previous file goes to `trash/` (as does a
+deleted model folder); restoring a file version makes it active again and
+trashes the current one. Stale form detection: the form carries `rev`
+(sha1 of the JSON) and `base` (its values when opened); on mismatch
+`admin.php` does a three-way merge and flags fields changed by both users.
+
+Large files: `js/admin.js` uploads the file to `api/admin_upload.php` in raw
+chunks (`adminChunkSize()`, below `post_max_size`, halved on HTTP 413),
+resumable via the `offset`/409 protocol, then submits the form with only
+`upload_id`. `adminTakeModelUpload()` validates the result (GLB header,
+version 2, declared length = file size; `.gltf` must be self-contained).
+Without JavaScript the plain `$_FILES` upload is used.
 
 ### `config.php` (Backend) + `js/config.php` (Frontend)
 `config.php` is the **single source of truth** for shared settings (branding,
@@ -805,6 +862,8 @@ The `.htaccess` enforces:
 - Directory listing disabled
 - Sensitive file access blocked (`*.log|bak|cache|hash|old|swp|tmp|ini`, every
   dotfile such as `.git`, `.env`, `custom/.installed` — `.well-known/` excepted)
+- `custom/admin/` denied by its own `.htaccess` (written by `adminEnsureDir()`;
+  its data files are additionally PHP-guarded)
 - Security headers (fallback; PHP's `sendSecurityHeaders()` sets the CSP):
   `X-Frame-Options` (`setifempty`), `X-Content-Type-Options`,
   `Referrer-Policy`, `Permissions-Policy`, HSTS on HTTPS

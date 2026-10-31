@@ -7,6 +7,27 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Pannello di amministrazione (`admin.php`) per gestire i modelli dal
+  browser, senza FTP:
+  - caricamento di nuovi modelli (GLB/GLTF) con nome, descrizione,
+    posizione scelta su mappa, rotazione e anteprima social; i file grandi
+    vanno a blocchi (`api/admin_upload.php`), oltre i limiti di
+    `upload_max_filesize`/`post_max_size`
+  - modifica dei modelli esistenti e sostituzione del file 3D: la nuova
+    versione prende un nome nuovo (la cache "immutable" e il service worker
+    non mostrerebbero altrimenti quella vecchia), la precedente va nel cestino
+  - cestino: modelli eliminati e versioni sostituite si ripristinano o si
+    eliminano definitivamente
+  - più account con ruoli (editor, amministratore); il primo amministratore
+    si crea con la chiave di configurazione di `custom/.installed`
+  - storico di chi ha modificato cosa e quando, con il dettaglio dei campi
+    (valore precedente → nuovo), filtrabile per modello, utente e tipo
+  - salvataggi contemporanei di due utenti sullo stesso modello rilevati:
+    i campi toccati da uno solo si uniscono, quelli toccati da entrambi
+    vengono segnalati invece di sovrascriversi in silenzio
+  - dati in `custom/admin/` (escluso da git, mai toccato dagli aggiornamenti)
+
 ### Modificato
 - Rotazione senza rollio, col mouse e col touch: il modello gira attorno
   alla verticale e si inclina solo su/giù, l'orizzonte resta sempre dritto.

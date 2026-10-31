@@ -19,6 +19,7 @@ codice ovunque tranne che in `custom/` e `modelli/`.
 | `generated/` | ❌ no | Cache delle icone PWA generate dal logo; si può cancellare, si ricrea da sola |
 | `.installed` | ❌ no | Marker di installazione completata, con la chiave che riapre il wizard |
 | `settings.ini.bak` | ❌ no | Copia di sicurezza scritta dal wizard prima di riscrivere `settings.ini` |
+| `admin/` | ❌ no | Dati del pannello di amministrazione (`admin.php`): account, storico delle modifiche, caricamenti in corso e cestino. Va incluso nei backup |
 
 > 🧭 **Quasi sempre basta `settings.ini`.** È un file di sole variabili:
 > niente codice PHP, quindi un errore di battitura non può rompere il sito

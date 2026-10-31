@@ -359,6 +359,8 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 ├── 📊 status.php                  # Pagina di stato e gestione cache PWA
 ├── 🧭 setup.php                   # Installazione guidata (primo avvio)
 ├── 🧩 setup_lib.php               # Campi, validazione e scrittura settings.ini del wizard
+├── 🔐 admin.php                   # Pannello di amministrazione (modelli, utenti, storico)
+├── 🧩 admin_lib.php               # Logica del pannello: account, storico, upload, cestino
 ├── 🗺️  sitemap.php                 # Sitemap.xml dinamica (via rewrite)
 ├── 🤖 robots.php                  # Robots.txt dinamico (via rewrite)
 ├── ⚙️  config.php                  # Configurazione backend (branding, temi, testi)
@@ -376,7 +378,8 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │
 ├── 🔌 api/
 │   ├── catalogo.php               # API catalogo modelli (JSON)
-│   └── catalogo_assets.php        # API assets/risorse dei modelli
+│   ├── catalogo_assets.php        # API assets/risorse dei modelli
+│   └── admin_upload.php           # Caricamento a blocchi dei file 3D (pannello)
 │
 ├── 🔒 custom/                      # Personalizzazioni — MAI toccata da un aggiornamento
 │   ├── README.md                  # Spiegazione dei quattro file (tracciato)
@@ -387,6 +390,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── .installed                 # Marker di installazione + chiave del wizard (gitignored)
 │   ├── settings.ini.bak           # Copia di sicurezza scritta dal wizard (gitignored)
 │   ├── generated/                 # Icone PWA generate dal logo (gitignored, automatica)
+│   ├── admin/                     # Account, storico, upload e cestino del pannello (gitignored)
 │   ├── icon-192.png               # La tua icona PWA 192x192, opzionale (gitignored)
 │   ├── icon-512.png               # La tua icona PWA 512x512, opzionale (gitignored)
 │   └── logo.png / logo.webp       # Il tuo logo (gitignored)
@@ -395,6 +399,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── index.css                  # Stili homepage
 │   ├── viewer.css                 # Stili visualizzatore
 │   ├── status.css                 # Stili pagina status
+│   ├── admin.css                  # Stili pannello di amministrazione
 │   └── setup.css                  # Stili installazione guidata
 │
 ├── 📜 js/
@@ -417,6 +422,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   │   └── gltf-memory.js         # Parsing GLB senza copie e texture ridotte su mobile
 │   ├── viewer-pwa.js              # Gestione PWA nel viewer
 │   ├── setup.js                   # Interfaccia dell'installazione guidata
+│   ├── admin.js                   # Pannello: upload a blocchi, mappa, filtri
 │   └── status.js                  # Logica pagina status (~1.700 righe)
 │
 ├── 🌍 i18n/
@@ -759,6 +765,61 @@ il sito — le righe non valide vengono semplicemente ignorate.
 > ℹ️ La cartella include anche un proprio `custom/README.md` con lo stesso
 > riepilogo, comodo se la stai esplorando direttamente da un editor di
 > codice o via FTP.
+
+---
+
+## 🔐 Pannello di Amministrazione (`admin.php`)
+
+Da `admin.php` (link **Gestione** nel footer della homepage) si caricano e
+si modificano i modelli direttamente dal browser, senza FTP e senza
+scrivere JSON a mano.
+
+**Primo accesso.** Finché non esiste nessun account, la pagina chiede di
+creare il primo amministratore. Per dimostrare di gestire l'installazione
+serve la **chiave di configurazione**: quella mostrata (e fatta scaricare)
+alla fine dell'installazione guidata, salvata in `custom/.installed`. Si può
+incollare o scegliere il file salvato.
+
+**Cosa si può fare**
+
+| | Editor | Amministratore |
+|---|:---:|:---:|
+| Caricare un nuovo modello (GLB/GLTF), con nome, descrizione, posizione sulla mappa, rotazione e anteprima social | ✅ | ✅ |
+| Modificare le informazioni e sostituire il file 3D di un modello | ✅ | ✅ |
+| Consultare lo storico delle modifiche | ✅ | ✅ |
+| Eliminare un modello (va nel cestino) e ripristinare dal cestino | — | ✅ |
+| Creare utenti, cambiare ruoli, reimpostare password, disattivare account | — | ✅ |
+
+- **File grandi**: il file 3D viene inviato a blocchi, quindi un GLB da
+  centinaia di MB passa anche se il server accetta upload da 2-8 MB. Senza
+  JavaScript resta il caricamento classico, entro `upload_max_filesize`.
+- **Sostituire il file 3D** non cancella niente: la versione precedente va
+  nel **cestino**, da dove si ripristina con un clic. Il nuovo file prende
+  un nome nuovo (`cartella_AAAAMMGG_hhmmss.glb`), così browser e app
+  installate lo scaricano davvero invece di mostrare quello già in cache.
+- **Storico**: ogni operazione registra chi l'ha fatta, quando e cosa è
+  cambiato (es. *Latitudine: 43.35 → 43.5*), filtrabile per modello, utente
+  e tipo. Ci sono anche accessi e tentativi falliti.
+- **Due persone sullo stesso modello**: se qualcuno salva mentre un altro
+  ha il modulo aperto, al secondo salvataggio il pannello lo segnala; i
+  campi cambiati da uno solo vengono uniti, quelli cambiati da entrambi
+  evidenziati, così nessuna modifica si perde in silenzio.
+- **Sicurezza**: password con hash (`password_hash`), sessioni con cookie
+  `HttpOnly`/`SameSite=Strict`, token CSRF e controllo di origine su ogni
+  modifica, blocco per 15 minuti dopo 5 accessi falliti, sessione scaduta
+  dopo 2 ore di inattività. Le pagine del pannello non vengono mai messe in
+  cache dal service worker. Usalo sempre in **HTTPS**.
+
+**Dove finiscono i dati.** Account, storico, caricamenti in corso e cestino
+stanno in `custom/admin/`: è dato della tua installazione (escluso da git,
+mai toccato da un aggiornamento) e va **incluso nei backup** insieme a
+`modelli/`. I file di dati sono protetti anche su server che ignorano
+`.htaccess`. Il cestino non si svuota da solo: elimina definitivamente ciò
+che non serve più per recuperare spazio.
+
+> 🧩 I modelli aggiunti a mano via FTP (procedura qui sotto) compaiono
+> comunque nel pannello e si possono modificare da lì; lo storico registra
+> solo le modifiche fatte dal pannello.
 
 ---
 

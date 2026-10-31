@@ -1,0 +1,884 @@
+/*
+  3D Cave Viewer - Pannello di amministrazione (stili)
+  https://github.com/davide-brugnoni/3DCaveViewer/
+  https://www.3dcaveviewer.com
+
+  Copyright (C) 2025 Davide Brugnoni davide.brugnoni@gmail.com
+  Licensed under GNU GPL v3
+*/
+
+/* Valori di riserva: js/config.php li sovrascrive con il tema dell'installazione. */
+:root {
+  --bg-color: #0d1117;
+  --panel-bg: rgba(22, 27, 34, 0.95);
+  --panel-bg-solid: #161b22;
+  --border-color: rgba(60, 60, 80, 0.5);
+  --text-color: #e0e0e0;
+  --text-muted: #8b949e;
+  --accent-color: #0696af;
+  --accent-hover: #1ebfd7;
+  --success-color: #3fb950;
+  --warning-color: #d29922;
+  --danger-color: #f85149;
+  --field-bg: rgba(0, 0, 0, 0.25);
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  background: var(--bg-color);
+  color: var(--text-color);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--accent-hover);
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+}
+
+/* ===== Intestazione ===== */
+.adm-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 12px calc(20px + env(safe-area-inset-right)) 12px calc(20px + env(safe-area-inset-left));
+  background: var(--panel-bg-solid);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.adm-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.adm-brand picture,
+.adm-brand img.adm-logo,
+.adm-brand .adm-logo img {
+  height: 38px;
+  width: auto;
+  display: block;
+}
+
+.adm-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.adm-brand-app {
+  font-weight: 600;
+}
+
+.adm-brand-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.adm-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.adm-nav a,
+.adm-user {
+  color: var(--text-color);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.adm-nav a:hover,
+.adm-user:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.adm-nav a.active,
+.adm-user.active {
+  background: color-mix(in srgb, var(--accent-color) 25%, transparent);
+  color: #fff;
+}
+
+.adm-userbox {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adm-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adm-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex: none;
+}
+
+.adm-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ===== Contenuto ===== */
+.adm-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px calc(20px + env(safe-area-inset-right)) 32px calc(20px + env(safe-area-inset-left));
+}
+
+.adm-card {
+  background: var(--panel-bg-solid);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.adm-narrow {
+  max-width: 520px;
+  margin: 24px auto;
+}
+
+.adm-narrow h1 {
+  margin-bottom: 12px;
+}
+
+.adm-empty {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.adm-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.adm-toolbar h1 {
+  margin-right: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adm-count {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  padding: 1px 10px;
+}
+
+.adm-folder {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.adm-muted {
+  color: var(--text-muted);
+}
+
+.adm-hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.adm-hidden {
+  display: none !important;
+}
+
+.adm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.adm-nowrap {
+  white-space: nowrap;
+}
+
+/* ===== Messaggi ===== */
+.adm-flash {
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg-solid);
+}
+
+.adm-flash-success {
+  border-color: var(--success-color);
+  background: color-mix(in srgb, var(--success-color) 12%, var(--panel-bg-solid));
+}
+
+.adm-flash-error {
+  border-color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 12%, var(--panel-bg-solid));
+}
+
+.adm-flash-warn {
+  border-color: var(--warning-color);
+  background: color-mix(in srgb, var(--warning-color) 12%, var(--panel-bg-solid));
+}
+
+/* ===== Pulsanti ===== */
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adm-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.adm-btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.adm-btn-primary {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+.adm-btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.adm-btn-ghost {
+  background: transparent;
+}
+
+.adm-btn-danger {
+  color: #fff;
+  background: color-mix(in srgb, var(--danger-color) 70%, transparent);
+  border-color: var(--danger-color);
+}
+
+.adm-btn-danger:hover {
+  background: var(--danger-color);
+}
+
+.adm-btn-small {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.adm-link {
+  font: inherit;
+  color: var(--accent-hover);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.adm-inline {
+  display: inline-flex;
+  gap: 6px;
+  margin: 0;
+}
+
+/* ===== Moduli ===== */
+.adm-form fieldset {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 0 0 8px;
+  padding: 16px 0 4px;
+}
+
+.adm-form fieldset:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.adm-form legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 8px;
+  color: var(--accent-hover);
+}
+
+.adm-field {
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.adm-field label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.adm-field input[type='text'],
+.adm-field input[type='password'],
+.adm-field input:not([type]),
+.adm-field input[type='search'],
+.adm-field textarea,
+.adm-field select,
+.adm-filters select,
+.adm-search {
+  font: inherit;
+  color: var(--text-color);
+  background: var(--field-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.adm-field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.adm-field input:focus,
+.adm-field textarea:focus,
+.adm-field select:focus,
+.adm-search:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+.adm-field input[type='file'] {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.adm-file-small {
+  margin-top: 6px;
+}
+
+.adm-field-error input,
+.adm-field-error textarea {
+  border-color: var(--danger-color);
+}
+
+.adm-error-text {
+  color: var(--danger-color);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.adm-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+  cursor: pointer;
+}
+
+.adm-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+
+.adm-row-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.adm-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 0;
+}
+
+.adm-sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--panel-bg-solid);
+  padding: 12px 0 calc(4px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-color);
+  z-index: 500;
+}
+
+.adm-search {
+  max-width: 300px;
+}
+
+/* ===== Modifica modello ===== */
+.adm-edit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.adm-page-new .adm-edit-layout {
+  grid-template-columns: minmax(0, 860px);
+}
+
+.adm-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 80px;
+}
+
+.adm-map {
+  height: 300px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 4px;
+  background: #1b2430;
+}
+
+.adm-current {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.adm-pending {
+  color: var(--success-color);
+}
+
+.adm-social {
+  margin: 0 0 12px;
+}
+
+.adm-social img {
+  display: block;
+  max-width: 100%;
+  width: 360px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.adm-progress {
+  position: relative;
+  background: var(--field-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adm-progress-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: color-mix(in srgb, var(--accent-color) 35%, transparent);
+  transition: width 0.25s ease;
+}
+
+.adm-progress-text,
+.adm-progress .adm-link {
+  position: relative;
+  font-size: 0.85rem;
+}
+
+.adm-progress-text {
+  flex: 1;
+}
+
+.adm-progress-error {
+  border-color: var(--danger-color);
+}
+
+.adm-progress-error .adm-progress-bar {
+  background: color-mix(in srgb, var(--danger-color) 25%, transparent);
+}
+
+.adm-danger {
+  border-color: color-mix(in srgb, var(--danger-color) 50%, var(--border-color));
+}
+
+.adm-danger h2 {
+  color: var(--danger-color);
+}
+
+/* ===== Tabelle ===== */
+.adm-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--panel-bg-solid);
+}
+
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.adm-table th,
+.adm-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.adm-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.adm-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.adm-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.adm-table td > .adm-muted,
+.adm-table td > .adm-folder {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.adm-model-name {
+  font-weight: 600;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.adm-model-name:hover {
+  color: var(--accent-hover);
+}
+
+.adm-col-actions {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.adm-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  vertical-align: middle;
+}
+
+.adm-badge-warn {
+  background: color-mix(in srgb, var(--warning-color) 25%, transparent);
+  color: var(--warning-color);
+}
+
+/* ===== Storico ===== */
+.adm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+}
+
+.adm-filters label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  font-weight: 600;
+  gap: 4px;
+  min-width: 180px;
+}
+
+.adm-changes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.adm-changes li {
+  margin: 2px 0;
+  word-break: break-word;
+}
+
+.adm-old {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--danger-color) 60%, transparent);
+}
+
+.adm-new {
+  color: var(--text-color);
+}
+
+.adm-history .adm-action-login-failed td {
+  color: var(--warning-color);
+}
+
+.adm-timeline {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.adm-timeline > li {
+  padding: 8px 0 8px 14px;
+  border-left: 2px solid var(--border-color);
+  position: relative;
+}
+
+.adm-timeline > li::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-color);
+}
+
+.adm-when {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.adm-what {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.adm-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.adm-pager a,
+.adm-pager span {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+.adm-pager .active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+/* ===== Utenti ===== */
+.adm-user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.adm-user-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adm-user-card .adm-muted {
+  font-size: 0.8rem;
+  margin: 0 0 12px;
+}
+
+.adm-disabled {
+  opacity: 0.7;
+}
+
+.adm-user-new {
+  border-style: dashed;
+}
+
+.adm-details summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
+.adm-details[open] summary {
+  margin-bottom: 12px;
+}
+
+/* ===== Piè di pagina ===== */
+.adm-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  padding: 16px calc(20px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+}
+
+.adm-footer a {
+  color: var(--text-muted);
+}
+
+.adm-langs {
+  display: flex;
+  gap: 6px;
+}
+
+.adm-langs a {
+  text-decoration: none;
+  opacity: 0.6;
+}
+
+.adm-langs a.active,
+.adm-langs a:hover {
+  opacity: 1;
+}
+
+/* Badge progetto 3DCaveViewer (attribuzione GPL, come nelle altre pagine) */
+.adm-footer .project-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adm-footer .project-ribbon:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.project-ribbon .project-ribbon-name {
+  font-weight: 600;
+}
+
+/* ===== Schermi piccoli ===== */
+@media (max-width: 960px) {
+  .adm-edit-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adm-side {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .adm-header {
+    position: static;
+  }
+
+  .adm-userbox {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .adm-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adm-row-3 {
+    gap: 0 8px;
+  }
+
+  .project-ribbon .project-ribbon-label {
+    display: none;
+  }
+
+  .adm-search {
+    max-width: none;
+    width: 100%;
+  }
+
+  .adm-card {
+    padding: 16px;
+  }
+
+  .adm-table th,
+  .adm-table td {
+    padding: 8px 10px;
+  }
+}
