@@ -524,6 +524,16 @@
     }
   },
   "admin": {
+    "tab": {
+      "label": "Secciones del modelo",
+      "position": "Posici\u00f3n",
+      "social": "Vista previa",
+      "delete": "Eliminar",
+      "unsaved": "Hay cambios sin guardar: si sales se perder\u00e1n.",
+      "unsavedShort": "Cambios sin guardar",
+      "prev": "Atr\u00e1s",
+      "next": "Siguiente"
+    },
     "msg": {
       "saved": "Cambios guardados.",
       "created": "Modelo \u00ab{name}\u00bb creado.",

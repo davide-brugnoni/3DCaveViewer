@@ -75,6 +75,151 @@
   const form = document.getElementById('adm-model-form');
   if (!form) return;
 
+  // ===== Schede del modulo modello =====
+  // Un solo <form> con più pannelli: si salva tutto insieme da qualsiasi
+  // scheda, e la scheda aperta resta nell'indirizzo (#tab=…, che non corrisponde a
+  // nessun id: il browser non salta al pannello) così dopo il
+  // salvataggio (redirect) si torna dove si era.
+  const tabbed = document.querySelector('[data-tabs]');
+  let showTab = () => {};
+  if (tabbed) {
+    const tabBar = tabbed.querySelector('.adm-tabs');
+    const tabs = Array.from(tabbed.querySelectorAll('[role="tab"]'));
+    const panels = new Map(tabs.map((tab) => [tab.dataset.tab, document.getElementById(tab.getAttribute('aria-controls'))]));
+    const formTabs = tabs.filter((tab) => form.contains(panels.get(tab.dataset.tab)));
+    const steps = form.querySelector('.adm-tab-steps');
+    const unsaved = document.getElementById('adm-unsaved');
+    const baseAction = form.getAttribute('action').split('#')[0];
+    let current = '';
+
+    const tabOf = (el) => {
+      const panel = el && el.closest('[data-panel]');
+      return panel ? panel.dataset.panel : '';
+    };
+
+    // Su schermi stretti la barra scorre in orizzontale: porta in vista la
+    // scheda attiva (scrollIntoView sposterebbe anche la pagina)
+    const revealTab = (tab) => {
+      const margin = 24;
+      const left = tab.offsetLeft;
+      const right = left + tab.offsetWidth;
+      if (left - margin < tabBar.scrollLeft) {
+        tabBar.scrollLeft = Math.max(0, left - margin);
+      } else if (right + margin > tabBar.scrollLeft + tabBar.clientWidth) {
+        tabBar.scrollLeft = right + margin - tabBar.clientWidth;
+      }
+    };
+
+    showTab = (name, opts = {}) => {
+      if (!panels.has(name)) return;
+      current = name;
+      tabs.forEach((tab) => {
+        const active = tab.dataset.tab === name;
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.tabIndex = active ? 0 : -1;
+        tab.classList.toggle('active', active);
+        panels.get(tab.dataset.tab).hidden = !active;
+        if (active && opts.focus) tab.focus();
+        if (active) revealTab(tab);
+      });
+      // Storico ed Elimina stanno fuori dal modulo: lo si nasconde del tutto
+      const inForm = formTabs.some((tab) => tab.dataset.tab === name);
+      form.hidden = !inForm;
+      if (steps) {
+        const index = formTabs.findIndex((tab) => tab.dataset.tab === name);
+        steps.querySelector('[data-tab-step="-1"]').disabled = index <= 0;
+        steps.querySelector('[data-tab-step="1"]').disabled = index < 0 || index >= formTabs.length - 1;
+      }
+      if (opts.remember !== false) {
+        try { history.replaceState(null, '', `#tab=${name}`); } catch (e) { /* file:// o sandbox */ }
+      }
+      if (!opts.keepAction) form.setAttribute('action', `${baseAction}#tab=${name}`);
+      document.dispatchEvent(new CustomEvent('adm:tabshown', { detail: name }));
+    };
+
+    tabBar.hidden = false;
+    tabbed.classList.add('adm-tabs-ready');
+    if (steps) steps.hidden = false;
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => showTab(tab.dataset.tab));
+      tab.addEventListener('keydown', (event) => {
+        const index = tabs.indexOf(tab);
+        let next = -1;
+        if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = tabs.length - 1;
+        if (next >= 0) {
+          event.preventDefault();
+          showTab(tabs[next].dataset.tab, { focus: true });
+        }
+      });
+    });
+
+    if (steps) {
+      steps.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-tab-step]');
+        if (!button) return;
+        const index = formTabs.findIndex((tab) => tab.dataset.tab === current);
+        const target = formTabs[index + Number(button.dataset.tabStep)];
+        if (target) showTab(target.dataset.tab);
+      });
+    }
+
+    // Segni sulle schede: errori dal server e modifiche non ancora salvate
+    const markErrors = () => {
+      tabs.forEach((tab) => {
+        tab.classList.toggle('has-error', !!panels.get(tab.dataset.tab).querySelector('.adm-field-error'));
+      });
+    };
+    markErrors();
+
+    let dirty = false;
+    const markDirty = (event) => {
+      const name = tabOf(event.target);
+      // Il campo nascosto dell'upload e simili non contano
+      if (!name || event.target.type === 'hidden') return;
+      const tab = tabs.find((t) => t.dataset.tab === name);
+      if (tab) tab.classList.add('is-dirty');
+      dirty = true;
+      if (unsaved) unsaved.hidden = false;
+    };
+    form.addEventListener('input', markDirty);
+    form.addEventListener('change', markDirty);
+    // La mappa scrive lat/lon via JS, senza eventi: li segnala lei
+    document.addEventListener('adm:fieldchanged', (event) => markDirty({ target: event.detail }));
+
+    window.addEventListener('beforeunload', (event) => {
+      if (!dirty || form.dataset.submitting === '1') return undefined;
+      event.preventDefault();
+      event.returnValue = tabbed.dataset.msgUnsaved;
+      return tabbed.dataset.msgUnsaved;
+    });
+    form.addEventListener('submit', () => { form.dataset.submitting = '1'; });
+
+    // Un campo obbligatorio in una scheda nascosta: la si apre, altrimenti
+    // il browser non può mostrare il messaggio e il clic su Salva "non fa niente"
+    let invalidShown = false;
+    form.addEventListener('invalid', (event) => {
+      if (invalidShown) return;
+      invalidShown = true;
+      const name = tabOf(event.target);
+      if (name && name !== current) {
+        showTab(name);
+        setTimeout(() => event.target.reportValidity(), 0);
+      }
+      setTimeout(() => { invalidShown = false; }, 0);
+    }, true);
+
+    // Scheda iniziale: quella con un errore, poi quella nell'indirizzo
+    const errorTab = tabs.find((tab) => tab.classList.contains('has-error'));
+    const hashTab = (location.hash.match(/^#tab=([a-z]+)$/) || [])[1];
+    const start = errorTab ? errorTab.dataset.tab
+      : (hashTab && panels.has(hashTab) ? hashTab : tabbed.dataset.defaultTab);
+    showTab(start, { remember: !!(errorTab || hashTab) });
+  }
+
   // ===== Cartella proposta dal nome =====
   const nameInput = document.getElementById('f-name');
   const folderInput = document.getElementById('f-folder');
@@ -128,6 +273,7 @@
     const writeInputs = (lat, lon) => {
       latInput.value = lat.toFixed(6);
       lonInput.value = L.Util.wrapNum(lon, [-180, 180], true).toFixed(6);
+      document.dispatchEvent(new CustomEvent('adm:fieldchanged', { detail: latInput }));
     };
     const syncFromInputs = (pan) => {
       const lat = parse(latInput);
@@ -156,12 +302,21 @@
     latInput.addEventListener('change', () => syncFromInputs(true));
     lonInput.addEventListener('change', () => syncFromInputs(true));
 
+    // Creata dentro una scheda nascosta la mappa misura 0×0: va
+    // ricalcolata (e ricentrata) quando la scheda diventa visibile
+    document.addEventListener('adm:tabshown', (event) => {
+      if (event.detail !== 'position') return;
+      map.invalidateSize();
+      if (marker) map.setView(marker.getLatLng(), map.getZoom());
+    });
+
     const clear = document.getElementById('adm-clear-position');
     if (clear) {
       clear.addEventListener('click', () => {
         latInput.value = '';
         lonInput.value = '';
         syncFromInputs(false);
+        document.dispatchEvent(new CustomEvent('adm:fieldchanged', { detail: latInput }));
       });
     }
   }
@@ -313,6 +468,9 @@
     event.preventDefault();
 
     uploading = true;
+    // La barra di avanzamento sta nella scheda "File 3D"
+    // (senza cambiare la scheda a cui si torna dopo il salvataggio)
+    showTab('file', { remember: false, keepAction: true });
     controller = new AbortController();
     saveButton.disabled = true;
     cancelButton.hidden = false;
@@ -326,6 +484,7 @@
       window.removeEventListener('beforeunload', leaveGuard);
       uploading = false;
       saveButton.disabled = false;
+      delete form.dataset.submitting;
       if (controller.signal.aborted) {
         progress.classList.add('adm-hidden');
       } else {

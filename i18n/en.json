@@ -524,6 +524,16 @@
     }
   },
   "admin": {
+    "tab": {
+      "label": "Model sections",
+      "position": "Position",
+      "social": "Preview",
+      "delete": "Delete",
+      "unsaved": "There are unsaved changes: leaving will lose them.",
+      "unsavedShort": "Unsaved changes",
+      "prev": "Back",
+      "next": "Next"
+    },
     "msg": {
       "saved": "Changes saved.",
       "created": "Model “{name}” created.",

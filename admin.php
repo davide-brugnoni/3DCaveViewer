@@ -1041,8 +1041,38 @@ $langMeta = getLanguagesMeta();
     <div class="adm-flash adm-flash-warn"><?= e(at('edit.invalidJson', 'Il file dei metadati di questo modello non è un JSON valido: salvando, verrà riscritto con i valori di questo modulo.')); ?></div>
     <?php endif; ?>
 
-    <div class="adm-edit-layout">
-    <form method="post" action="admin.php?p=<?= e($page); ?><?= $isNew ? '' : '&amp;m=' . e(rawurlencode($folder)); ?>" enctype="multipart/form-data" class="adm-form adm-card" id="adm-model-form"
+    <?php
+    // Schede del modulo: le prime stanno dentro il <form> (un solo
+    // salvataggio per tutte), Storico ed Elimina sono pannelli a sé.
+    // Senza JavaScript le sezioni restano tutte visibili una sotto l'altra.
+    $recent = $isNew ? [] : array_slice(adminHistory(['target' => $folder, 'action' => 'model.']), 0, 15);
+    $tabs = [
+        'info' => at('edit.info', 'Informazioni'),
+        'position' => at('tab.position', 'Posizione'),
+        'orientation' => at('edit.orientation', 'Orientamento'),
+        'file' => at('edit.modelFile', 'File 3D'),
+        'social' => at('tab.social', 'Anteprima'),
+    ];
+    if (!$isNew) {
+        $tabs['history'] = at('nav.history', 'Storico');
+        if (adminCan($user, 'models.delete')) {
+            $tabs['delete'] = at('tab.delete', 'Elimina');
+        }
+    }
+    ?>
+    <div class="adm-tabbed" data-tabs data-default-tab="info"
+         data-msg-unsaved="<?= e(at('tab.unsaved', 'Ci sono modifiche non salvate: uscendo andranno perse.')); ?>">
+    <nav class="adm-tabs" role="tablist" aria-label="<?= e(at('tab.label', 'Sezioni del modello')); ?>" hidden>
+      <?php foreach ($tabs as $tabId => $tabLabel): ?>
+      <button type="button" role="tab" id="tab-btn-<?= e($tabId); ?>" aria-controls="tab-<?= e($tabId); ?>" aria-selected="false" tabindex="-1" data-tab="<?= e($tabId); ?>" class="adm-tab<?= $tabId === 'delete' ? ' adm-tab-danger' : ''; ?>">
+        <span><?= e($tabLabel); ?></span>
+        <?php if ($tabId === 'history' && $recent !== []): ?><span class="adm-tab-count"><?= count($recent) >= 15 ? '15+' : count($recent); ?></span><?php endif; ?>
+        <?php if ($tabId === 'file' && $isNew): ?><span class="adm-tab-required" aria-hidden="true">*</span><?php endif; ?>
+        <span class="adm-tab-dot" aria-hidden="true"></span>
+      </button>
+      <?php endforeach; ?>
+    </nav>
+    <form method="post" action="admin.php?p=<?= e($page); ?><?= $isNew ? '' : '&amp;m=' . e(rawurlencode($folder)); ?>" enctype="multipart/form-data" class="adm-form adm-card adm-tab-host" id="adm-model-form"
           data-upload-url="api/admin_upload.php"
           data-csrf="<?= e($csrf); ?>"
           data-max-bytes="<?= ADMIN_MAX_MODEL_BYTES; ?>"
@@ -1061,8 +1091,8 @@ $langMeta = getLanguagesMeta();
       <input type="hidden" name="base" value="<?= e((string) json_encode($isNew ? [] : adminFormValues($meta), JSON_UNESCAPED_UNICODE)); ?>" />
       <input type="hidden" name="upload_id" id="f-upload-id" value="<?= e($pendingUpload); ?>" />
 
-      <fieldset>
-        <legend><?= e(at('edit.info', 'Informazioni')); ?></legend>
+      <section class="adm-tab-panel" id="tab-info" role="tabpanel" aria-labelledby="tab-btn-info" data-panel="info">
+        <h2 class="adm-panel-title"><?= e(at('edit.info', 'Informazioni')); ?></h2>
         <?php adminInput('name', at('field.name', 'Nome'), $values['name'], $errors, ['required' => true, 'maxlength' => ADMIN_NAME_MAX], at('edit.nameHint', 'Mostrato su mappa, elenco e selettore del visualizzatore.')); ?>
         <?php if ($isNew): ?>
         <?php adminInput('folder', at('field.folder', 'Cartella'), $folder, $errors, ['maxlength' => 64, 'pattern' => '[a-z0-9][a-z0-9_\-]{0,63}', 'data-auto-slug' => '1', 'spellcheck' => 'false'], at('edit.folderHint', 'Identifica il modello negli indirizzi (viewer.php?m=…): non si può cambiare dopo. Proposta in automatico dal nome.')); ?>
@@ -1078,10 +1108,10 @@ $langMeta = getLanguagesMeta();
           <span class="adm-hint"><?= e(at('edit.descriptionHint', 'Testo del popup sulla mappa, delle informazioni del modello e delle anteprime social.')); ?></span>
           <?php endif; ?>
         </p>
-      </fieldset>
+      </section>
 
-      <fieldset>
-        <legend><?= e(at('edit.position', 'Posizione sulla mappa')); ?></legend>
+      <section class="adm-tab-panel" id="tab-position" role="tabpanel" aria-labelledby="tab-btn-position" data-panel="position">
+        <h2 class="adm-panel-title"><?= e(at('edit.position', 'Posizione sulla mappa')); ?></h2>
         <div class="adm-row">
           <?php adminInput('lat', at('field.lat', 'Latitudine'), $values['lat'], $errors, ['inputmode' => 'decimal', 'placeholder' => '43.35172']); ?>
           <?php adminInput('lon', at('field.lon', 'Longitudine'), $values['lon'], $errors, ['inputmode' => 'decimal', 'placeholder' => '12.57976']); ?>
@@ -1095,20 +1125,20 @@ $langMeta = getLanguagesMeta();
           <?= e(at('edit.mapHint', 'Fai clic sulla mappa o trascina il segnaposto. Senza coordinate il modello non compare sulla mappa, ma resta nel selettore del visualizzatore.')); ?>
           <button type="button" class="adm-link" id="adm-clear-position"><?= e(at('edit.clearPosition', 'Togli la posizione')); ?></button>
         </p>
-      </fieldset>
+      </section>
 
-      <fieldset>
-        <legend><?= e(at('edit.orientation', 'Orientamento')); ?></legend>
+      <section class="adm-tab-panel" id="tab-orientation" role="tabpanel" aria-labelledby="tab-btn-orientation" data-panel="orientation">
+        <h2 class="adm-panel-title"><?= e(at('edit.orientation', 'Orientamento')); ?></h2>
         <div class="adm-row adm-row-3">
           <?php adminInput('rotX', at('field.rotX', 'Rotazione X'), $values['rotX'], $errors, ['inputmode' => 'decimal', 'placeholder' => '0']); ?>
           <?php adminInput('rotY', at('field.rotY', 'Rotazione Y'), $values['rotY'], $errors, ['inputmode' => 'decimal', 'placeholder' => '0']); ?>
           <?php adminInput('rotZ', at('field.rotZ', 'Rotazione Z'), $values['rotZ'], $errors, ['inputmode' => 'decimal', 'placeholder' => '0']); ?>
         </div>
         <p class="adm-hint"><?= e(at('edit.orientationHint', 'In gradi. Serve ai modelli esportati con l\'asse Z verso l\'alto (es. CloudCompare): di solito X = -90.')); ?></p>
-      </fieldset>
+      </section>
 
-      <fieldset>
-        <legend><?= e(at('edit.modelFile', 'File 3D')); ?></legend>
+      <section class="adm-tab-panel" id="tab-file" role="tabpanel" aria-labelledby="tab-btn-file" data-panel="file">
+        <h2 class="adm-panel-title"><?= e(at('edit.modelFile', 'File 3D')); ?></h2>
         <?php if (!$isNew): ?>
         <p class="adm-current">
           <?php if (is_file($currentPath)): ?>
@@ -1136,10 +1166,10 @@ $langMeta = getLanguagesMeta();
           <span class="adm-progress-text"></span>
           <button type="button" class="adm-link" id="adm-upload-cancel"><?= e(at('upload.cancel', 'Annulla')); ?></button>
         </div>
-      </fieldset>
+      </section>
 
-      <fieldset>
-        <legend><?= e(at('edit.social', 'Anteprima social')); ?></legend>
+      <section class="adm-tab-panel" id="tab-social" role="tabpanel" aria-labelledby="tab-btn-social" data-panel="social">
+        <h2 class="adm-panel-title"><?= e(at('edit.social', 'Anteprima social')); ?></h2>
         <?php if (!$isNew && is_file($socialPath)): ?>
         <figure class="adm-social">
           <img src="<?= e($modelsUrl . '/' . rawurlencode($folder) . '/' . rawurlencode($folder . '_social.jpg') . '?v=' . (int) filemtime($socialPath)); ?>" alt="" loading="lazy" />
@@ -1153,52 +1183,54 @@ $langMeta = getLanguagesMeta();
           <input type="file" id="f-social" name="social_image" accept="image/jpeg,image/png,image/webp" />
           <span class="adm-hint"><?= e(at('edit.socialHint', 'Facoltativa, idealmente 1200×630. Se manca viene generata automaticamente dal visualizzatore.')); ?></span>
         </p>
-      </fieldset>
+      </section>
 
       <p class="adm-actions adm-sticky-actions">
         <button type="submit" class="adm-btn adm-btn-primary" id="adm-save"><?= e($isNew ? at('new.submit', 'Crea modello') : at('edit.submit', 'Salva modifiche')); ?></button>
         <a href="admin.php" class="adm-btn adm-btn-ghost"><?= e(at('edit.cancel', 'Annulla')); ?></a>
+        <span class="adm-unsaved" id="adm-unsaved" hidden><?= e(at('tab.unsavedShort', 'Modifiche non salvate')); ?></span>
+        <span class="adm-tab-steps" hidden>
+          <button type="button" class="adm-btn adm-btn-ghost adm-btn-small" data-tab-step="-1">← <?= e(at('tab.prev', 'Indietro')); ?></button>
+          <button type="button" class="adm-btn adm-btn-small" data-tab-step="1"><?= e(at('tab.next', 'Avanti')); ?> →</button>
+        </span>
       </p>
     </form>
 
     <?php if (!$isNew): ?>
-    <aside class="adm-side">
-      <section class="adm-card">
-        <h2><?= e(at('edit.recent', 'Modifiche recenti')); ?></h2>
-        <?php $recent = array_slice(adminHistory(['target' => $folder, 'action' => 'model.']), 0, 8); ?>
-        <?php if ($recent === []): ?>
-        <p class="adm-muted"><?= e(at('history.emptyModel', 'Nessuna modifica registrata dal pannello per questo modello.')); ?></p>
-        <?php else: ?>
-        <ol class="adm-timeline">
-          <?php foreach ($recent as $entry): ?>
-          <li>
-            <span class="adm-when"><?= e(adminDate((int) $entry['ts'])); ?> · <?= e((string) ($entry['name'] ?: $entry['user'])); ?></span>
-            <span class="adm-what"><?= e(adminActionLabel((string) $entry['action'])); ?></span>
-            <?= adminRenderDetails($entry); ?>
-          </li>
-          <?php endforeach; ?>
-        </ol>
-        <p><a href="admin.php?p=history&amp;m=<?= e(rawurlencode($folder)); ?>"><?= e(at('edit.fullHistory', 'Storico completo')); ?> →</a></p>
-        <?php endif; ?>
-      </section>
-
-      <?php if (adminCan($user, 'models.delete')): ?>
-      <section class="adm-card adm-danger">
-        <h2><?= e(at('edit.delete', 'Elimina modello')); ?></h2>
-        <p class="adm-hint"><?= e(at('edit.deleteHint', 'Il modello sparisce dal sito e finisce nel cestino con tutti i suoi file: si può ripristinare.')); ?></p>
-        <form method="post" action="admin.php" class="adm-form">
-          <input type="hidden" name="csrf" value="<?= e($csrf); ?>" />
-          <input type="hidden" name="action" value="model_delete" />
-          <input type="hidden" name="folder" value="<?= e($folder); ?>" />
-          <p class="adm-field">
-            <label for="f-confirm"><?= e(at('edit.deleteConfirm', 'Per confermare scrivi {folder}', ['folder' => $folder])); ?></label>
-            <input type="text" id="f-confirm" name="confirm" required autocomplete="off" spellcheck="false" />
-          </p>
-          <p class="adm-actions"><button type="submit" class="adm-btn adm-btn-danger"><?= e(at('edit.deleteSubmit', 'Sposta nel cestino')); ?></button></p>
-        </form>
-      </section>
+    <section class="adm-tab-panel adm-card" id="tab-history" role="tabpanel" aria-labelledby="tab-btn-history" data-panel="history">
+      <h2 class="adm-panel-title"><?= e(at('edit.recent', 'Modifiche recenti')); ?></h2>
+      <?php if ($recent === []): ?>
+      <p class="adm-muted"><?= e(at('history.emptyModel', 'Nessuna modifica registrata dal pannello per questo modello.')); ?></p>
+      <?php else: ?>
+      <ol class="adm-timeline">
+        <?php foreach ($recent as $entry): ?>
+        <li>
+          <span class="adm-when"><?= e(adminDate((int) $entry['ts'])); ?> · <?= e((string) ($entry['name'] ?: $entry['user'])); ?></span>
+          <span class="adm-what"><?= e(adminActionLabel((string) $entry['action'])); ?></span>
+          <?= adminRenderDetails($entry); ?>
+        </li>
+        <?php endforeach; ?>
+      </ol>
+      <p><a href="admin.php?p=history&amp;m=<?= e(rawurlencode($folder)); ?>"><?= e(at('edit.fullHistory', 'Storico completo')); ?> →</a></p>
       <?php endif; ?>
-    </aside>
+    </section>
+
+    <?php if (adminCan($user, 'models.delete')): ?>
+    <section class="adm-tab-panel adm-card adm-danger" id="tab-delete" role="tabpanel" aria-labelledby="tab-btn-delete" data-panel="delete">
+      <h2 class="adm-panel-title"><?= e(at('edit.delete', 'Elimina modello')); ?></h2>
+      <p class="adm-hint"><?= e(at('edit.deleteHint', 'Il modello sparisce dal sito e finisce nel cestino con tutti i suoi file: si può ripristinare.')); ?></p>
+      <form method="post" action="admin.php" class="adm-form adm-delete-form">
+        <input type="hidden" name="csrf" value="<?= e($csrf); ?>" />
+        <input type="hidden" name="action" value="model_delete" />
+        <input type="hidden" name="folder" value="<?= e($folder); ?>" />
+        <p class="adm-field">
+          <label for="f-confirm"><?= e(at('edit.deleteConfirm', 'Per confermare scrivi {folder}', ['folder' => $folder])); ?></label>
+          <input type="text" id="f-confirm" name="confirm" required autocomplete="off" spellcheck="false" />
+        </p>
+        <p class="adm-actions"><button type="submit" class="adm-btn adm-btn-danger"><?= e(at('edit.deleteSubmit', 'Sposta nel cestino')); ?></button></p>
+      </form>
+    </section>
+    <?php endif; ?>
     <?php endif; ?>
     </div>
 

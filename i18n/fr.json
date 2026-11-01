@@ -524,6 +524,16 @@
     }
   },
   "admin": {
+    "tab": {
+      "label": "Sections du mod\u00e8le",
+      "position": "Position",
+      "social": "Aper\u00e7u",
+      "delete": "Supprimer",
+      "unsaved": "Des modifications ne sont pas enregistr\u00e9es : en quittant, elles seront perdues.",
+      "unsavedShort": "Modifications non enregistr\u00e9es",
+      "prev": "Pr\u00e9c\u00e9dent",
+      "next": "Suivant"
+    },
     "msg": {
       "saved": "Modifications enregistr\u00e9es.",
       "created": "Mod\u00e8le \u00ab {name} \u00bb cr\u00e9\u00e9.",

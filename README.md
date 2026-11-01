@@ -790,6 +790,10 @@ incollare o scegliere il file salvato.
 | Eliminare un modello (va nel cestino) e ripristinare dal cestino | — | ✅ |
 | Creare utenti, cambiare ruoli, reimpostare password, disattivare account | — | ✅ |
 
+- **Schede**: la pagina di un modello è divisa in schede (Informazioni,
+  Posizione, Orientamento, File 3D, Anteprima, Storico, Elimina). «Salva»
+  salva tutte le schede insieme; un pallino segnala quelle modificate e
+  non ancora salvate, o quella con un errore da correggere.
 - **File grandi**: il file 3D viene inviato a blocchi, quindi un GLB da
   centinaia di MB passa anche se il server accetta upload da 2-8 MB. Senza
   JavaScript resta il caricamento classico, entro `upload_max_filesize`.

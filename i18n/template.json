@@ -505,6 +505,16 @@
     }
   },
   "admin": {
+    "tab": {
+      "label": "",
+      "position": "",
+      "social": "",
+      "delete": "",
+      "unsaved": "",
+      "unsavedShort": "",
+      "prev": "",
+      "next": ""
+    },
     "msg": {
       "saved": "",
       "created": "",

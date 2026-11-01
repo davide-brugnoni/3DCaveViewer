@@ -28,6 +28,11 @@
   box-sizing: border-box;
 }
 
+/* hidden deve vincere sui display dei componenti (schede, pulsanti) */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
@@ -470,24 +475,165 @@ h2 {
   max-width: 300px;
 }
 
-/* ===== Modifica modello ===== */
-.adm-edit-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 20px;
-  align-items: start;
+/* ===== Modifica modello: schede ===== */
+.adm-tabbed {
+  max-width: 920px;
 }
 
-.adm-page-new .adm-edit-layout {
-  grid-template-columns: minmax(0, 860px);
+/* Senza JavaScript i pannelli restano tutti visibili, uno sotto l'altro */
+.adm-tab-panel + .adm-tab-panel {
+  border-top: 1px solid var(--border-color);
+  margin-top: 8px;
+  padding-top: 16px;
 }
 
-.adm-side {
+.adm-tabbed > .adm-tab-panel {
+  margin-top: 20px;
+}
+
+.adm-panel-title {
+  font-size: 1rem;
+  color: var(--accent-hover);
+}
+
+.adm-tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 1;
+}
+
+.adm-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.adm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  padding: 10px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.adm-tab:hover {
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.adm-tab:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
+}
+
+.adm-tab.active {
+  color: var(--text-color);
+  background: var(--panel-bg-solid);
+  border-color: var(--border-color);
+  box-shadow: inset 0 2px 0 var(--accent-color);
+}
+
+.adm-tab-danger.active {
+  box-shadow: inset 0 2px 0 var(--danger-color);
+}
+
+.adm-tab-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0 7px;
+}
+
+.adm-tab-required {
+  color: var(--accent-hover);
+}
+
+/* Pallino: giallo = modifiche non salvate, rosso = errore da correggere */
+.adm-tab-dot {
+  display: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.adm-tab.is-dirty .adm-tab-dot {
+  display: inline-block;
+  background: var(--warning-color);
+}
+
+.adm-tab.has-error {
+  color: var(--danger-color);
+}
+
+.adm-tab.has-error .adm-tab-dot {
+  display: inline-block;
+  background: var(--danger-color);
+}
+
+/* Con le schede attive: titoli doppi nascosti, schede attaccate al pannello */
+.adm-tabs-ready .adm-panel-title {
+  display: none;
+}
+
+.adm-tabs-ready .adm-tab-panel + .adm-tab-panel {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.adm-tabs-ready > .adm-card,
+.adm-tabs-ready > .adm-tab-panel {
+  margin-top: 0;
+  border-top-left-radius: 0;
+}
+
+.adm-tabs-ready .adm-tab-host {
+  min-height: 360px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: 80px;
+}
+
+.adm-tabs-ready .adm-sticky-actions {
+  margin-top: auto;
+}
+
+.adm-tabs-ready .adm-map {
+  height: 420px;
+}
+
+.adm-unsaved {
+  align-self: center;
+  font-size: 0.8rem;
+  color: var(--warning-color);
+}
+
+.adm-tab-steps {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.adm-tab-steps .adm-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.adm-danger .adm-delete-form {
+  max-width: 420px;
 }
 
 .adm-map {
@@ -835,16 +981,6 @@ h2 {
 }
 
 /* ===== Schermi piccoli ===== */
-@media (max-width: 960px) {
-  .adm-edit-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .adm-side {
-    position: static;
-  }
-}
-
 @media (max-width: 640px) {
   .adm-header {
     position: static;
@@ -866,6 +1002,20 @@ h2 {
 
   .project-ribbon .project-ribbon-label {
     display: none;
+  }
+
+  .adm-tab {
+    padding: 9px 12px;
+  }
+
+  .adm-tabs-ready .adm-map {
+    height: 320px;
+  }
+
+  .adm-tab-steps {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
   }
 
   .adm-search {

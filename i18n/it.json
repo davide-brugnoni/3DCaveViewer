@@ -524,6 +524,16 @@
     }
   },
   "admin": {
+    "tab": {
+      "label": "Sezioni del modello",
+      "position": "Posizione",
+      "social": "Anteprima",
+      "delete": "Elimina",
+      "unsaved": "Ci sono modifiche non salvate: uscendo andranno perse.",
+      "unsavedShort": "Modifiche non salvate",
+      "prev": "Indietro",
+      "next": "Avanti"
+    },
     "msg": {
       "saved": "Modifiche salvate.",
       "created": "Modello «{name}» creato.",

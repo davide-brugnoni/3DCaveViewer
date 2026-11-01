@@ -485,6 +485,22 @@ trashes the current one. Stale form detection: the form carries `rev`
 (sha1 of the JSON) and `base` (its values when opened); on mismatch
 `admin.php` does a three-way merge and flags fields changed by both users.
 
+The model page (`edit`/`new`) is split into tabs: Informazioni, Posizione,
+Orientamento, File 3D, Anteprima — panels (`[data-panel]`) of the **same**
+`<form>`, so one save covers all of them and the merge/upload logic is
+unchanged — plus Storico and Elimina, panels outside the form (the form is
+hidden while they are shown). The tab system lives in `js/admin.js`: the
+server renders every panel visible and the tab bar `hidden`, so without
+JavaScript the page is the plain long form. The open tab is kept in the
+URL as `#tab=<name>` (deliberately not `#tab-…`, which would match the
+panel `id` and make the browser jump to it) and written into the form's
+`action`, so the 303 after saving comes back to the same tab. On load the
+first tab containing `.adm-field-error` wins over the hash; an `invalid`
+event from a hidden tab opens it; edited tabs get a dot and leaving with
+unsaved changes asks for confirmation. Leaflet is created inside a possibly
+hidden panel, so the map listens for `adm:tabshown` and calls
+`invalidateSize()`.
+
 Large files: `js/admin.js` uploads the file to `api/admin_upload.php` in raw
 chunks (`adminChunkSize()`, below `post_max_size`, halved on HTTP 413),
 resumable via the `offset`/409 protocol, then submits the form with only
