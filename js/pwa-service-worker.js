@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-offline-v64';
+const CACHE_VERSION = 'pwa-offline-v65';
 const CACHE_PREFIX = 'pwa-offline-'; // Prefisso per identificare le cache dell'app
 const FETCH_TIMEOUT = 15000; // 15 secondi (aumentato per connessioni lente)
 // I modelli 3D (GLB/GLTF) possono superare i 100MB: con FETCH_TIMEOUT il download
@@ -63,6 +63,11 @@ const LOCAL_ASSETS = [
   // Librerie locali - Leaflet
   'lib/leaflet/leaflet.css',
   'lib/leaflet/leaflet.js',
+  // Icone dei segnaposto: Leaflet le carica dal CSS, senza sarebbero immagini
+  // rotte sulla mappa offline
+  'lib/leaflet/images/marker-icon.png',
+  'lib/leaflet/images/marker-icon-2x.png',
+  'lib/leaflet/images/marker-shadow.png',
   // Librerie locali - Three.js
   'lib/three/build/three.module.js',
   'lib/three/examples/jsm/loaders/OBJLoader.js',
@@ -440,8 +445,13 @@ async function migrateFromOldCaches(newCache) {
 
 // Cache asset locali con limite di concorrenza
 async function cacheLocalAssets(cache) {
-  // Filtra i file PHP che devono essere sempre fetchati freschi (non cachare all'install)
-  const staticAssets = LOCAL_ASSETS.filter(asset => !asset.endsWith('.php'));
+  // Anche le pagine e gli endpoint PHP si salvano subito: la prima pagina
+  // visitata non passa dal worker (non c'è ancora), quindi prima index.php,
+  // js/config.php e il catalogo finivano in cache solo a una visita successiva.
+  // Su iPhone la web app installata ha una memoria separata da Safari: il suo
+  // primo avvio è proprio quella prima pagina, e offline non partiva nulla.
+  // Online restano sempre freschi: navigazione e catalogo sono network-first.
+  const staticAssets = LOCAL_ASSETS;
 
   const fetchAsset = async (asset) => {
     try {
@@ -462,6 +472,12 @@ async function cacheLocalAssets(cache) {
 
       // Usa fetchWithTimeout anche per asset locali
       const response = await fetchWithTimeout(request);
+
+      // Una pagina PHP rediretta (es. verso setup.php prima dell'installazione)
+      // non va salvata: servita a una navigazione, il browser la rifiuta
+      if (response?.redirected) {
+        return { success: false, asset, error: 'redirected' };
+      }
 
       // Verifica se la risposta può essere cachata
       if (!isCacheable(response)) {

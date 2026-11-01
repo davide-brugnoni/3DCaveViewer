@@ -822,7 +822,7 @@ In PHP code:
 
 The service worker (`js/pwa-service-worker.js`) uses a **cache-first with network fallback** strategy. Key behaviors:
 - Assets versioned via a `CACHE_VERSION` constant at the top of the file — increment this when deploying breaking changes
-- Static shell cached on install; dynamic resources (models, catalog) cached on first fetch
+- Static shell cached on install — PHP pages (`index.php`, `viewer.php`, `status.php`), `js/config.php` and the catalog endpoints included, because the first page load is never controlled by the worker (and an iOS home-screen app starts with storage separate from Safari's); online they stay fresh (navigation and catalog are network-first). Models are cached on first fetch or on consent
 - `status.php` provides a dashboard to inspect and clear cached assets
 - `offline.html` is the fallback when network and cache both fail
 - Map tiles: only the homepage's **standard view** (configured centre and
