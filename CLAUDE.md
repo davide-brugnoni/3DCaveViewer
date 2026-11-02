@@ -521,9 +521,13 @@ back to Euler XYZ). The default point of view is "Visualizzatore"
 (`frameLikeViewer()`): the viewer's opening view — FOV 60°, camera on +Z
 looking at the centre of the *rotated* model's box, `computeFrame()` distance
 with margin 1.2 — recomputed after every rotation, so the preview shows what
-the public will see; dragging/zooming the preview leaves that view until the
-button is pressed again. It reuses `fetchBinaryModel()`/`parseGltfLean()` with
-low texture limits, creates the WebGL scene only when the tab enters the
+the public will see. In that view a drag rotates the **model** (it
+writes `rotX/Y/Z`, world Y for horizontal and world X for vertical drags) and
+OrbitControls are disabled, because only the degrees are saved: a view built
+by orbiting the camera would never reach the viewer. The other views are
+check-only (camera orbit, with a "not saved" note). `api/catalogo.php` is
+`Cache-Control: no-cache` so the viewer sees a save immediately. It reuses
+`fetchBinaryModel()`/`parseGltfLean()` with low texture limits, creates the WebGL scene only when the tab enters the
 viewport (IntersectionObserver), loads files above `data-auto-bytes` (60 MB)
 only on request, and previews a file just picked in "File 3D" before it is
 uploaded. A draft's file comes through `api/admin_model.php`. The import map

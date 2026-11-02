@@ -144,7 +144,7 @@ $folderHash = md5(implode('|', array_column($models, 'folder')));
 
 $jsonPayload = null;
 if (is_readable($cacheFile)
-    && (int) filemtime($cacheFile) >= $latestChange
+    && (int) filemtime($cacheFile) > $latestChange
     && is_readable($hashFile)
     && trim((string) file_get_contents($hashFile)) === $folderHash) {
     $jsonPayload = file_get_contents($cacheFile);
@@ -182,7 +182,12 @@ if ($latestChange === 0 && is_readable($cacheFile)) {
 }
 $lastModified = gmdate('D, d M Y H:i:s', $latestChange ?: time()) . ' GMT';
 
-header('Cache-Control: public, max-age=60, stale-while-revalidate=300');
+// no-cache = "chiedi sempre al server", non "non salvare": la risposta
+// abituale è un 304 vuoto. Con max-age/stale-while-revalidate il browser
+// continuava a usare per minuti il catalogo di prima di un salvataggio dal
+// pannello (rotazione, nome, posizione) e il visualizzatore apriva il
+// modello con i valori vecchi.
+header('Cache-Control: no-cache');
 header('ETag: ' . $etag);
 header('Last-Modified: ' . $lastModified);
 
@@ -190,7 +195,11 @@ $ifNoneMatch = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
 $ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? '';
 
 $etagMatches = $ifNoneMatch !== '' && trim($ifNoneMatch) === $etag;
-$notModified = $ifModifiedSince !== '' && strtotime($ifModifiedSince) >= strtotime($lastModified);
+// If-None-Match ha la precedenza (RFC 9110): la data ha la risoluzione di un
+// secondo, e un JSON salvato nello stesso secondo della richiesta precedente
+// darebbe un 304 con il contenuto vecchio
+$notModified = $ifNoneMatch === '' && $ifModifiedSince !== ''
+    && strtotime($ifModifiedSince) >= strtotime($lastModified);
 
 if ($etagMatches || $notModified) {
     http_response_code(304);

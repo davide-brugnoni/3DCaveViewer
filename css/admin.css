@@ -1158,6 +1158,20 @@ h2 {
   pointer-events: none;
 }
 
+.adm-orient-viewnote {
+  position: absolute;
+  top: 32px;
+  left: 12px;
+  max-width: calc(100% - 24px);
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--warning-color);
+  background: color-mix(in srgb, var(--panel-bg-solid) 80%, transparent);
+  pointer-events: none;
+}
+
 .adm-orient-tools {
   margin-top: 12px;
 }

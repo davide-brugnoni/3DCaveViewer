@@ -32,6 +32,11 @@
 // centro del modello ruotato, inquadratura di computeFrame() con margine
 // 1.2) e si ricalcola a ogni rotazione, come fa il visualizzatore quando
 // apre il modello: ciò che si vede qui è ciò che vedrà il pubblico.
+// Per questo in quella vista il trascinamento gira il MODELLO (cioè i
+// gradi salvati) e non la camera, e la rotella non fa zoom: una vista
+// costruita girando la camera non verrebbe salvata, e il visualizzatore
+// aprirebbe il modello in un altro modo. Le altre viste (3D, Fronte, Lato,
+// Alto) sono solo di controllo: lì si gira la camera, e lo si dice.
 // Il modello si carica solo quando la scheda diventa visibile:
 // aprire il modulo per cambiare la descrizione non deve scaricare 100 MB.
 
@@ -69,6 +74,7 @@ function initOrientation() {
   const statusText = status.querySelector('.adm-orient-status-text');
   const loadButton = document.getElementById('adm-orient-load');
   const localNote = document.getElementById('adm-orient-local');
+  const viewNote = document.getElementById('adm-orient-viewnote');
   const fileInput = document.getElementById('f-model-file');
   const sliders = new Map(AXES.map((axis) => [axis, root.querySelector(`[data-orient-slider="rot${axis.toUpperCase()}"]`)]));
   const autoBytes = Number(msg.autoBytes) || 60 * 1024 * 1024;
@@ -244,7 +250,10 @@ function initOrientation() {
     controls.screenSpacePanning = true;
     // Chi gira o sposta la vista a mano esce dalla vista "viewer": le
     // rotazioni successive non devono riportarlo indietro di colpo
-    controls.addEventListener('start', () => markView(null));
+    controls.addEventListener('start', () => { if (currentView !== 'viewer') markView(null); });
+    controls.enabled = currentView !== 'viewer';
+    bindModelDrag(renderer.domElement);
+    markView(currentView);
 
     buildGrid(1);
     resize();
@@ -291,6 +300,63 @@ function initOrientation() {
     root.querySelectorAll('[data-orient-view]').forEach((button) => {
       button.setAttribute('aria-pressed', String(button.dataset.orientView === name));
     });
+    const isViewer = name === 'viewer';
+    if (controls) controls.enabled = !isViewer;
+    if (renderer) renderer.domElement.style.cursor = isViewer ? 'grab' : '';
+    if (viewNote) viewNote.hidden = isViewer;
+  }
+
+  // ===== Trascinamento nella vista "Visualizzatore": gira il modello =====
+  // La camera del visualizzatore guarda da +Z con l'alto sulla Y: un
+  // trascinamento orizzontale gira il modello attorno alla Y del mondo,
+  // uno verticale attorno alla X del mondo (l'asse "destra" della camera),
+  // come prendere in mano il modello. Il quaternione vivo resta qui durante
+  // il gesto, i campi (arrotondati a 0,01°) ne ricevono gli Euler XYZ.
+  function bindModelDrag(el) {
+    let drag = null;
+    const qStep = new THREE.Quaternion();
+    const qAxis = new THREE.Quaternion();
+    el.addEventListener('pointerdown', (event) => {
+      if (currentView !== 'viewer' || !model || event.button > 0) return;
+      const deg = readDegrees();
+      drag = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        quat: new THREE.Quaternion().setFromEuler(new THREE.Euler(
+          THREE.MathUtils.degToRad(deg.x), THREE.MathUtils.degToRad(deg.y), THREE.MathUtils.degToRad(deg.z), 'XYZ')),
+      };
+      el.setPointerCapture(event.pointerId);
+      el.style.cursor = 'grabbing';
+      event.preventDefault();
+    });
+    el.addEventListener('pointermove', (event) => {
+      if (!drag || event.pointerId !== drag.id) return;
+      const dx = event.clientX - drag.x;
+      const dy = event.clientY - drag.y;
+      drag.x = event.clientX;
+      drag.y = event.clientY;
+      // Tutta l'altezza dell'anteprima = 180°
+      const k = Math.PI / Math.max(el.clientHeight, 1);
+      qStep.setFromAxisAngle(WORLD_AXIS.y, dx * k);
+      qAxis.setFromAxisAngle(WORLD_AXIS.x, dy * k);
+      qStep.multiply(qAxis);
+      drag.quat.premultiply(qStep).normalize();
+      const euler = new THREE.Euler().setFromQuaternion(drag.quat, 'XYZ');
+      writeDegrees({
+        x: THREE.MathUtils.radToDeg(euler.x),
+        y: THREE.MathUtils.radToDeg(euler.y),
+        z: THREE.MathUtils.radToDeg(euler.z),
+      });
+    });
+    const end = (event) => {
+      if (!drag || event.pointerId !== drag.id) return;
+      drag = null;
+      if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
+      el.style.cursor = currentView === 'viewer' ? 'grab' : '';
+    };
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
   }
 
   // La vista iniziale del visualizzatore: centerScaleAndLight() centra il

@@ -1320,6 +1320,7 @@ $langMeta = getLanguagesMeta();
             </div>
             <span class="adm-orient-up" aria-hidden="true">↑ <?= e(at('edit.orientUp', 'alto')); ?></span>
             <p class="adm-orient-local" id="adm-orient-local" hidden></p>
+            <p class="adm-orient-viewnote" id="adm-orient-viewnote" hidden><?= e(at('edit.orientViewNote', 'Vista di controllo: non viene salvata. Torna a «Visualizzatore» per scegliere come si apre il modello.')); ?></p>
           </div>
           <div class="adm-orient-tools">
             <?php foreach (['x' => 'rotX', 'y' => 'rotY', 'z' => 'rotZ'] as $axis => $field): ?>
@@ -1335,7 +1336,7 @@ $langMeta = getLanguagesMeta();
               <button type="button" class="adm-btn adm-btn-small adm-btn-ghost" data-orient-preset="zero"><?= e(at('edit.orientZero', 'Azzera')); ?></button>
               <button type="button" class="adm-btn adm-btn-small adm-btn-ghost" data-orient-preset="saved"><?= e(at('edit.orientRevert', 'Ripristina i valori salvati')); ?></button>
             </p>
-            <p class="adm-hint"><?= e(at('edit.orientHint', 'Parti dalla vista «Visualizzatore»: è esattamente quella con cui il visualizzatore apre il modello, e si ricalcola a ogni rotazione. Gira il modello finché l\'ingresso o la parte che vuoi mostrare è inquadrata come preferisci, il pavimento della grotta è parallelo alla griglia e l\'alto è verso l\'alto, poi salva: i gradi vengono scritti nei campi qui sopra e usati dal visualizzatore. Trascina per girare la vista (non il modello), rotella per lo zoom: la vista esce da «Visualizzatore» finché non ci torni. I pulsanti ruotano attorno agli assi del mondo: rosso X, verde Y (verticale), blu Z.')); ?></p>
+            <p class="adm-hint"><?= e(at('edit.orientHint', 'Nella vista «Visualizzatore» vedi esattamente come il visualizzatore aprirà il modello: trascina per girare il modello (non la camera) finché l\'ingresso o la parte che vuoi mostrare è inquadrata come preferisci, il pavimento della grotta è parallelo alla griglia e l\'alto è verso l\'alto, poi salva. Si salvano solo i gradi dei campi qui sopra, e il visualizzatore riparte sempre da questa vista. Le viste 3D, Fronte, Lato e Alto servono a controllare il risultato: lì trascinare gira la camera e non cambia nulla di ciò che viene salvato. I pulsanti ruotano attorno agli assi del mondo: rosso X, verde Y (verticale), blu Z.')); ?></p>
           </div>
         </div>
       </section>
