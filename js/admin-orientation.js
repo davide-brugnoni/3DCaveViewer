@@ -27,7 +27,12 @@
 //
 // La rotazione si applica come in applyModelRotation() di js/viewer.js
 // (Euler XYZ in gradi sull'oggetto), così l'anteprima e il visualizzatore
-// coincidono. Il modello si carica solo quando la scheda diventa visibile:
+// coincidono. Anche il punto di vista di partenza è quello del
+// visualizzatore (vista "viewer": camera a 60° di campo, da +Z verso il
+// centro del modello ruotato, inquadratura di computeFrame() con margine
+// 1.2) e si ricalcola a ogni rotazione, come fa il visualizzatore quando
+// apre il modello: ciò che si vede qui è ciò che vedrà il pubblico.
+// Il modello si carica solo quando la scheda diventa visibile:
 // aprire il modulo per cambiare la descrizione non deve scaricare 100 MB.
 
 import * as THREE from 'three';
@@ -180,6 +185,7 @@ function initOrientation() {
   let axesHelper = null;
   let model = null;
   let radius = 1;
+  let currentView = 'viewer';
   let visible = false;
   let started = false;
 
@@ -215,7 +221,8 @@ function initOrientation() {
     canvasHost.appendChild(renderer.domElement);
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(45, 1, 0.01, 1000);
+    // Stesso campo visivo verticale del visualizzatore (js/viewer.js)
+    camera = new THREE.PerspectiveCamera(60, 1, 0.01, 1000);
     camera.position.set(4, 3, 5);
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.6));
@@ -235,6 +242,9 @@ function initOrientation() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.12;
     controls.screenSpacePanning = true;
+    // Chi gira o sposta la vista a mano esce dalla vista "viewer": le
+    // rotazioni successive non devono riportarlo indietro di colpo
+    controls.addEventListener('start', () => markView(null));
 
     buildGrid(1);
     resize();
@@ -273,6 +283,43 @@ function initOrientation() {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    if (currentView === 'viewer') frameLikeViewer();
+  }
+
+  function markView(name) {
+    currentView = name;
+    root.querySelectorAll('[data-orient-view]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.orientView === name));
+    });
+  }
+
+  // La vista iniziale del visualizzatore: centerScaleAndLight() centra il
+  // modello GIÀ ruotato sul suo box, poi computeFrame() (margine 1.2) mette
+  // la camera su +Z alla distanza che fa stare altezza, larghezza e
+  // profondità nel campo visivo. Lo stesso calcolo, sul box del pivot.
+  const frameBox = new THREE.Box3();
+  function frameLikeViewer() {
+    if (!camera) return;
+    const margin = 1.2;
+    const empty = !model || frameBox.setFromObject(pivot).isEmpty();
+    const center = empty ? new THREE.Vector3() : frameBox.getCenter(new THREE.Vector3());
+    const size = empty ? new THREE.Vector3(radius, radius, radius).multiplyScalar(2) : frameBox.getSize(new THREE.Vector3());
+    const halfFovY = THREE.MathUtils.degToRad(camera.fov * 0.5);
+    const halfFovX = Math.atan(Math.tan(halfFovY) * (camera.aspect || 1));
+    const distance = Math.max(
+      (size.y * margin * 0.5) / Math.tan(halfFovY),
+      (size.x * margin * 0.5) / Math.tan(halfFovX),
+      (size.z * margin * 0.5) / Math.tan(halfFovY),
+      1e-3
+    );
+    const maxSize = Math.max(size.x, size.y, size.z) * margin;
+    camera.up.set(0, 1, 0);
+    controls.target.copy(center);
+    camera.position.copy(center).add(new THREE.Vector3(0, 0, distance));
+    camera.near = Math.max(distance - maxSize * 2, distance / 1000, 1e-4);
+    camera.far = distance + maxSize * 2 + radius * 20;
+    camera.updateProjectionMatrix();
+    controls.update();
   }
 
   const box = new THREE.Box3();
@@ -290,10 +337,14 @@ function initOrientation() {
     const floor = model && !box.setFromObject(pivot).isEmpty() ? box.min.y : -radius;
     grid.position.y = floor;
     axesHelper.position.set(0, floor, 0);
+    // Come il visualizzatore, che reinquadra il modello dopo averlo ruotato
+    if (currentView === 'viewer') frameLikeViewer();
   }
 
   function setView(name) {
     if (!camera) return;
+    markView(name);
+    if (name === 'viewer') { frameLikeViewer(); return; }
     const dirs = {
       iso: new THREE.Vector3(1, 0.75, 1.3),
       front: new THREE.Vector3(0, 0, 1),
@@ -351,7 +402,7 @@ function initOrientation() {
     holder.add(model);
     buildGrid(radius);
     applyRotation();
-    setView('iso');
+    setView('viewer');
     setStatus('');
   }
 

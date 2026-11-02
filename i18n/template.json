@@ -722,6 +722,8 @@
       "orientNoWebgl": "",
       "orientCanvas": "",
       "orientLoad": "",
+      "orientViewViewer": "",
+      "orientViewViewerTitle": "",
       "orientViews": "",
       "orientViewIso": "",
       "orientViewFront": "",
