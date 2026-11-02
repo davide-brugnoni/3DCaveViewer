@@ -479,8 +479,11 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── public/index.html          # Interfaccia web dell'ottimizzatore
 │   └── README.md
 │
-└── 🛠️  glb-optimizer-static/       # Ottimizzatore GLB — versione browser-only
-    └── index.html                 # Pagina HTML singola, nessun server necessario
+├── 🛠️  glb-optimizer-static/       # Ottimizzatore GLB — versione browser-only
+│   └── index.html                 # Pagina HTML singola, nessun server necessario
+│
+└── 🪟  EXE_GLB_OPTIMIZER/          # Ottimizzatore GLB come programma Windows (installer)
+    └── README.md
 ```
 
 ---
@@ -1287,6 +1290,16 @@ npm start
 # → apri http://localhost:3000 nel browser
 ```
 
+### 🪟 `EXE_GLB_OPTIMIZER/` — Programma per Windows
+
+Lo stesso ottimizzatore della versione server, ma come programma Windows
+da installare con un doppio clic: un'installazione guidata in italiano
+spiega a cosa serve e cosa viene installato, poi il programma si apre in
+una finestra propria dal menu Start. Non serve installare Node.js né usare
+il terminale. L'installer (`GLB-Optimizer-Setup-<versione>.exe`) viene
+compilato automaticamente da GitHub Actions; dettagli in
+[`EXE_GLB_OPTIMIZER/README.md`](EXE_GLB_OPTIMIZER/README.md).
+
 ### 💻 `glb-optimizer-static/` — Pagina HTML singola
 
 Un'unica pagina HTML che esegue l'ottimizzazione **interamente nel
@@ -1309,6 +1322,7 @@ Nessun upload verso server esterni.
 | Esigenza | Strumento consigliato |
 |----------|----------------------|
 | Ottimizzazione saltuaria, zero setup | `glb-optimizer-static/` |
+| Su Windows, senza terminale né Node.js | `EXE_GLB_OPTIMIZER/` (installer) |
 | Ambiente condiviso / batch ripetuti | `glb-optimizer/` (server Node) |
 | Massima privacy (nessun upload) | Entrambi: anche il server Node gira in locale |
 | Ricompressione texture WebP/JPEG | `glb-optimizer/` (server Node) |

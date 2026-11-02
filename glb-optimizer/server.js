@@ -505,7 +505,11 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => console.log(`\n✓ GLB Optimizer pronto → http://localhost:${PORT} (max ${MAX_CONCURRENT} job concorrenti)\n`));
+// HOST vuoto = tutte le interfacce (comportamento storico); l'app Windows
+// (EXE_GLB_OPTIMIZER) passa 127.0.0.1: nessun accesso dalla rete e nessuna
+// richiesta del firewall di Windows.
+const HOST = process.env.HOST || undefined;
+const server = app.listen(PORT, HOST, () => console.log(`\n✓ GLB Optimizer pronto → http://${HOST || 'localhost'}:${PORT} (max ${MAX_CONCURRENT} job concorrenti)\n`));
 
 // Il default di Node (300 s) tronca gli upload multi-GB su reti lente
 // (5 GB a 100 Mbps ≈ 7 minuti): nessun timeout sulla ricezione della request.

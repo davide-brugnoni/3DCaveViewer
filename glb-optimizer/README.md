@@ -18,6 +18,9 @@ Trasformazioni disponibili (basate su [glTF Transform](https://gltf-transform.de
 
 ## Avvio
 
+Su Windows c'è anche il programma installabile, senza terminale né
+Node.js: vedi [`EXE_GLB_OPTIMIZER/`](../EXE_GLB_OPTIMIZER/README.md).
+
 Richiede **Node.js ≥ 22**.
 
 ```bash
@@ -34,6 +37,7 @@ Apri il browser su **http://localhost:3000**.
 | Variabile | Default | Effetto |
 |---|---|---|
 | `PORT` | `3000` | Porta HTTP del server |
+| `HOST` | *(tutte le interfacce)* | Indirizzo di ascolto; `127.0.0.1` rende il server raggiungibile solo da questo computer |
 | `MAX_CONCURRENT` | `3` | Elaborazioni contemporanee; oltre, il server risponde `503` "Server occupato" |
 | `DRACO_MAX_VERTS` | `4000000` (min 100 000) | Vertici massimi per primitiva prima della suddivisione per Draco |
 
