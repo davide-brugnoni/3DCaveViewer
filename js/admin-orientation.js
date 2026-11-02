@@ -201,6 +201,17 @@ function initOrientation() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     const bg = getComputedStyle(document.documentElement).getPropertyValue('--panel-bg-solid').trim() || '#161b22';
     renderer.setClearColor(new THREE.Color(bg));
+    // Misure fissate qui e non solo in css/admin.css: con un foglio di stile
+    // vecchio in cache il canvas prenderebbe la sua dimensione intrinseca,
+    // il contenitore crescerebbe con lui e il ResizeObserver lo ingrandirebbe
+    // di nuovo a ogni giro (pagina lunghissima, modello mai visibile)
+    if (stage.clientHeight < 50) stage.style.height = '420px';
+    stage.style.position = 'relative';
+    stage.style.overflow = 'hidden';
+    Object.assign(canvasHost.style, { position: 'absolute', inset: '0' });
+    Object.assign(renderer.domElement.style, {
+      position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block', touchAction: 'none',
+    });
     canvasHost.appendChild(renderer.domElement);
 
     scene = new THREE.Scene();
