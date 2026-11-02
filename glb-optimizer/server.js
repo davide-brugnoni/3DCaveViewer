@@ -160,10 +160,54 @@ const TEXTURE_MAX_SIDES = [2048, 4096, 8192];
 function describeTextures(document) {
   return document.getRoot().listTextures().map((t) => {
     const image = t.getImage();
-    const size = image ? ImageUtils.getSize(image, t.getMimeType()) : null;
+    let size = null;
+    try { size = image ? ImageUtils.getSize(image, t.getMimeType()) : null; } catch { /* intestazione illeggibile */ }
     const format = (t.getMimeType() || '?').replace('image/', '');
     return size ? `${size[0]}×${size[1]} ${format}` : format;
   });
+}
+
+// textureCompress elabora tutte le texture insieme e un errore di sharp/libvips
+// su una sola (es. "colourspace: parameter space not set", visto su Windows
+// con alcuni modelli) faceva fallire l'intero file. Qui ogni texture passa da
+// sola: se una non si può ricomprimere resta com'era, con un avviso nel
+// registro che ne descrive il formato, e il resto del modello va avanti.
+function safeTextureCompress(options, warnings) {
+  return async (document) => {
+    const textures = document.getRoot().listTextures();
+    for (const [i, texture] of textures.entries()) {
+      const name = texture.getName();
+      const label = texture.getURI() || name || `#${i + 1}`;
+      const tag = `__glbopt_texture_${i}__`;
+      texture.setName(tag);
+      try {
+        await textureCompress({ ...options, pattern: new RegExp(`^${tag}$`) })(document);
+      } catch (err) {
+        warnings.push(`texture ${label}: ${err.message}`);
+        console.warn(`  ⚠ Texture ${label} lasciata invariata: ${err.message}`);
+        console.warn(`    ${await describeImage(texture)}`);
+      } finally {
+        texture.setName(name);
+      }
+    }
+  };
+}
+
+// Descrizione tecnica di un'immagine, per capire dal registro perché libvips
+// l'ha rifiutata (spazio colore, canali, profilo ICC…).
+async function describeImage(texture) {
+  const image = texture.getImage();
+  const parts = [`mime ${texture.getMimeType() || '?'}`, `${image ? fmtMB(image.byteLength) : 'nessun dato'}`];
+  if (!image) return parts.join(', ');
+  try {
+    const m = await sharp(image).metadata();
+    parts.push(`${m.width}×${m.height}`, `formato ${m.format}`, `spazio ${m.space}`, `canali ${m.channels}`,
+      `profondità ${m.depth}`, `alpha ${m.hasAlpha}`, `ICC ${m.hasProfile ? `sì (${m.icc?.length || '?'} byte)` : 'no'}`,
+      `progressivo ${m.isProgressive}`, `chroma ${m.chromaSubsampling || '-'}`);
+  } catch (err) {
+    parts.push(`metadati illeggibili: ${err.message}`);
+  }
+  return parts.join(', ');
 }
 
 async function applyTransforms(document, opts, fileSizeBytes = 0) {
@@ -171,6 +215,7 @@ async function applyTransforms(document, opts, fileSizeBytes = 0) {
   const skipped = [];
   const transforms = [];
   const applied = [];
+  const warnings = [];
 
   if (opts.weld === 'true') {
     const tolerance = parseFloat(opts.weldTolerance);
@@ -197,11 +242,11 @@ async function applyTransforms(document, opts, fileSizeBytes = 0) {
 
   if (opts.texture === 'webp' || opts.texture === 'jpeg') {
     const quality = Math.max(1, Math.min(100, parseInt(opts.textureQuality) || (opts.texture === 'webp' ? 80 : 85)));
-    transforms.push(textureCompress({ encoder: sharp, targetFormat: opts.texture, quality, resize }));
+    transforms.push(safeTextureCompress({ encoder: sharp, targetFormat: opts.texture, quality, resize }, warnings));
     applied.push(`texture(${opts.texture} q${quality}${maxSide ? `, max ${maxSide}px` : ''})`);
   } else if (resize) {
     // Solo ridimensionamento: ogni texture resta nel formato di partenza
-    transforms.push(textureCompress({ encoder: sharp, resize }));
+    transforms.push(safeTextureCompress({ encoder: sharp, resize }, warnings));
     applied.push(`texture(max ${maxSide}px)`);
   }
 
@@ -240,6 +285,12 @@ async function applyTransforms(document, opts, fileSizeBytes = 0) {
     if (nSplit > 0)
       console.log(`  ⚙ ${nSplit} primitive oltre ${MAX_DRACO_VERTS.toLocaleString('it-IT')} vertici suddivise per la codifica Draco`);
   }
+  return warnings;
+}
+
+// Avvisi non bloccanti (es. texture lasciate invariate) per l'interfaccia.
+function setWarningHeader(res, warnings) {
+  if (warnings.length) res.setHeader('X-Warnings', encodeURIComponent(warnings.join('\n')));
 }
 
 // La compressione Draco avviene in fase di scrittura, quindi la dimensione
@@ -308,7 +359,7 @@ app.post('/optimize', concurrencyGuard, uploadGLB.single('file'), async (req, re
       );
     }
 
-    await applyTransforms(document, req.body, inputSize);
+    const warnings = await applyTransforms(document, req.body, inputSize);
 
     // Verifica post-trasformazione: se tutte le mesh sono sparite, c'è un problema
     const statsOut = getDocumentStats(document);
@@ -343,7 +394,8 @@ app.post('/optimize', concurrencyGuard, uploadGLB.single('file'), async (req, re
     res.setHeader('X-Input-Size',  inputSize);
     res.setHeader('X-Output-Size', outputSize);
     res.setHeader('X-Elapsed-Ms',  Date.now() - t0);
-    res.setHeader('Access-Control-Expose-Headers', 'X-Input-Size, X-Output-Size, X-Elapsed-Ms');
+    setWarningHeader(res, warnings);
+    res.setHeader('Access-Control-Expose-Headers', 'X-Input-Size, X-Output-Size, X-Elapsed-Ms, X-Warnings');
 
     const outputName = req.file.originalname.replace(/\.(glb|gltf)$/i, '_optimized.glb');
     res.download(outputPath, outputName, () => {
@@ -450,7 +502,7 @@ app.post('/convert', concurrencyGuard, (req, res) => {
         );
       }
 
-      await applyTransforms(gltfDoc, req.body, objFile.size);
+      const warnings = await applyTransforms(gltfDoc, req.body, objFile.size);
 
       const statsOut = getDocumentStats(gltfDoc);
       console.log(`  Dopo transforms: ${statsOut.meshes} mesh, ${statsOut.primitives} primitive, ${statsOut.vertices} vertici, ${statsOut.accessors} accessor`);
@@ -483,7 +535,8 @@ app.post('/convert', concurrencyGuard, (req, res) => {
       res.setHeader('X-Input-Size',  inputSize);
       res.setHeader('X-Output-Size', outputSize);
       res.setHeader('X-Elapsed-Ms',  Date.now() - t0);
-      res.setHeader('Access-Control-Expose-Headers', 'X-Input-Size, X-Output-Size, X-Elapsed-Ms');
+      setWarningHeader(res, warnings);
+      res.setHeader('Access-Control-Expose-Headers', 'X-Input-Size, X-Output-Size, X-Elapsed-Ms, X-Warnings');
 
       const outputName = objFile.originalname.replace(/\.obj$/i, '_converted.glb');
       res.download(optimizedPath, outputName, () => cleanup());

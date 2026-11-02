@@ -64,6 +64,12 @@ texture esterne va prima convertito in GLB (ad es. da Blender).
 Se l'OBJ non contiene la direttiva `mtllib` per gli MTL caricati, il tool la
 aggiunge da sé.
 
+Se una texture non si riesce a ricomprimere (immagine danneggiata o in un
+formato che la libreria grafica non gestisce), resta com'era nel file e il
+resto del modello viene ottimizzato comunque: l'interfaccia lo segnala e il
+registro del server riporta formato, spazio colore, canali e profilo ICC
+dell'immagine.
+
 ## Texture: cosa consigliamo per il visualizzatore
 
 Le texture pesano sul telefono molto più della geometria: un'immagine

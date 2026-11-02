@@ -647,7 +647,7 @@
       const meta = getResponseMeta(res);
       await triggerDownload(res, mainFile.name.replace(/\.(glb|gltf)$/i, '_optimized.glb'));
       showStats(meta.inputSize, meta.outputSize, 'Prima', 'Dopo', meta.elapsedMs);
-      setStatus('✓ File ottimizzato e scaricato!', 'success');
+      setDoneStatus('✓ File ottimizzato e scaricato!', meta.warnings);
       actionBtn.textContent = 'Ottimizza di nuovo';
     } catch (err) {
       setStatus(`Errore: ${err.message}`, 'error');
@@ -672,7 +672,7 @@
       const meta = getResponseMeta(res);
       await triggerDownload(res, mainFile.name.replace(/\.obj$/i, '_converted.glb'));
       showStats(meta.inputSize, meta.outputSize, 'OBJ originale', 'GLB ottimizzato', meta.elapsedMs);
-      setStatus('✓ File convertito e ottimizzato, download avviato!', 'success');
+      setDoneStatus('✓ File convertito e ottimizzato, download avviato!', meta.warnings);
       actionBtn.textContent = 'Converti di nuovo';
     } catch (err) {
       setStatus(`Errore: ${err.message}`, 'error');
@@ -702,7 +702,14 @@
       inputSize:  parseInt(res.headers.get('X-Input-Size')  || '0'),
       outputSize: parseInt(res.headers.get('X-Output-Size') || '0'),
       elapsedMs:  parseInt(res.headers.get('X-Elapsed-Ms')  || '0'),
+      warnings:   decodeURIComponent(res.headers.get('X-Warnings') || '').split('\n').filter(Boolean),
     };
+  }
+
+  // Esito con eventuali avvisi non bloccanti (texture lasciate invariate).
+  function setDoneStatus(text, warnings) {
+    if (!warnings.length) return setStatus(text, 'success');
+    setStatus(`${text} Attenzione: ${warnings.length === 1 ? 'una texture non è stata ricompressa ed è rimasta' : `${warnings.length} texture non sono state ricompresse e sono rimaste`} come nell'originale — ${warnings.join('; ')}`, 'success');
   }
 
   async function triggerDownload(res, filename) {
