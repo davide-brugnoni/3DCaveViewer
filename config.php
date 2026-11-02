@@ -841,6 +841,104 @@ function isValidModelFolder(string $name): bool {
 }
 
 /**
+ * True se il modello è pubblicato, cioè visibile sul sito.
+ *
+ * Una bozza ha "published": false nei metadati: resta in modelli/ con i
+ * suoi file, ma catalogo, sitemap, download offline e viewer la trattano
+ * come inesistente (solo il pannello di amministrazione la vede, e ne apre
+ * l'anteprima). Senza la chiave il modello è pubblicato: i JSON scritti a
+ * mano o prima di questa funzione non cambiano comportamento.
+ *
+ * @param array $metadata Metadati del modello
+ * @return bool
+ */
+function isModelPublished(array $metadata): bool {
+    return !array_key_exists('published', $metadata) || $metadata['published'] !== false;
+}
+
+/**
+ * Contenuto del .htaccess che rende inaccessibile dal web la cartella di una
+ * bozza. La prima riga è la firma: syncDraftProtection() rimuove solo un
+ * file che la porta, mai un .htaccess messo lì a mano da qualcuno.
+ */
+const DRAFT_HTACCESS = "# 3DCaveViewer: modello in bozza, file non accessibili dal web.\n"
+    . "# Scritto e rimosso automaticamente alla pubblicazione: non modificare.\n"
+    . "Require all denied\n";
+
+/**
+ * Allinea la protezione della cartella di un modello al suo stato: una bozza
+ * riceve DRAFT_HTACCESS (GLB, JSON e immagini rispondono 403 a chiunque, la
+ * sua anteprima passa da api/admin_model.php), un modello pubblicato lo
+ * perde. Va chiamata ovunque lo stato possa cambiare o essere scoperto:
+ * salvataggio dal pannello, ripristino dal cestino, api/catalogo.php (che
+ * così copre anche un "published": false scritto a mano via FTP).
+ *
+ * Su un server che ignora .htaccess (nginx) la bozza resta nascosta dal sito
+ * ma i suoi file sono raggiungibili da chi ne conosce l'indirizzo esatto.
+ *
+ * @param string $dir Percorso assoluto della cartella del modello
+ * @param bool $draft True se il modello è una bozza
+ * @return bool False se la protezione non è stata scritta (cartella non scrivibile)
+ */
+function syncDraftProtection(string $dir, bool $draft): bool {
+    $file = $dir . '/.htaccess';
+    $current = is_file($file) ? (string) @file_get_contents($file) : null;
+    $ours = $current !== null && strpos($current, '# 3DCaveViewer: modello in bozza') === 0;
+
+    if ($draft) {
+        if ($current === DRAFT_HTACCESS) {
+            return true;
+        }
+        if ($current !== null && !$ours) {
+            // Un .htaccess dell'utente: si aggiunge il divieto in fondo, senza toccare il resto
+            if (strpos($current, 'Require all denied') !== false) {
+                return true;
+            }
+            return @file_put_contents($file, rtrim($current) . "\n\n" . DRAFT_HTACCESS) !== false;
+        }
+        $tmp = $file . '.tmp.' . getmypid();
+        if (@file_put_contents($tmp, DRAFT_HTACCESS) === false || !@rename($tmp, $file)) {
+            @unlink($tmp);
+            error_log('3DCaveViewer: impossibile proteggere la bozza in ' . $dir);
+            return false;
+        }
+        return true;
+    }
+
+    if ($ours) {
+        @unlink($file);
+    } elseif ($current !== null && strpos($current, DRAFT_HTACCESS) !== false) {
+        // Divieto accodato a un .htaccess dell'utente: si toglie solo quello
+        @file_put_contents($file, rtrim(str_replace(DRAFT_HTACCESS, '', $current)) . "\n");
+    }
+    return true;
+}
+
+/**
+ * Cartelle dei modelli in bozza ("published": false), per escluderne i file.
+ * Di passaggio ne allinea la protezione (vedi syncDraftProtection()).
+ *
+ * @return array<string, true> cartella => true
+ */
+function draftModelFolders(): array {
+    $base = __DIR__ . '/' . config('paths.modelsFolder', 'modelli');
+    $drafts = [];
+    foreach ((array) @glob($base . '/*', GLOB_ONLYDIR) as $dir) {
+        $folder = basename((string) $dir);
+        if (!isValidModelFolder($folder)) {
+            continue;
+        }
+        $raw = @file_get_contents($dir . '/' . $folder . '.json');
+        $meta = $raw !== false ? json_decode($raw, true) : null;
+        if (is_array($meta) && !isModelPublished($meta)) {
+            $drafts[$folder] = true;
+            syncDraftProtection((string) $dir, true);
+        }
+    }
+    return $drafts;
+}
+
+/**
  * Percorso assoluto della cartella di un modello.
  * Il nome deve essere già validato con isValidModelFolder().
  *

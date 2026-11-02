@@ -93,6 +93,15 @@ foreach ($iterator as $item) {
         continue;
     }
 
+    // Bozze ("published": false): presenti su disco, invisibili sul sito e
+    // con i file bloccati dal web. La protezione si riallinea qui a ogni
+    // passaggio, così vale anche per un JSON modificato a mano via FTP.
+    $isDraft = !isModelPublished($metadata);
+    syncDraftProtection($baseDir . DIRECTORY_SEPARATOR . $folder, $isDraft);
+    if ($isDraft) {
+        continue;
+    }
+
     // Escludi i modelli il cui file 3D non esiste (es. cartella con solo metadati):
     // finirebbero nel selettore del viewer e nella sitemap con un URL che fallisce.
     // Il viewer apre "file" (GLB/GLTF) oppure la coppia "obj" + "mtl".

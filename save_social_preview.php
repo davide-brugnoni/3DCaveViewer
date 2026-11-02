@@ -124,8 +124,8 @@ if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'], true)) {
 $modelFolder = $requestedFolder;
 $modelDir = modelDir($modelFolder);
 
-// Check if model directory exists
-if (!is_dir($modelDir)) {
+// Check if model directory exists (drafts are not public: no anonymous writes)
+if (!is_dir($modelDir) || isset(draftModelFolders()[$modelFolder])) {
     http_response_code(404);
     echo json_encode(['success' => false, 'error' => 'Model directory not found']);
     exit;

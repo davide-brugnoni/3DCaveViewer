@@ -40,8 +40,8 @@ if (!isValidModelFolder($requestedFolder)) {
 $modelFolder = $requestedFolder;
 $modelDir = modelDir($modelFolder);
 
-// Check if model directory exists
-if (!is_dir($modelDir)) {
+// Check if model directory exists (a draft counts as missing)
+if (!is_dir($modelDir) || isset(draftModelFolders()[$modelFolder])) {
     servePlaceholder();
     exit;
 }

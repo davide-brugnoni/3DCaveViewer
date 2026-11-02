@@ -1520,6 +1520,14 @@ const manager = new THREE.LoadingManager();
         })
         .then(data => {
           modelsData = Array.isArray(data) ? data : [];
+          // Anteprima di una bozza (viewer.php?preview=1, solo per chi è nel
+          // pannello di amministrazione): il catalogo pubblico non la contiene,
+          // i metadati arrivano da viewer.php in data-preview-model
+          const preview = readPreviewModel();
+          if (preview && !modelsData.some(x => x.folder === preview.folder)) {
+            modelsData.push(preview);
+            showToast(_t('viewer.draftPreview', 'Anteprima di una bozza: questo modello non è visibile al pubblico'), 6000);
+          }
           populateSelector();
 
           const params = new URLSearchParams(location.search);
@@ -1554,6 +1562,21 @@ const manager = new THREE.LoadingManager();
           showOnboardingIfNeeded();
           positionCoachBubble();
         });
+    }
+
+    // Metadati della bozza in anteprima, o null (vedi "BOZZE E ANTEPRIMA" in viewer.php)
+    function readPreviewModel(){
+      const raw = document.body.dataset.previewModel;
+      if (!raw) return null;
+      try {
+        const model = JSON.parse(raw);
+        if (!model || typeof model.folder !== 'string' || typeof model.name !== 'string' || model.name === '') return null;
+        // Il nome fa da chiave nel selettore: il suffisso tiene distinta la bozza
+        model.name = `${model.name} · ${_t('viewer.draftBadge', 'bozza')}`;
+        return model;
+      } catch (e) {
+        return null;
+      }
     }
 
     /* ===== UI helpers (showToast, haptic, isSmallScreen, debounce in ./viewer/utils.js) ===== */
@@ -1711,6 +1734,8 @@ const manager = new THREE.LoadingManager();
       // Mai dalla modalità incorporata: l'inquadratura scelta per un articolo
       // sovrascriverebbe l'anteprima social del modello per tutti.
       if (isEmbed) return;
+      // Né dall'anteprima di una bozza: il server la rifiuterebbe comunque
+      if (document.body.dataset.previewModel) return;
 
       try {
         // Wait a bit for the model to be fully rendered
@@ -2922,7 +2947,10 @@ const manager = new THREE.LoadingManager();
         resetLoaderWatchdog();
         // URL assoluto: è la forma con cui il service worker vede la richiesta,
         // e i messaggi MODEL_LOAD_* devono parlare della stessa chiave
-        downloadAndParseGltf(new URL(basePath + modelInfo.file, document.baseURI).href, basePath, modelInfo, loadSeq);
+        // fileUrl: anteprima di una bozza, servita da api/admin_model.php
+        // perché la sua cartella non è raggiungibile dal web
+        const fileUrl = modelInfo.fileUrl || (basePath + modelInfo.file);
+        downloadAndParseGltf(new URL(fileUrl, document.baseURI).href, basePath, modelInfo, loadSeq);
         return;
       }
 

@@ -52,6 +52,10 @@ try {
     exit;
 }
 
+// I file delle bozze non vanno scaricati per l'uso offline: non sono
+// pubblici e possono pesare centinaia di MB
+$draftFolders = draftModelFolders();
+
 foreach ($iterator as $item) {
     if (!$item->isFile()) {
         continue;
@@ -74,6 +78,11 @@ foreach ($iterator as $item) {
 
     $relativePath = substr($item->getPathname(), strlen($baseDir) + 1);
     if ($relativePath === false) {
+        continue;
+    }
+
+    $topFolder = strtok(str_replace(DIRECTORY_SEPARATOR, '/', $relativePath), '/');
+    if (is_string($topFolder) && isset($draftFolders[$topFolder])) {
         continue;
     }
 

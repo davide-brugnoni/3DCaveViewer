@@ -55,6 +55,7 @@ echo "Allow: /\n";
 echo "Disallow: " . ($scriptDir === '' ? '' : $scriptDir) . "/status.php\n";
 echo "Disallow: " . ($scriptDir === '' ? '' : $scriptDir) . "/save_social_preview.php\n";
 echo "Disallow: " . ($scriptDir === '' ? '' : $scriptDir) . "/setup.php\n";
+echo "Disallow: " . ($scriptDir === '' ? '' : $scriptDir) . "/admin.php\n";
 echo "Disallow: " . ($scriptDir === '' ? '' : $scriptDir) . "/js/\n";
 echo "\n";
 echo "Sitemap: " . $baseUrl . "sitemap.xml\n";

@@ -24,5 +24,9 @@ custom/icon-*
 # config.php) — cache derivata, mai da tracciare, rigenerata da sola
 custom/generated/
 
+# Dati del pannello di amministrazione (admin.php): account, storico delle
+# modifiche, caricamenti in corso e cestino — dati della singola installazione
+custom/admin/
+
 # Dependencies
 node_modules/

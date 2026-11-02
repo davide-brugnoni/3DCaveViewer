@@ -7,6 +7,43 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Pannello di amministrazione (`admin.php`) per gestire i modelli dal
+  browser, senza FTP:
+  - caricamento di nuovi modelli (GLB/GLTF) con nome, descrizione,
+    posizione scelta su mappa, rotazione e anteprima social; i file grandi
+    vanno a blocchi (`api/admin_upload.php`), oltre i limiti di
+    `upload_max_filesize`/`post_max_size`
+  - modifica dei modelli esistenti e sostituzione del file 3D: la nuova
+    versione prende un nome nuovo (la cache "immutable" e il service worker
+    non mostrerebbero altrimenti quella vecchia), la precedente va nel cestino
+  - cestino: modelli eliminati e versioni sostituite si ripristinano o si
+    eliminano definitivamente
+  - più account con ruoli (editor, amministratore); il primo amministratore
+    si crea nell'installazione guidata (nuovo passo **Amministratore**,
+    facoltativo, che a fine installazione lascia già dentro il pannello)
+    oppure dopo, da `admin.php`, con la chiave di configurazione di
+    `custom/.installed`
+  - storico di chi ha modificato cosa e quando, con il dettaglio dei campi
+    (valore precedente → nuovo), filtrabile per modello, utente e tipo
+  - salvataggi contemporanei di due utenti sullo stesso modello rilevati:
+    i campi toccati da uno solo si uniscono, quelli toccati da entrambi
+    vengono segnalati invece di sovrascriversi in silenzio
+  - pagina del modello divisa in schede (Informazioni, Posizione,
+    Orientamento, File 3D, Anteprima, Storico, Elimina) con un solo
+    salvataggio per tutte: la scheda con un errore si apre da sola, quelle
+    modificate e non salvate sono segnalate, e dopo il salvataggio si
+    torna alla scheda in cui si era
+  - bozze: un modello può essere salvato senza pubblicarlo
+    (`"published": false` nei metadati). Resta in `modelli/` ma catalogo,
+    mappa, visualizzatore, sitemap, anteprime social e download offline lo
+    ignorano; dal pannello si apre in anteprima (`viewer.php?…&preview=1`,
+    solo con una sessione del pannello) e si pubblica o ritira con un clic.
+    I file di una bozza sono bloccati da un `.htaccess` generato nella sua
+    cartella (403 anche a chi conosce l'indirizzo esatto, su Apache) e
+    l'anteprima li riceve da `api/admin_model.php`
+  - dati in `custom/admin/` (escluso da git, mai toccato dagli aggiornamenti)
+
 ### Modificato
 - Rotazione senza rollio, col mouse e col touch: il modello gira attorno
   alla verticale e si inclina solo su/giù, l'orizzonte resta sempre dritto.

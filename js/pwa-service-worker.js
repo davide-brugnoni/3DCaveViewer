@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-offline-v65';
+const CACHE_VERSION = 'pwa-offline-v66';
 const CACHE_PREFIX = 'pwa-offline-'; // Prefisso per identificare le cache dell'app
 const FETCH_TIMEOUT = 15000; // 15 secondi (aumentato per connessioni lente)
 // I modelli 3D (GLB/GLTF) possono superare i 100MB: con FETCH_TIMEOUT il download
@@ -867,6 +867,14 @@ self.addEventListener('fetch', (event) => {
     // sottocartella (es. /3d/) l'origin darebbe /api/ invece di /3d/api/ e le
     // richieste non verrebbero riconosciute.
     const apiPathPrefix = new URL('api/', self.registration.scope).pathname;
+
+    // Pannello di amministrazione: mai dalla cache, mai in cache (pagine
+    // private, legate alla sessione). Le risorse passano dritte alla rete.
+    const adminPath = new URL('admin.php', self.registration.scope).pathname;
+    if (url.pathname === adminPath || url.pathname.startsWith(apiPathPrefix + 'admin_')) {
+      return;
+    }
+
     if (url.pathname === apiPathPrefix + 'catalogo.php' ||
         url.pathname === apiPathPrefix + 'catalogo_assets.php') {
       event.respondWith(networkFirst(request, event));

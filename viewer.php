@@ -67,6 +67,42 @@ if (isValidModelFolder($requestedFolder)) {
     }
 }
 
+// ============================================================
+// BOZZE E ANTEPRIMA (?preview=1)
+// ============================================================
+// Un modello in bozza ("published": false) per il pubblico non esiste:
+// niente titolo né descrizione nei meta tag, niente preload del file.
+// Chi è entrato nel pannello di amministrazione (editor o amministratore)
+// lo apre con ?m=<cartella>&preview=1: i metadati arrivano alla pagina in
+// data-preview-model, perché api/catalogo.php — pubblico e in cache — le
+// bozze non le elenca mai. La sessione si apre solo se c'è il suo cookie,
+// così i visitatori normali non ricevono cookie.
+$previewModel = null;
+if (is_array($modelData) && !isModelPublished($modelData)) {
+    $previewAllowed = false;
+    if (isset($_GET['preview']) && (string) $_GET['preview'] === '1' && isset($_COOKIE['cvadmin'])) {
+        require_once __DIR__ . '/admin_lib.php';
+        adminStartSession(dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/viewer.php')));
+        $previewAllowed = adminCan(adminCurrentUser(), 'models.edit');
+        session_write_close();
+    }
+    if ($previewAllowed && is_string($modelFolder)) {
+        $previewModel = $modelData;
+        $previewModel['folder'] = $modelFolder;
+        // Stessa risoluzione del nome file di api/catalogo.php
+        if (!isset($previewModel['file']) || !is_string($previewModel['file']) || $previewModel['file'] === '') {
+            $previewModel['file'] = $modelFolder . '.glb';
+        }
+        // La cartella della bozza è chiusa al web: il file arriva dal pannello
+        $previewModel['fileUrl'] = 'api/admin_model.php?m=' . rawurlencode($modelFolder)
+            . '&f=' . rawurlencode(basename((string) $previewModel['file']));
+        header('Cache-Control: no-store, private');
+        header('X-Robots-Tag: noindex, nofollow');
+    } else {
+        $modelData = null;
+    }
+}
+
 $pageTitle = $defaultTitle;
 $pageDescription = $defaultDescription;
 $pageImage = '';
@@ -80,7 +116,9 @@ if (is_array($modelData)) {
 // Early hint: precarica il file 3D così il download parte insieme al caricamento dei moduli JS
 $preloadModelUrl = null;
 $preloadModelMedia = null;
-if (is_array($modelData) && is_string($modelFolder)
+// Niente preload per l'anteprima di una bozza: la sua cartella è chiusa al
+// web (risponderebbe 403) e il file arriva da api/admin_model.php
+if (is_array($modelData) && is_string($modelFolder) && $previewModel === null
     && isValidModelFolder($modelFolder)
     && isset($modelData['file']) && is_string($modelData['file'])
     && preg_match('/^[\pL\pN _.()-]+\.(glb|gltf)$/u', $modelData['file'])
@@ -255,7 +293,7 @@ $linkTarget = $isEmbed ? ' target="_blank" rel="noopener"' : '';
   </script>
 <?php endif; ?>
 </head>
-<body<?= $isEmbed ? ' class="embed-mode" data-embed-ui="' . e(implode(' ', $embedUi)) . '"' : ''; ?>>
+<body<?= $isEmbed ? ' class="embed-mode" data-embed-ui="' . e(implode(' ', $embedUi)) . '"' : ''; ?><?= $previewModel !== null ? ' data-preview-model="' . e((string) json_encode($previewModel, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . '"' : ''; ?>>
   <!-- Top bar: hamburger (mobile) + selettore modello sempre visibile -->
   <div id="top-bar">
     <button id="menu-toggle" class="icon-btn" aria-label="<?= e(__t('menu.open')); ?>" aria-expanded="false" aria-controls="controls-container">

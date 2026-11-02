@@ -651,6 +651,31 @@
             found.push({ input: document.getElementById('f-minZoom'), message: MSG.msgMinZoom || '' });
         }
 
+        // Amministratore (passo facoltativo): tutto vuoto va bene; se si
+        // comincia a compilarlo valgono le regole di adminCreateFirstAdminFromSetup()
+        const user = document.getElementById('f-adminUsername');
+        const pass = document.getElementById('f-adminPassword');
+        const pass2 = document.getElementById('f-adminPassword2');
+        if (user && pass && pass2) {
+            const name = user.value.trim().toLowerCase();
+            const started = name !== '' || pass.value !== '' || pass2.value !== '';
+            const minLength = parseInt(pass.dataset.minLength, 10) || 10;
+            if (started) {
+                if (name === '') {
+                    found.push({ input: user, message: MSG.msgAdminMissing || '' });
+                } else if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(name)) {
+                    found.push({ input: user, message: MSG.msgAdminUsername || '' });
+                }
+                if (pass.value === '') {
+                    found.push({ input: pass, message: MSG.msgAdminMissing || '' });
+                } else if (Array.from(pass.value).length < minLength) {
+                    found.push({ input: pass, message: (MSG.msgAdminPassword || '').replace('{min}', String(minLength)) });
+                } else if (pass.value !== pass2.value) {
+                    found.push({ input: pass2, message: MSG.msgAdminMismatch || '' });
+                }
+            }
+        }
+
         return found;
     }
 
@@ -743,7 +768,8 @@
                 return;
             }
             step.querySelectorAll('input, select').forEach(function (input) {
-                if (input.type === 'hidden' || input.type === 'file' || !input.name) {
+                // Le password non finiscono mai a schermo
+                if (input.type === 'hidden' || input.type === 'file' || input.type === 'password' || !input.name) {
                     return;
                 }
                 const label = step.querySelector('label[for="' + input.id + '"]');
