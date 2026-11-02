@@ -7,6 +7,15 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+### Aggiunto
+- `EXE_GLB_OPTIMIZER/`: il GLB Optimizer come programma per Windows, con
+  installazione guidata in italiano (a cosa serve, cosa viene installato,
+  requisiti; per l'utente corrente, senza permessi di amministratore) e una
+  finestra propria. Include il proprio Node.js: non serve installare nulla.
+  L'installer è compilato dal workflow GitHub `glb-optimizer-windows.yml`.
+- `glb-optimizer/`: variabile `HOST` per scegliere l'indirizzo di ascolto
+  (`127.0.0.1` = raggiungibile solo dal computer stesso).
+
 ## [1.1.0] — 2026-11-02 — pannello di amministrazione
 
 I modelli si gestiscono dal browser: caricamento, modifica, orientamento,

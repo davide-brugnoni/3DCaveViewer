@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'">
+  <title>GLB Optimizer</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: #0f1117; color: #e2e8f0;
+      font: 15px/1.55 "Segoe UI", system-ui, sans-serif;
+    }
+    main { width: min(640px, 100% - 48px); padding: 32px 0; }
+    header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    header img { width: 64px; height: 64px; border-radius: 14px; }
+    h1 { margin: 0; font-size: 1.6rem; }
+    .sub { margin: 2px 0 0; color: #94a3b8; }
+    .card { background: #1a1d2e; border: 1px solid #2a2f45; border-radius: 12px; padding: 18px 22px; }
+    ul { margin: 8px 0 0; padding-left: 20px; }
+    li { margin: 3px 0; }
+    .status { display: flex; align-items: center; gap: 12px; margin-top: 20px; color: #a5b4fc; }
+    .spinner {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 3px solid #312e81; border-top-color: #818cf8; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { display: none; margin-top: 20px; }
+    .error h2 { margin: 0 0 6px; font-size: 1.1rem; color: #f87171; }
+    pre {
+      max-height: 260px; overflow: auto; margin: 10px 0 0; padding: 10px 12px;
+      background: #0b0d14; border-radius: 8px; color: #cbd5e1; font-size: 12px; white-space: pre-wrap;
+    }
+    .hint { color: #94a3b8; font-size: 0.9rem; }
+    body.has-error .status { display: none; }
+    body.has-error .error { display: block; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icon.png" alt="">
+      <div>
+        <h1>GLB Optimizer</h1>
+        <p class="sub">Prepara i modelli 3D per 3DCaveViewer</p>
+      </div>
+    </header>
+
+    <div class="card">
+      Ottimizza i file <strong>GLB/GLTF</strong> e converte i file <strong>OBJ</strong> in GLB leggeri,
+      pronti per il visualizzatore:
+      <ul>
+        <li>compressione della geometria con Draco (tipicamente −70–90%)</li>
+        <li>texture ricompresse in WebP o JPEG e ridimensionate</li>
+        <li>rimozione di dati duplicati o inutilizzati</li>
+      </ul>
+      <p class="hint">Tutto avviene su questo computer: nessun file viene inviato in rete.</p>
+    </div>
+
+    <div class="status"><div class="spinner"></div><span>Avvio del motore di elaborazione…</span></div>
+
+    <div class="error">
+      <div class="card">
+        <h2 id="error-title">Avvio non riuscito</h2>
+        <div id="error-text"></div>
+        <pre id="error-log"></pre>
+        <p class="hint">Registro completo: <span id="error-file"></span><br>
+          Chiudi e riapri il programma; se il problema si ripete, invia il registro allo sviluppatore.</p>
+      </div>
+    </div>
+  </main>
+  <script>
+    const q = new URLSearchParams(location.search);
+    if (q.has('error')) {
+      document.body.classList.add('has-error');
+      if (q.get('title')) document.getElementById('error-title').textContent = q.get('title');
+      document.getElementById('error-text').textContent = q.get('error');
+      document.getElementById('error-log').textContent = q.get('log') || '(registro vuoto)';
+      document.getElementById('error-file').textContent = q.get('logFile') || '';
+    }
+  </script>
+</body>
+</html>

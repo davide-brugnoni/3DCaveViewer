@@ -1,0 +1,64 @@
+# Compila l'installer Windows di GLB Optimizer (EXE_GLB_OPTIMIZER/).
+# Si avvia da solo quando cambiano l'app o l'optimizer, a mano dalla scheda
+# Actions ("Run workflow") e sui tag glb-optimizer-v*, che pubblicano anche
+# l'installer come release. Il file .exe si scarica dagli "Artifacts" della run.
+name: GLB Optimizer per Windows
+
+on:
+  workflow_dispatch:
+  push:
+    # Con solo "tags" i push sui branch non avvierebbero nulla; i filtri
+    # "paths" non valgono per i tag.
+    branches: ['**']
+    tags: ['glb-optimizer-v*']
+    paths:
+      - 'EXE_GLB_OPTIMIZER/**'
+      - 'glb-optimizer/**'
+      - 'img/icon-512.png'
+      - '.github/workflows/glb-optimizer-windows.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: EXE_GLB_OPTIMIZER
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: EXE_GLB_OPTIMIZER/package-lock.json
+
+      - name: Dipendenze
+        run: npm ci
+
+      - name: Applicazione (electron-builder)
+        run: npm run pack
+
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Installer
+        run: node scripts/build-installer.mjs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GLB-Optimizer-Setup
+          path: EXE_GLB_OPTIMIZER/dist/GLB-Optimizer-Setup-*.exe
+          if-no-files-found: error
+
+      - name: Release (solo sui tag glb-optimizer-v*)
+        if: startsWith(github.ref, 'refs/tags/glb-optimizer-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: EXE_GLB_OPTIMIZER/dist/GLB-Optimizer-Setup-*.exe

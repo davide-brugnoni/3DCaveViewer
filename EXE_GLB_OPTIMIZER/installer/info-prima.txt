@@ -1,0 +1,58 @@
+﻿GLB OPTIMIZER — COSA STAI INSTALLANDO
+======================================
+
+A COSA SERVE
+GLB Optimizer prepara i modelli 3D delle grotte per 3DCaveViewer, il
+visualizzatore web di Buio Verticale (Gruppo Speleologico CAI Gubbio).
+I rilievi 3D esportati da fotogrammetria o laser scanner sono spesso
+pesantissimi: questo programma li rende abbastanza leggeri da aprirsi
+anche su telefono, senza perdere dettaglio visibile.
+
+Cosa fa:
+  • ottimizza i file GLB e GLTF;
+  • converte i file OBJ (con i loro .mtl e le texture) in GLB;
+  • comprime la geometria con Draco (di solito il file scende del 70–90%);
+  • ricomprime le texture in WebP o JPEG e le riduce (es. a 4096 px);
+  • elimina dati duplicati o inutilizzati.
+
+Tutta l'elaborazione avviene su questo computer: nessun file viene
+inviato in Internet, e il programma non apre porte verso la rete.
+
+ELEMENTI CHE VERRANNO INSTALLATI
+Tutto finisce in un'unica cartella (di default
+%LOCALAPPDATA%\Programs\GLB Optimizer, oppure Programmi se installi
+per tutti gli utenti):
+
+  1. GLB Optimizer — la finestra del programma e l'interfaccia
+     (basata su Electron, lo stesso motore di finestre di programmi
+     come Visual Studio Code).
+
+  2. Motore di elaborazione Node.js — esegue le ottimizzazioni.
+     È una copia privata, usata solo da GLB Optimizer: non modifica
+     né richiede un Node.js già installato sul computer.
+
+  3. Librerie di elaborazione 3D:
+       - glTF Transform: lettura, scrittura e ottimizzazione dei glTF;
+       - Draco (Google): compressione della geometria;
+       - sharp / libvips: ricompressione delle texture;
+       - obj2gltf (Cesium): conversione dei file OBJ;
+       - Express: collega la finestra al motore di elaborazione.
+
+  4. Collegamenti nel menu Start (e, se lo scegli, sul desktop) e il
+     programma di disinstallazione.
+
+Non vengono installati servizi, driver né programmi che partono
+all'avvio di Windows. Non servono altri download.
+
+REQUISITI
+  • Windows 10 o 11 a 64 bit;
+  • circa 600 MB di spazio su disco;
+  • RAM: 8 GB bastano per i modelli comuni; per file oltre 1–2 GB
+    ne servono 16 o più (la conversione di un OBJ usa 2–3 volte la
+    sua dimensione in memoria).
+
+LICENZA
+Software libero, licenza GNU GPL v3.
+© Davide Brugnoni — https://github.com/davide-brugnoni/3DCaveViewer
+I componenti inclusi hanno le loro licenze libere (MIT, Apache 2.0,
+ISC, LGPL per libvips): il testo è nella cartella di installazione.
