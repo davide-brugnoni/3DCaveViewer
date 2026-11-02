@@ -794,6 +794,15 @@ incollare o scegliere il file salvato.
   Posizione, Orientamento, File 3D, Anteprima, Storico, Elimina). «Salva»
   salva tutte le schede insieme; un pallino segnala quelle modificate e
   non ancora salvate, o quella con un errore da correggere.
+- **Bozze**: un modello si può salvare come **bozza** invece che
+  pubblicato (scheda Informazioni → Visibilità). La bozza resta sul server
+  con tutti i suoi file ma il sito la ignora: non compare sulla mappa,
+  nell'elenco, nel visualizzatore, nella sitemap né nei download offline, e
+  chi apre il suo indirizzo trova «modello non esistente». Dal pannello la
+  vedi in **anteprima** nel visualizzatore; quando è pronta la pubblichi
+  con un clic (pulsanti **Pubblica / Ritira** nell'elenco, filtrabile per
+  Tutti / Pubblicati / Bozze). Nascosta non vuol dire segreta: chi conosce
+  l'indirizzo esatto del file `.glb` può comunque scaricarlo.
 - **File grandi**: il file 3D viene inviato a blocchi, quindi un GLB da
   centinaia di MB passa anche se il server accetta upload da 2-8 MB. Senza
   JavaScript resta il caricamento classico, entro `upload_max_filesize`.
@@ -864,6 +873,7 @@ Il file JSON deve chiamarsi come la cartella (`modelli/nuova_cavita/nuova_cavita
 | `description` | — | Testo nel popup della mappa, nelle informazioni del modello e nelle anteprime social |
 | `rotation` | — | `x`/`y`/`z` in gradi: corregge l'orientamento di modelli esportati con convenzione Z-up (es. CloudCompare) invece di Y-up come Three.js |
 | `folder` | — | Ignorato: viene sempre preso dal nome della cartella |
+| `published` | — | `false` = **bozza**: il modello resta nella cartella ma non compare da nessuna parte sul sito (mappa, elenco, visualizzatore, sitemap, download offline). Senza il campo è pubblicato |
 
 > 🧱 **Modelli OBJ (legacy)**: indica i file con i campi `obj` e `mtl`
 > (es. `"obj": "grotta.obj", "mtl": "grotta.mtl"`) e metti in `file` il nome

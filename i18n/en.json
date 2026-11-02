@@ -51,6 +51,8 @@
   },
 
   "viewer": {
+    "draftPreview": "Draft preview: this model is not visible to the public",
+    "draftBadge": "draft",
     "defaultTitle": "3D Cave Viewer",
     "defaultDescription": "Explore 3D models. {organization}",
     "loadingModel": "Loading model\u2026",
@@ -548,7 +550,9 @@
       "accountSaved": "Profile updated.",
       "loggedOut": "You have signed out.",
       "sessionExpired": "Your session has expired: please sign in again.",
-      "welcome": "Administrator account created. Welcome!"
+      "welcome": "Administrator account created. Welcome!",
+      "published": "“{name}” is published: it is now visible on the site.",
+      "unpublished": "“{name}” is back to draft: it is no longer visible on the site."
     },
     "err": {
       "csrf": "Invalid or expired request: reload the page and try again.",
@@ -612,7 +616,8 @@
       "rotX": "Rotation X",
       "rotY": "Rotation Y",
       "rotZ": "Rotation Z",
-      "folder": "Folder"
+      "folder": "Folder",
+      "published": "Visibility"
     },
     "common": {
       "yes": "yes",
@@ -637,7 +642,9 @@
       "userPassword": "Password reset",
       "userDelete": "User deleted",
       "accountUpdate": "Profile edited",
-      "accountPassword": "Password changed"
+      "accountPassword": "Password changed",
+      "modelPublish": "Model published",
+      "modelUnpublish": "Model unpublished (draft)"
     },
     "problem": {
       "meta_missing": "metadata missing",
@@ -711,7 +718,8 @@
       "delete": "Delete model",
       "deleteHint": "The model disappears from the site and goes to the trash with all its files: it can be restored.",
       "deleteConfirm": "To confirm, type {folder}",
-      "deleteSubmit": "Move to trash"
+      "deleteSubmit": "Move to trash",
+      "preview": "Preview in the viewer"
     },
     "new": {
       "title": "New model",
@@ -744,7 +752,16 @@
       "by": "by {name}",
       "edit": "Edit",
       "view": "Open",
-      "noMatch": "No model matches the search."
+      "noMatch": "No model matches the search.",
+      "filterAll": "All",
+      "filterPublished": "Published",
+      "filterDraft": "Drafts",
+      "emptyDraft": "No draft models.",
+      "emptyPublished": "No published models.",
+      "preview": "Preview",
+      "unpublishConfirm": "Unpublish “{name}”? It will stay saved as a draft.",
+      "unpublish": "Unpublish",
+      "publish": "Publish"
     },
     "upload": {
       "uploading": "Uploading the 3D file: {percent}% ({done} of {total})",
@@ -808,6 +825,13 @@
       "changePassword": "Change password",
       "passwordHint": "Leave empty to keep it. Other sessions open with this account will be closed.",
       "currentPassword": "Current password"
+    },
+    "visibility": {
+      "published": "Published",
+      "draft": "Draft",
+      "draftHint": "Saved but not visible on the site",
+      "publishedHint": "Visible on the map, in the list and in the viewer.",
+      "draftHintLong": "Saved with all its files but hidden from the public: you only see it from the panel, as a preview. Publish it when it is ready."
     }
   }
 }

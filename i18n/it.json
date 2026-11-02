@@ -51,6 +51,8 @@
   },
 
   "viewer": {
+    "draftPreview": "Anteprima di una bozza: questo modello non è visibile al pubblico",
+    "draftBadge": "bozza",
     "defaultTitle": "Visualizzatore cavit\u00e0 3D",
     "defaultDescription": "Esplora i modelli 3D. {organization}",
     "loadingModel": "Caricamento modello\u2026",
@@ -548,7 +550,9 @@
       "accountSaved": "Profilo aggiornato.",
       "loggedOut": "Sei uscito dal pannello.",
       "sessionExpired": "La sessione è scaduta: accedi di nuovo.",
-      "welcome": "Account amministratore creato. Benvenuto!"
+      "welcome": "Account amministratore creato. Benvenuto!",
+      "published": "«{name}» è pubblicato: ora è visibile sul sito.",
+      "unpublished": "«{name}» è tornato in bozza: non è più visibile sul sito."
     },
     "err": {
       "csrf": "Richiesta non valida o scaduta: ricarica la pagina e riprova.",
@@ -612,7 +616,8 @@
       "rotX": "Rotazione X",
       "rotY": "Rotazione Y",
       "rotZ": "Rotazione Z",
-      "folder": "Cartella"
+      "folder": "Cartella",
+      "published": "Visibilità"
     },
     "common": {
       "yes": "sì",
@@ -637,7 +642,9 @@
       "userPassword": "Password reimpostata",
       "userDelete": "Utente eliminato",
       "accountUpdate": "Profilo modificato",
-      "accountPassword": "Password cambiata"
+      "accountPassword": "Password cambiata",
+      "modelPublish": "Modello pubblicato",
+      "modelUnpublish": "Modello ritirato (bozza)"
     },
     "problem": {
       "meta_missing": "metadati mancanti",
@@ -711,7 +718,8 @@
       "delete": "Elimina modello",
       "deleteHint": "Il modello sparisce dal sito e finisce nel cestino con tutti i suoi file: si può ripristinare.",
       "deleteConfirm": "Per confermare scrivi {folder}",
-      "deleteSubmit": "Sposta nel cestino"
+      "deleteSubmit": "Sposta nel cestino",
+      "preview": "Anteprima nel visualizzatore"
     },
     "new": {
       "title": "Nuovo modello",
@@ -744,7 +752,16 @@
       "by": "da {name}",
       "edit": "Modifica",
       "view": "Apri",
-      "noMatch": "Nessun modello corrisponde alla ricerca."
+      "noMatch": "Nessun modello corrisponde alla ricerca.",
+      "filterAll": "Tutti",
+      "filterPublished": "Pubblicati",
+      "filterDraft": "Bozze",
+      "emptyDraft": "Nessun modello in bozza.",
+      "emptyPublished": "Nessun modello pubblicato.",
+      "preview": "Anteprima",
+      "unpublishConfirm": "Ritirare «{name}» dal sito? Resterà salvato come bozza.",
+      "unpublish": "Ritira",
+      "publish": "Pubblica"
     },
     "upload": {
       "uploading": "Caricamento del file 3D: {percent}% ({done} di {total})",
@@ -808,6 +825,13 @@
       "changePassword": "Cambia password",
       "passwordHint": "Lascia vuoto per non cambiarla. Le altre sessioni aperte con questo account verranno chiuse.",
       "currentPassword": "Password attuale"
+    },
+    "visibility": {
+      "published": "Pubblicato",
+      "draft": "Bozza",
+      "draftHint": "Salvato ma non visibile sul sito",
+      "publishedHint": "Visibile sulla mappa, nell'elenco e nel visualizzatore.",
+      "draftHintLong": "Salvato con tutti i suoi file ma nascosto al pubblico: lo vedi solo dal pannello, in anteprima. Pubblicalo quando è pronto."
     }
   }
 }

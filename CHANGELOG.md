@@ -31,6 +31,11 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
     salvataggio per tutte: la scheda con un errore si apre da sola, quelle
     modificate e non salvate sono segnalate, e dopo il salvataggio si
     torna alla scheda in cui si era
+  - bozze: un modello può essere salvato senza pubblicarlo
+    (`"published": false` nei metadati). Resta in `modelli/` ma catalogo,
+    mappa, visualizzatore, sitemap, anteprime social e download offline lo
+    ignorano; dal pannello si apre in anteprima (`viewer.php?…&preview=1`,
+    solo con una sessione del pannello) e si pubblica o ritira con un clic
   - dati in `custom/admin/` (escluso da git, mai toccato dagli aggiornamenti)
 
 ### Modificato

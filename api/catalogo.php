@@ -93,6 +93,11 @@ foreach ($iterator as $item) {
         continue;
     }
 
+    // Bozze ("published": false): presenti su disco, invisibili sul sito
+    if (!isModelPublished($metadata)) {
+        continue;
+    }
+
     // Escludi i modelli il cui file 3D non esiste (es. cartella con solo metadati):
     // finirebbero nel selettore del viewer e nella sitemap con un URL che fallisce.
     // Il viewer apre "file" (GLB/GLTF) oppure la coppia "obj" + "mtl".

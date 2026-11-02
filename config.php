@@ -841,6 +841,44 @@ function isValidModelFolder(string $name): bool {
 }
 
 /**
+ * True se il modello è pubblicato, cioè visibile sul sito.
+ *
+ * Una bozza ha "published": false nei metadati: resta in modelli/ con i
+ * suoi file, ma catalogo, sitemap, download offline e viewer la trattano
+ * come inesistente (solo il pannello di amministrazione la vede, e ne apre
+ * l'anteprima). Senza la chiave il modello è pubblicato: i JSON scritti a
+ * mano o prima di questa funzione non cambiano comportamento.
+ *
+ * @param array $metadata Metadati del modello
+ * @return bool
+ */
+function isModelPublished(array $metadata): bool {
+    return !array_key_exists('published', $metadata) || $metadata['published'] !== false;
+}
+
+/**
+ * Cartelle dei modelli in bozza ("published": false), per escluderne i file.
+ *
+ * @return array<string, true> cartella => true
+ */
+function draftModelFolders(): array {
+    $base = __DIR__ . '/' . config('paths.modelsFolder', 'modelli');
+    $drafts = [];
+    foreach ((array) @glob($base . '/*', GLOB_ONLYDIR) as $dir) {
+        $folder = basename((string) $dir);
+        if (!isValidModelFolder($folder)) {
+            continue;
+        }
+        $raw = @file_get_contents($dir . '/' . $folder . '.json');
+        $meta = $raw !== false ? json_decode($raw, true) : null;
+        if (is_array($meta) && !isModelPublished($meta)) {
+            $drafts[$folder] = true;
+        }
+    }
+    return $drafts;
+}
+
+/**
  * Percorso assoluto della cartella di un modello.
  * Il nome deve essere già validato con isValidModelFolder().
  *

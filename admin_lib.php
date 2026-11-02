@@ -855,6 +855,7 @@ function adminListModels(): array {
             'hasSocial' => is_file($social),
             'mtime' => (int) max(@filemtime($base . '/' . $folder . '/' . $folder . '.json') ?: 0, $hasFile ? (int) filemtime($filePath) : 0),
             'problem' => $problem,
+            'published' => isModelPublished($meta),
         ];
     }
     usort($models, static function (array $a, array $b): int {
@@ -887,6 +888,7 @@ function adminFormValues(array $meta): array {
         'rotX' => $num($rotation['x'] ?? null),
         'rotY' => $num($rotation['y'] ?? null),
         'rotZ' => $num($rotation['z'] ?? null),
+        'published' => isModelPublished($meta) ? '1' : '0',
     ];
 }
 
@@ -905,9 +907,15 @@ function adminCollectModelFields(array $post): array {
         'rotX' => trim((string) ($post['rotX'] ?? '')),
         'rotY' => trim((string) ($post['rotY'] ?? '')),
         'rotZ' => trim((string) ($post['rotZ'] ?? '')),
+        // Senza la scelta (modulo vecchio, client che non la manda) resta pubblicato
+        'published' => ($post['published'] ?? '1') === '0' ? '0' : '1',
     ];
     $errors = [];
-    $data = ['name' => $values['name'], 'description' => $values['description']];
+    $data = [
+        'name' => $values['name'],
+        'description' => $values['description'],
+        'published' => $values['published'] === '1',
+    ];
 
     if ($values['name'] === '') {
         $errors['name'] = 'required';
@@ -954,6 +962,12 @@ function adminApplyModelFields(array $meta, array $data, string $folder): array 
     }
     $meta['lat'] = $data['lat'];
     $meta['lon'] = $data['lon'];
+    // Pubblicato = nessuna chiave (come i JSON scritti a mano), bozza = false
+    if ($data['published']) {
+        unset($meta['published']);
+    } else {
+        $meta['published'] = false;
+    }
 
     $rotation = $data['rotation'];
     $isZero = $rotation['x'] == 0 && $rotation['y'] == 0 && $rotation['z'] == 0;
@@ -973,6 +987,13 @@ function adminDiffMeta(array $old, array $new): array {
     $keys = array_unique(array_merge(array_keys($old), array_keys($new)));
     foreach ($keys as $key) {
         if ($key === 'folder') {
+            continue;
+        }
+        if ($key === 'published') {
+            // Chiave assente = pubblicato: conta solo lo stato
+            if (isModelPublished($old) !== isModelPublished($new)) {
+                $changes['published'] = [isModelPublished($old), isModelPublished($new)];
+            }
             continue;
         }
         $before = $old[$key] ?? null;

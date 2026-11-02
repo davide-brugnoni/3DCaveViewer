@@ -72,6 +72,10 @@ foreach ($dirs as $dir) {
     // Stesso criterio di catalogo.php: senza file 3D il modello non è pubblicato,
     // quindi non deve comparire in sitemap con un URL che fallisce il caricamento.
     $metadata = json_decode((string) file_get_contents($metadataPath), true);
+    // Le bozze non si indicizzano
+    if (is_array($metadata) && !isModelPublished($metadata)) {
+        continue;
+    }
     $modelFile = (is_array($metadata) && isset($metadata['file']) && is_string($metadata['file']) && $metadata['file'] !== '')
         ? basename($metadata['file'])
         : $folder . '.glb';

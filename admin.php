@@ -63,6 +63,8 @@ function adminMessage(string $code, array $params = []): string {
     $messages = [
         // esiti
         'saved' => at('msg.saved', 'Modifiche salvate.'),
+        'published' => at('msg.published', '«{name}» è pubblicato: ora è visibile sul sito.'),
+        'unpublished' => at('msg.unpublished', '«{name}» è tornato in bozza: non è più visibile sul sito.'),
         'created' => at('msg.created', 'Modello «{name}» creato.'),
         'nothing_changed' => at('msg.nothingChanged', 'Nessuna modifica da salvare.'),
         'deleted' => at('msg.deleted', 'Modello «{name}» spostato nel cestino.'),
@@ -156,6 +158,7 @@ function adminFieldLabel(string $field): string {
         'rotY' => at('field.rotY', 'Rotazione Y'),
         'rotZ' => at('field.rotZ', 'Rotazione Z'),
         'folder' => at('field.folder', 'Cartella'),
+        'published' => at('field.published', 'Visibilità'),
     ];
     return $labels[$field] ?? $field;
 }
@@ -195,6 +198,8 @@ function adminActionLabel(string $action): string {
         'model.delete' => at('action.modelDelete', 'Modello eliminato (cestino)'),
         'model.restore' => at('action.modelRestore', 'Modello ripristinato'),
         'model.file_restore' => at('action.modelFileRestore', 'Versione precedente del file ripristinata'),
+        'model.publish' => at('action.modelPublish', 'Modello pubblicato'),
+        'model.unpublish' => at('action.modelUnpublish', 'Modello ritirato (bozza)'),
         'trash.purge' => at('action.trashPurge', 'Eliminato definitivamente'),
         'user.create' => at('action.userCreate', 'Utente creato'),
         'user.update' => at('action.userUpdate', 'Utente modificato'),
@@ -219,6 +224,18 @@ function adminProblemLabel(string $problem): string {
     return $labels[$problem] ?? $problem;
 }
 
+function adminVisibilityLabel(bool $published): string {
+    return $published ? at('visibility.published', 'Pubblicato') : at('visibility.draft', 'Bozza');
+}
+
+/**
+ * Indirizzo del modello nel visualizzatore: le bozze si aprono in anteprima
+ * (viewer.php le mostra solo a chi è entrato nel pannello).
+ */
+function adminViewerUrl(string $folder, bool $published): string {
+    return 'viewer.php?m=' . rawurlencode($folder) . ($published ? '' : '&preview=1');
+}
+
 function adminRoleLabel(string $role): string {
     return $role === 'admin' ? at('role.admin', 'Amministratore') : at('role.editor', 'Editor');
 }
@@ -241,11 +258,14 @@ function adminRenderDetails(array $entry): string {
             if (!is_array($pair) || count($pair) !== 2) {
                 continue;
             }
+            $format = $field === 'published'
+                ? static fn($v): string => $v === null ? '' : adminVisibilityLabel($v !== false)
+                : 'adminFormatValue';
             // Campo nuovo (creazione): solo il valore, senza "— →"
             $old = $pair[0] === null || $pair[0] === ''
-                ? '' : '<span class="adm-old">' . e(adminFormatValue($pair[0])) . '</span> → ';
+                ? '' : '<span class="adm-old">' . e($format($pair[0])) . '</span> → ';
             $items[] = '<li><strong>' . e(adminFieldLabel((string) $field)) . '</strong>: '
-                . $old . '<span class="adm-new">' . e(adminFormatValue($pair[1])) . '</span></li>';
+                . $old . '<span class="adm-new">' . e($format($pair[1])) . '</span></li>';
         }
     }
     $simple = [
@@ -459,7 +479,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 adminRedirect(['p' => 'new']);
             }
             adminLog('model.create', $folder, [
-                'changes' => adminDiffMeta([], $meta),
+                // Alla creazione non c'è un "prima": solo i valori scelti
+                'changes' => array_map(static fn(array $pair): array => [null, $pair[1]], adminDiffMeta(['published' => false], $meta)
+                    + (isModelPublished($meta) ? [] : ['published' => [null, false]])),
                 'original' => $upload['original'],
                 'size' => $upload['size'],
             ]);
@@ -539,6 +561,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // --- Eliminazione di un modello (nel cestino) ----------------------------
+    // --- Pubblica / ritira (dall'elenco, senza aprire il modulo) -----------
+    if ($action === 'model_publish') {
+        $folder = (string) ($_POST['folder'] ?? '');
+        $back = ($_POST['back'] ?? '') === 'edit' ? ['p' => 'edit', 'm' => $folder] : array_filter(['s' => preg_replace('/[^a-z]/', '', (string) ($_POST['s'] ?? ''))]);
+        if (!adminCan($user, 'models.edit')) {
+            adminFlash('error', 'forbidden');
+            adminRedirect($back);
+        }
+        $loaded = adminLoadModel($folder);
+        if ($loaded === null || !$loaded['valid']) {
+            adminFlash('error', 'model_missing');
+            adminRedirect($back);
+        }
+        $publish = ($_POST['publish'] ?? '') === '1';
+        $meta = $loaded['meta'];
+        $name = is_string($meta['name'] ?? null) && $meta['name'] !== '' ? $meta['name'] : $folder;
+        if (isModelPublished($meta) !== $publish) {
+            if ($publish) {
+                unset($meta['published']);
+            } else {
+                $meta['published'] = false;
+            }
+            if (!adminSaveModelMeta($folder, $meta)) {
+                adminFlash('error', 'write_failed');
+                adminRedirect($back);
+            }
+            adminLog($publish ? 'model.publish' : 'model.unpublish', $folder, ['name' => $name]);
+        }
+        adminFlash('success', $publish ? 'published' : 'unpublished', ['name' => $name]);
+        adminRedirect($back);
+    }
+
     if ($action === 'model_delete') {
         $folder = (string) ($_POST['folder'] ?? '');
         if (!adminCan($user, 'models.delete')) {
@@ -948,9 +1002,27 @@ $langMeta = getLanguagesMeta();
     </section>
 
 <?php elseif ($page === 'models'): ?>
-    <?php $models = adminListModels(); $lastChanges = adminLastChanges(); ?>
+    <?php
+    $allModels = adminListModels();
+    $lastChanges = adminLastChanges();
+    $draftCount = count(array_filter($allModels, static fn(array $m): bool => !$m['published']));
+    $statusFilter = in_array($_GET['s'] ?? '', ['published', 'draft'], true) ? (string) $_GET['s'] : '';
+    $models = $statusFilter === ''
+        ? $allModels
+        : array_values(array_filter($allModels, static fn(array $m): bool => $m['published'] === ($statusFilter === 'published')));
+    $statusTabs = [
+        '' => [at('models.filterAll', 'Tutti'), count($allModels)],
+        'published' => [at('models.filterPublished', 'Pubblicati'), count($allModels) - $draftCount],
+        'draft' => [at('models.filterDraft', 'Bozze'), $draftCount],
+    ];
+    ?>
     <section class="adm-toolbar">
-      <h1><?= e(at('nav.models', 'Modelli')); ?> <span class="adm-count"><?= count($models); ?></span></h1>
+      <h1><?= e(at('nav.models', 'Modelli')); ?> <span class="adm-count"><?= count($allModels); ?></span></h1>
+      <nav class="adm-segmented" aria-label="<?= e(at('field.published', 'Visibilità')); ?>">
+        <?php foreach ($statusTabs as $key => [$label, $count]): ?>
+        <a href="admin.php<?= $key !== '' ? '?s=' . e($key) : ''; ?>" class="<?= $statusFilter === $key ? 'active' : ''; ?>"<?= $statusFilter === $key ? ' aria-current="page"' : ''; ?>><?= e($label); ?> <span class="adm-count"><?= (int) $count; ?></span></a>
+        <?php endforeach; ?>
+      </nav>
       <input type="search" id="adm-model-filter" class="adm-search" placeholder="<?= e(at('models.search', 'Cerca per nome o cartella…')); ?>" aria-label="<?= e(at('models.search', 'Cerca per nome o cartella…')); ?>" />
       <?php if (adminCan($user, 'models.edit')): ?>
       <a href="admin.php?p=new" class="adm-btn adm-btn-primary">+ <?= e(at('models.new', 'Nuovo modello')); ?></a>
@@ -958,7 +1030,9 @@ $langMeta = getLanguagesMeta();
     </section>
     <?php if ($models === []): ?>
     <section class="adm-card adm-empty">
-      <p><?= e(at('models.empty', 'Non ci sono ancora modelli. Inizia caricando il primo.')); ?></p>
+      <p><?= e($allModels === []
+          ? at('models.empty', 'Non ci sono ancora modelli. Inizia caricando il primo.')
+          : ($statusFilter === 'draft' ? at('models.emptyDraft', 'Nessun modello in bozza.') : at('models.emptyPublished', 'Nessun modello pubblicato.'))); ?></p>
     </section>
     <?php else: ?>
     <div class="adm-table-wrap">
@@ -974,9 +1048,12 @@ $langMeta = getLanguagesMeta();
       </thead>
       <tbody>
       <?php foreach ($models as $model): $last = $lastChanges[$model['folder']] ?? null; ?>
-        <tr data-filter="<?= e(strtolower($model['name'] . ' ' . $model['folder'])); ?>">
+        <tr data-filter="<?= e(strtolower($model['name'] . ' ' . $model['folder'])); ?>"<?= $model['published'] ? '' : ' class="adm-row-draft"'; ?>>
           <td>
             <a class="adm-model-name" href="admin.php?p=edit&amp;m=<?= e(rawurlencode($model['folder'])); ?>"><?= e($model['name'] !== '' ? $model['name'] : $model['folder']); ?></a>
+            <?php if (!$model['published']): ?>
+            <span class="adm-badge adm-badge-draft" title="<?= e(at('visibility.draftHint', 'Salvato ma non visibile sul sito')); ?>"><?= e(adminVisibilityLabel(false)); ?></span>
+            <?php endif; ?>
             <span class="adm-folder"><?= e($model['folder']); ?></span>
             <?php if ($model['problem'] !== ''): ?>
             <span class="adm-badge adm-badge-warn" title="<?= e(at('models.hiddenHint', 'Il modello non compare sul sito finché il problema non è risolto.')); ?>"><?= e(adminProblemLabel($model['problem'])); ?></span>
@@ -1000,7 +1077,20 @@ $langMeta = getLanguagesMeta();
           <td class="adm-col-actions">
             <a class="adm-btn adm-btn-small" href="admin.php?p=edit&amp;m=<?= e(rawurlencode($model['folder'])); ?>"><?= e(at('models.edit', 'Modifica')); ?></a>
             <?php if ($model['problem'] === ''): ?>
-            <a class="adm-btn adm-btn-small adm-btn-ghost" href="viewer.php?m=<?= e(rawurlencode($model['folder'])); ?>" target="_blank" rel="noopener"><?= e(at('models.view', 'Apri')); ?></a>
+            <a class="adm-btn adm-btn-small adm-btn-ghost" href="<?= e(adminViewerUrl($model['folder'], $model['published'])); ?>" target="_blank" rel="noopener"><?= e($model['published'] ? at('models.view', 'Apri') : at('models.preview', 'Anteprima')); ?></a>
+            <?php endif; ?>
+            <?php if (adminCan($user, 'models.edit') && $model['problem'] !== 'meta_missing' && $model['problem'] !== 'meta_invalid'): ?>
+            <form method="post" action="admin.php" class="adm-inline">
+              <input type="hidden" name="csrf" value="<?= e($csrf); ?>" />
+              <input type="hidden" name="action" value="model_publish" />
+              <input type="hidden" name="folder" value="<?= e($model['folder']); ?>" />
+              <input type="hidden" name="s" value="<?= e($statusFilter); ?>" />
+              <?php if ($model['published']): ?>
+              <button type="submit" name="publish" value="0" class="adm-btn adm-btn-small adm-btn-ghost" data-confirm="<?= e(at('models.unpublishConfirm', 'Ritirare «{name}» dal sito? Resterà salvato come bozza.', ['name' => $model['name'] !== '' ? $model['name'] : $model['folder']])); ?>"><?= e(at('models.unpublish', 'Ritira')); ?></button>
+              <?php else: ?>
+              <button type="submit" name="publish" value="1" class="adm-btn adm-btn-small adm-btn-publish"><?= e(at('models.publish', 'Pubblica')); ?></button>
+              <?php endif; ?>
+            </form>
             <?php endif; ?>
           </td>
         </tr>
@@ -1025,15 +1115,18 @@ $langMeta = getLanguagesMeta();
     $pendingUpload = (string) ($form['uploadId'] ?? '');
     $pendingMeta = $pendingUpload !== '' ? adminReadStore('uploads/' . $pendingUpload) : [];
     $mapCenter = (array) config('map.center', [43.351726, 12.579768]);
+    // Stato salvato su disco (il badge in alto), non quello scelto nel modulo
+    $isPublished = $isNew || isModelPublished($meta);
     ?>
     <section class="adm-toolbar">
       <h1>
         <?= e($isNew ? at('new.title', 'Nuovo modello') : ($values['name'] !== '' ? $values['name'] : $folder)); ?>
         <?php if (!$isNew): ?><span class="adm-folder"><?= e($folder); ?></span><?php endif; ?>
+        <?php if (!$isNew && !$isPublished): ?><span class="adm-badge adm-badge-draft"><?= e(adminVisibilityLabel(false)); ?></span><?php endif; ?>
       </h1>
       <a href="admin.php" class="adm-btn adm-btn-ghost">← <?= e(at('edit.back', 'Tutti i modelli')); ?></a>
       <?php if (!$isNew && is_file($currentPath)): ?>
-      <a href="viewer.php?m=<?= e(rawurlencode($folder)); ?>" class="adm-btn" target="_blank" rel="noopener"><?= e(at('edit.openViewer', 'Apri nel visualizzatore')); ?> ↗</a>
+      <a href="<?= e(adminViewerUrl($folder, $isPublished)); ?>" class="adm-btn" target="_blank" rel="noopener"><?= e($isPublished ? at('edit.openViewer', 'Apri nel visualizzatore') : at('edit.preview', 'Anteprima nel visualizzatore')); ?> ↗</a>
       <?php endif; ?>
     </section>
 
@@ -1108,6 +1201,19 @@ $langMeta = getLanguagesMeta();
           <span class="adm-hint"><?= e(at('edit.descriptionHint', 'Testo del popup sulla mappa, delle informazioni del modello e delle anteprime social.')); ?></span>
           <?php endif; ?>
         </p>
+        <div class="adm-field adm-visibility" role="radiogroup" aria-labelledby="f-published-label">
+          <span class="adm-label" id="f-published-label"><?= e(at('field.published', 'Visibilità')); ?></span>
+          <label class="adm-choice">
+            <input type="radio" name="published" value="1" <?= $values['published'] === '1' ? 'checked' : ''; ?> />
+            <span><strong><?= e(adminVisibilityLabel(true)); ?></strong>
+              <span class="adm-hint"><?= e(at('visibility.publishedHint', 'Visibile sulla mappa, nell\'elenco e nel visualizzatore.')); ?></span></span>
+          </label>
+          <label class="adm-choice">
+            <input type="radio" name="published" value="0" <?= $values['published'] === '0' ? 'checked' : ''; ?> />
+            <span><strong><?= e(adminVisibilityLabel(false)); ?></strong>
+              <span class="adm-hint"><?= e(at('visibility.draftHintLong', 'Salvato con tutti i suoi file ma nascosto al pubblico: lo vedi solo dal pannello, in anteprima. Pubblicalo quando è pronto.')); ?></span></span>
+          </label>
+        </div>
       </section>
 
       <section class="adm-tab-panel" id="tab-position" role="tabpanel" aria-labelledby="tab-btn-position" data-panel="position">

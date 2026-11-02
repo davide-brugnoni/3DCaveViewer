@@ -788,6 +788,97 @@ h2 {
   color: var(--warning-color);
 }
 
+/* ===== Pubblicato / bozza ===== */
+.adm-badge-draft {
+  background: color-mix(in srgb, var(--warning-color) 22%, transparent);
+  color: var(--warning-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.adm-row-draft .adm-model-name {
+  color: var(--text-muted);
+}
+
+.adm-btn-publish {
+  color: var(--success-color);
+  border-color: color-mix(in srgb, var(--success-color) 55%, transparent);
+}
+
+.adm-btn-publish:hover {
+  background: color-mix(in srgb, var(--success-color) 15%, transparent);
+}
+
+.adm-segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--panel-bg-solid);
+}
+
+.adm-segmented a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adm-segmented a:hover {
+  color: var(--text-color);
+}
+
+.adm-segmented a.active {
+  background: color-mix(in srgb, var(--accent-color) 25%, transparent);
+  color: var(--text-color);
+}
+
+.adm-segmented .adm-count {
+  padding: 0 7px;
+  font-size: 0.75rem;
+}
+
+.adm-visibility {
+  gap: 8px;
+}
+
+.adm-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.adm-choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 400 !important;
+}
+
+.adm-choice input {
+  margin-top: 4px;
+  accent-color: var(--accent-color);
+}
+
+.adm-choice:has(input:checked) {
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+}
+
+.adm-choice .adm-hint {
+  margin-top: 2px;
+}
+
 /* ===== Storico ===== */
 .adm-filters {
   display: flex;
@@ -1021,6 +1112,11 @@ h2 {
   .adm-search {
     max-width: none;
     width: 100%;
+  }
+
+  .adm-segmented {
+    width: 100%;
+    overflow-x: auto;
   }
 
   .adm-card {

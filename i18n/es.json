@@ -51,6 +51,8 @@
   },
 
   "viewer": {
+    "draftPreview": "Vista previa de un borrador: este modelo no es visible para el p\u00fablico",
+    "draftBadge": "borrador",
     "searchModel": "Buscar modelo...",
     "noModelResults": "Ning\u00fan modelo encontrado",
     "fpEnterToast": "POV activo: joystick para moverte, arrastra para mirar alrededor, toca dos veces para dar un paso adelante",
@@ -548,7 +550,9 @@
       "accountSaved": "Perfil actualizado.",
       "loggedOut": "Has cerrado la sesi\u00f3n.",
       "sessionExpired": "La sesi\u00f3n ha caducado: inicia sesi\u00f3n de nuevo.",
-      "welcome": "Cuenta de administrador creada. \u00a1Bienvenido!"
+      "welcome": "Cuenta de administrador creada. \u00a1Bienvenido!",
+      "published": "\u00ab{name}\u00bb est\u00e1 publicado: ahora es visible en el sitio.",
+      "unpublished": "\u00ab{name}\u00bb ha vuelto a borrador: ya no es visible en el sitio."
     },
     "err": {
       "csrf": "Solicitud no v\u00e1lida o caducada: recarga la p\u00e1gina e int\u00e9ntalo de nuevo.",
@@ -612,7 +616,8 @@
       "rotX": "Rotaci\u00f3n X",
       "rotY": "Rotaci\u00f3n Y",
       "rotZ": "Rotaci\u00f3n Z",
-      "folder": "Carpeta"
+      "folder": "Carpeta",
+      "published": "Visibilidad"
     },
     "common": {
       "yes": "s\u00ed",
@@ -637,7 +642,9 @@
       "userPassword": "Contrase\u00f1a restablecida",
       "userDelete": "Usuario eliminado",
       "accountUpdate": "Perfil modificado",
-      "accountPassword": "Contrase\u00f1a cambiada"
+      "accountPassword": "Contrase\u00f1a cambiada",
+      "modelPublish": "Modelo publicado",
+      "modelUnpublish": "Modelo retirado (borrador)"
     },
     "problem": {
       "meta_missing": "faltan metadatos",
@@ -711,7 +718,8 @@
       "delete": "Eliminar modelo",
       "deleteHint": "El modelo desaparece del sitio y va a la papelera con todos sus archivos: se puede restaurar.",
       "deleteConfirm": "Para confirmar, escribe {folder}",
-      "deleteSubmit": "Mover a la papelera"
+      "deleteSubmit": "Mover a la papelera",
+      "preview": "Vista previa en el visor"
     },
     "new": {
       "title": "Nuevo modelo",
@@ -744,7 +752,16 @@
       "by": "por {name}",
       "edit": "Editar",
       "view": "Abrir",
-      "noMatch": "Ning\u00fan modelo coincide con la b\u00fasqueda."
+      "noMatch": "Ning\u00fan modelo coincide con la b\u00fasqueda.",
+      "filterAll": "Todos",
+      "filterPublished": "Publicados",
+      "filterDraft": "Borradores",
+      "emptyDraft": "No hay modelos en borrador.",
+      "emptyPublished": "No hay modelos publicados.",
+      "preview": "Vista previa",
+      "unpublishConfirm": "\u00bfRetirar \u00ab{name}\u00bb del sitio? Seguir\u00e1 guardado como borrador.",
+      "unpublish": "Retirar",
+      "publish": "Publicar"
     },
     "upload": {
       "uploading": "Subiendo el archivo 3D: {percent}% ({done} de {total})",
@@ -808,6 +825,13 @@
       "changePassword": "Cambiar contrase\u00f1a",
       "passwordHint": "D\u00e9jala vac\u00eda para no cambiarla. Las dem\u00e1s sesiones abiertas con esta cuenta se cerrar\u00e1n.",
       "currentPassword": "Contrase\u00f1a actual"
+    },
+    "visibility": {
+      "published": "Publicado",
+      "draft": "Borrador",
+      "draftHint": "Guardado pero no visible en el sitio",
+      "publishedHint": "Visible en el mapa, en la lista y en el visor.",
+      "draftHintLong": "Guardado con todos sus archivos pero oculto al p\u00fablico: solo lo ves desde el panel, en vista previa. Publ\u00edcalo cuando est\u00e9 listo."
     }
   }
 }

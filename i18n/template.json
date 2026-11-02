@@ -47,6 +47,8 @@
     "retry": ""
   },
   "viewer": {
+    "draftPreview": "",
+    "draftBadge": "",
     "defaultTitle": "",
     "defaultDescription": "",
     "loadingModel": "",
@@ -529,7 +531,9 @@
       "accountSaved": "",
       "loggedOut": "",
       "sessionExpired": "",
-      "welcome": ""
+      "welcome": "",
+      "published": "",
+      "unpublished": ""
     },
     "err": {
       "csrf": "",
@@ -593,7 +597,8 @@
       "rotX": "",
       "rotY": "",
       "rotZ": "",
-      "folder": ""
+      "folder": "",
+      "published": ""
     },
     "common": {
       "yes": "",
@@ -618,7 +623,9 @@
       "userPassword": "",
       "userDelete": "",
       "accountUpdate": "",
-      "accountPassword": ""
+      "accountPassword": "",
+      "modelPublish": "",
+      "modelUnpublish": ""
     },
     "problem": {
       "meta_missing": "",
@@ -692,7 +699,8 @@
       "delete": "",
       "deleteHint": "",
       "deleteConfirm": "",
-      "deleteSubmit": ""
+      "deleteSubmit": "",
+      "preview": ""
     },
     "new": {
       "title": "",
@@ -725,7 +733,16 @@
       "by": "",
       "edit": "",
       "view": "",
-      "noMatch": ""
+      "noMatch": "",
+      "filterAll": "",
+      "filterPublished": "",
+      "filterDraft": "",
+      "emptyDraft": "",
+      "emptyPublished": "",
+      "preview": "",
+      "unpublishConfirm": "",
+      "unpublish": "",
+      "publish": ""
     },
     "upload": {
       "uploading": "",
@@ -789,6 +806,13 @@
       "changePassword": "",
       "passwordHint": "",
       "currentPassword": ""
+    },
+    "visibility": {
+      "published": "",
+      "draft": "",
+      "draftHint": "",
+      "publishedHint": "",
+      "draftHintLong": ""
     }
   }
 }

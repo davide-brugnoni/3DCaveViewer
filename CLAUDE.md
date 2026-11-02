@@ -501,6 +501,25 @@ unsaved changes asks for confirmation. Leaflet is created inside a possibly
 hidden panel, so the map listens for `adm:tabshown` and calls
 `invalidateSize()`.
 
+Drafts: `"published": false` in a model's JSON (absent ⇒ published, so
+hand-written metadata keeps working) hides it from the public while its
+files stay in `modelli/`. `isModelPublished()` / `draftModelFolders()` in
+`config.php` are the single check, applied by `api/catalogo.php`,
+`api/catalogo_assets.php` (no offline download), `sitemap.php`,
+`generate_social_preview.php`, `save_social_preview.php` and `viewer.php`,
+where a draft is treated as missing (no title/description in the meta
+tags, no preload). The exception is `viewer.php?m=<folder>&preview=1`: when
+an admin-panel session cookie is present it opens that session, and for a
+user allowed `models.edit` it passes the metadata in `data-preview-model`
+on `<body>` (the public, cached catalog never lists drafts); `viewer.js`
+(`readPreviewModel()`) appends it to `modelsData` with a "· bozza" name
+suffix and a toast, and skips `autoGenerateSocialPreview()`. The panel sets
+the flag from the Informazioni tab (`published` radio, part of the
+three-way merge) or with the list's Pubblica/Ritira buttons
+(`action=model_publish`, logged as `model.publish`/`model.unpublish`); the
+list filters by `?s=published|draft`. The files of a draft are still
+reachable by anyone who knows their exact URL: hidden, not secret.
+
 Large files: `js/admin.js` uploads the file to `api/admin_upload.php` in raw
 chunks (`adminChunkSize()`, below `post_max_size`, halved on HTTP 413),
 resumable via the `offset`/409 protocol, then submits the form with only
@@ -692,7 +711,8 @@ values — no brand name is hardcoded in app code.
    }
    ```
    `name` is required; `folder` is overwritten with the real folder name by
-   `api/catalogo.php`, `rotation` is optional.
+   `api/catalogo.php`, `rotation` is optional. `"published": false` makes it
+   a draft, hidden from the site (see the admin panel section).
 4. Optionally add social preview: `modelli/[model_name]/[model_name]_social.jpg`
 5. Nothing else: the cache is rebuilt when a metadata file is newer than it or
    the folder list changes (`catalogo.cache.hash`). Deleting

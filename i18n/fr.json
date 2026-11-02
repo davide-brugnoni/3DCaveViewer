@@ -51,6 +51,8 @@
   },
 
   "viewer": {
+    "draftPreview": "Aper\u00e7u d'un brouillon : ce mod\u00e8le n'est pas visible par le public",
+    "draftBadge": "brouillon",
     "searchModel": "Rechercher un mod\u00e8le...",
     "noModelResults": "Aucun mod\u00e8le trouv\u00e9",
     "fpEnterToast": "POV actif : joystick pour vous d\u00e9placer, faites glisser pour regarder autour, touchez deux fois pour avancer d'un pas",
@@ -548,7 +550,9 @@
       "accountSaved": "Profil mis \u00e0 jour.",
       "loggedOut": "Vous \u00eates d\u00e9connect\u00e9.",
       "sessionExpired": "La session a expir\u00e9 : reconnectez-vous.",
-      "welcome": "Compte administrateur cr\u00e9\u00e9. Bienvenue !"
+      "welcome": "Compte administrateur cr\u00e9\u00e9. Bienvenue !",
+      "published": "\u00ab {name} \u00bb est publi\u00e9 : il est maintenant visible sur le site.",
+      "unpublished": "\u00ab {name} \u00bb est repass\u00e9 en brouillon : il n'est plus visible sur le site."
     },
     "err": {
       "csrf": "Requ\u00eate invalide ou expir\u00e9e : rechargez la page et r\u00e9essayez.",
@@ -612,7 +616,8 @@
       "rotX": "Rotation X",
       "rotY": "Rotation Y",
       "rotZ": "Rotation Z",
-      "folder": "Dossier"
+      "folder": "Dossier",
+      "published": "Visibilit\u00e9"
     },
     "common": {
       "yes": "oui",
@@ -637,7 +642,9 @@
       "userPassword": "Mot de passe r\u00e9initialis\u00e9",
       "userDelete": "Utilisateur supprim\u00e9",
       "accountUpdate": "Profil modifi\u00e9",
-      "accountPassword": "Mot de passe modifi\u00e9"
+      "accountPassword": "Mot de passe modifi\u00e9",
+      "modelPublish": "Mod\u00e8le publi\u00e9",
+      "modelUnpublish": "Mod\u00e8le retir\u00e9 (brouillon)"
     },
     "problem": {
       "meta_missing": "m\u00e9tadonn\u00e9es manquantes",
@@ -711,7 +718,8 @@
       "delete": "Supprimer le mod\u00e8le",
       "deleteHint": "Le mod\u00e8le dispara\u00eet du site et va dans la corbeille avec tous ses fichiers : il peut \u00eatre restaur\u00e9.",
       "deleteConfirm": "Pour confirmer, saisissez {folder}",
-      "deleteSubmit": "Placer dans la corbeille"
+      "deleteSubmit": "Placer dans la corbeille",
+      "preview": "Aper\u00e7u dans la visionneuse"
     },
     "new": {
       "title": "Nouveau mod\u00e8le",
@@ -744,7 +752,16 @@
       "by": "par {name}",
       "edit": "Modifier",
       "view": "Ouvrir",
-      "noMatch": "Aucun mod\u00e8le ne correspond \u00e0 la recherche."
+      "noMatch": "Aucun mod\u00e8le ne correspond \u00e0 la recherche.",
+      "filterAll": "Tous",
+      "filterPublished": "Publi\u00e9s",
+      "filterDraft": "Brouillons",
+      "emptyDraft": "Aucun mod\u00e8le en brouillon.",
+      "emptyPublished": "Aucun mod\u00e8le publi\u00e9.",
+      "preview": "Aper\u00e7u",
+      "unpublishConfirm": "Retirer \u00ab {name} \u00bb du site ? Il restera enregistr\u00e9 en brouillon.",
+      "unpublish": "Retirer",
+      "publish": "Publier"
     },
     "upload": {
       "uploading": "Chargement du fichier 3D : {percent} % ({done} sur {total})",
@@ -808,6 +825,13 @@
       "changePassword": "Changer le mot de passe",
       "passwordHint": "Laissez vide pour le conserver. Les autres sessions ouvertes avec ce compte seront ferm\u00e9es.",
       "currentPassword": "Mot de passe actuel"
+    },
+    "visibility": {
+      "published": "Publi\u00e9",
+      "draft": "Brouillon",
+      "draftHint": "Enregistr\u00e9 mais non visible sur le site",
+      "publishedHint": "Visible sur la carte, dans la liste et dans la visionneuse.",
+      "draftHintLong": "Enregistr\u00e9 avec tous ses fichiers mais cach\u00e9 au public : vous ne le voyez que depuis le panneau, en aper\u00e7u. Publiez-le quand il est pr\u00eat."
     }
   }
 }
