@@ -1032,6 +1032,8 @@ function adminSaveModelMeta(string $folder, array $meta): bool {
     }
     $ok = adminAtomicWrite(adminModelsDir() . '/' . $folder . '/' . $folder . '.json', $json . "\n");
     if ($ok) {
+        // Bozza: file chiusi al web subito, senza aspettare il catalogo
+        syncDraftProtection(adminModelsDir() . '/' . $folder, !isModelPublished($meta));
         adminInvalidateCatalog();
     }
     return $ok;
@@ -1574,6 +1576,10 @@ function adminTrashRestore(string $id, string $username): array {
             return ['ok' => false, 'error' => 'write_failed', 'item' => $item];
         }
         @unlink($source . '.php');
+        $restored = adminLoadModel($folder);
+        if ($restored !== null && $restored['valid']) {
+            syncDraftProtection($target, !isModelPublished($restored['meta']));
+        }
         adminInvalidateCatalog();
         return ['ok' => true, 'error' => '', 'item' => $item];
     }

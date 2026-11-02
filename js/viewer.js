@@ -2947,7 +2947,10 @@ const manager = new THREE.LoadingManager();
         resetLoaderWatchdog();
         // URL assoluto: è la forma con cui il service worker vede la richiesta,
         // e i messaggi MODEL_LOAD_* devono parlare della stessa chiave
-        downloadAndParseGltf(new URL(basePath + modelInfo.file, document.baseURI).href, basePath, modelInfo, loadSeq);
+        // fileUrl: anteprima di una bozza, servita da api/admin_model.php
+        // perché la sua cartella non è raggiungibile dal web
+        const fileUrl = modelInfo.fileUrl || (basePath + modelInfo.file);
+        downloadAndParseGltf(new URL(fileUrl, document.baseURI).href, basePath, modelInfo, loadSeq);
         return;
       }
 

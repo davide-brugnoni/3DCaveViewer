@@ -71,7 +71,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 ├── api/
 │   ├── catalogo.php            # API endpoint: returns model list as JSON
 │   ├── catalogo_assets.php     # API endpoint: model asset URLs (for PWA caching)
-│   └── admin_upload.php        # Chunked 3D-file upload for the admin panel
+│   ├── admin_upload.php        # Chunked 3D-file upload for the admin panel
+│   └── admin_model.php         # Serves draft model files to panel users (preview)
 │
 ├── custom/                     # 🔒 User customizations — NEVER touched by an update
 │   ├── README.md                   # Tracked, explains the folder to deployers (Italian)
@@ -517,8 +518,25 @@ suffix and a toast, and skips `autoGenerateSocialPreview()`. The panel sets
 the flag from the Informazioni tab (`published` radio, part of the
 three-way merge) or with the list's Pubblica/Ritira buttons
 (`action=model_publish`, logged as `model.publish`/`model.unpublish`); the
-list filters by `?s=published|draft`. The files of a draft are still
-reachable by anyone who knows their exact URL: hidden, not secret.
+list filters by `?s=published|draft`.
+
+A draft's files are also **locked**: `syncDraftProtection()` (`config.php`)
+writes `DRAFT_HTACCESS` (`Require all denied`, first line a signature
+comment) into the model folder, so its GLB, JSON and images answer 403, and
+removes it on publish (only a file carrying the signature; a user's own
+`.htaccess` gets the rule appended/removed instead). It runs after every
+`adminSaveModelMeta()`, after a trash restore, inside `draftModelFolders()`
+and in `api/catalogo.php`'s loop — the latter also catches a
+`"published": false` written by hand over FTP on the next catalog request.
+Since the folder is closed, the preview cannot read it directly:
+`viewer.php` adds `fileUrl` (`api/admin_model.php?m=…&f=…`) to
+`data-preview-model`, `viewer.js` loads that instead of `basePath + file`,
+and the panel's social thumbnail of a draft uses the same endpoint. The
+endpoint requires a session allowed `models.edit`, serves only plain file
+names with a whitelisted extension (glb/gltf/jpg/jpeg/png/webp) inside the
+model folder, `Cache-Control: private, no-store`, and closes the session
+before streaming. On servers that ignore `.htaccess` (nginx) a draft is
+hidden but its files stay reachable by exact URL.
 
 Large files: `js/admin.js` uploads the file to `api/admin_upload.php` in raw
 chunks (`adminChunkSize()`, below `post_max_size`, halved on HTTP 413),
@@ -900,6 +918,7 @@ The `.htaccess` enforces:
   dotfile such as `.git`, `.env`, `custom/.installed` — `.well-known/` excepted)
 - `custom/admin/` denied by its own `.htaccess` (written by `adminEnsureDir()`;
   its data files are additionally PHP-guarded)
+- Draft model folders denied by a generated `.htaccess` (`syncDraftProtection()`)
 - Security headers (fallback; PHP's `sendSecurityHeaders()` sets the CSP):
   `X-Frame-Options` (`setifempty`), `X-Content-Type-Options`,
   `Referrer-Policy`, `Permissions-Policy`, HSTS on HTTPS

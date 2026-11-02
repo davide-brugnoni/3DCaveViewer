@@ -1278,7 +1278,11 @@ $langMeta = getLanguagesMeta();
         <h2 class="adm-panel-title"><?= e(at('edit.social', 'Anteprima social')); ?></h2>
         <?php if (!$isNew && is_file($socialPath)): ?>
         <figure class="adm-social">
-          <img src="<?= e($modelsUrl . '/' . rawurlencode($folder) . '/' . rawurlencode($folder . '_social.jpg') . '?v=' . (int) filemtime($socialPath)); ?>" alt="" loading="lazy" />
+          <?php // Bozza: cartella chiusa al web, l'immagine passa dal pannello
+          $socialUrl = $isPublished
+              ? $modelsUrl . '/' . rawurlencode($folder) . '/' . rawurlencode($folder . '_social.jpg') . '?v=' . (int) filemtime($socialPath)
+              : 'api/admin_model.php?m=' . rawurlencode($folder) . '&f=' . rawurlencode($folder . '_social.jpg') . '&v=' . (int) filemtime($socialPath); ?>
+          <img src="<?= e($socialUrl); ?>" alt="" loading="lazy" />
           <figcaption>
             <label class="adm-check"><input type="checkbox" name="social_delete" value="1" /> <?= e(at('edit.socialDelete', 'Elimina (il visualizzatore ne genera una nuova alla prossima visita)')); ?></label>
           </figcaption>

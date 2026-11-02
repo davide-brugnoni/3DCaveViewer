@@ -93,6 +93,9 @@ if (is_array($modelData) && !isModelPublished($modelData)) {
         if (!isset($previewModel['file']) || !is_string($previewModel['file']) || $previewModel['file'] === '') {
             $previewModel['file'] = $modelFolder . '.glb';
         }
+        // La cartella della bozza è chiusa al web: il file arriva dal pannello
+        $previewModel['fileUrl'] = 'api/admin_model.php?m=' . rawurlencode($modelFolder)
+            . '&f=' . rawurlencode(basename((string) $previewModel['file']));
         header('Cache-Control: no-store, private');
         header('X-Robots-Tag: noindex, nofollow');
     } else {

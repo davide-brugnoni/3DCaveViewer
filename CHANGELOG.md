@@ -35,7 +35,10 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
     (`"published": false` nei metadati). Resta in `modelli/` ma catalogo,
     mappa, visualizzatore, sitemap, anteprime social e download offline lo
     ignorano; dal pannello si apre in anteprima (`viewer.php?…&preview=1`,
-    solo con una sessione del pannello) e si pubblica o ritira con un clic
+    solo con una sessione del pannello) e si pubblica o ritira con un clic.
+    I file di una bozza sono bloccati da un `.htaccess` generato nella sua
+    cartella (403 anche a chi conosce l'indirizzo esatto, su Apache) e
+    l'anteprima li riceve da `api/admin_model.php`
   - dati in `custom/admin/` (escluso da git, mai toccato dagli aggiornamenti)
 
 ### Modificato

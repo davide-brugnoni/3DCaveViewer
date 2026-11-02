@@ -93,8 +93,12 @@ foreach ($iterator as $item) {
         continue;
     }
 
-    // Bozze ("published": false): presenti su disco, invisibili sul sito
-    if (!isModelPublished($metadata)) {
+    // Bozze ("published": false): presenti su disco, invisibili sul sito e
+    // con i file bloccati dal web. La protezione si riallinea qui a ogni
+    // passaggio, così vale anche per un JSON modificato a mano via FTP.
+    $isDraft = !isModelPublished($metadata);
+    syncDraftProtection($baseDir . DIRECTORY_SEPARATOR . $folder, $isDraft);
+    if ($isDraft) {
         continue;
     }
 

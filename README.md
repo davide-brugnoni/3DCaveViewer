@@ -379,7 +379,8 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 ├── 🔌 api/
 │   ├── catalogo.php               # API catalogo modelli (JSON)
 │   ├── catalogo_assets.php        # API assets/risorse dei modelli
-│   └── admin_upload.php           # Caricamento a blocchi dei file 3D (pannello)
+│   ├── admin_upload.php           # Caricamento a blocchi dei file 3D (pannello)
+│   └── admin_model.php            # File delle bozze per l'anteprima (solo pannello)
 │
 ├── 🔒 custom/                      # Personalizzazioni — MAI toccata da un aggiornamento
 │   ├── README.md                  # Spiegazione dei quattro file (tracciato)
@@ -801,8 +802,13 @@ incollare o scegliere il file salvato.
   chi apre il suo indirizzo trova «modello non esistente». Dal pannello la
   vedi in **anteprima** nel visualizzatore; quando è pronta la pubblichi
   con un clic (pulsanti **Pubblica / Ritira** nell'elenco, filtrabile per
-  Tutti / Pubblicati / Bozze). Nascosta non vuol dire segreta: chi conosce
-  l'indirizzo esatto del file `.glb` può comunque scaricarlo.
+  Tutti / Pubblicati / Bozze). I file di una bozza sono anche **bloccati**:
+  il pannello scrive nella sua cartella un `.htaccess` che nega l'accesso,
+  quindi nemmeno chi conosce l'indirizzo esatto del `.glb` può scaricarlo
+  (risposta 403); alla pubblicazione il blocco si toglie da solo.
+  L'anteprima passa dal pannello, solo per chi ha fatto l'accesso.
+  Il blocco richiede Apache (`.htaccess` attivo, come per il resto del
+  sito): su nginx la bozza resta nascosta ma i file restano scaricabili.
 - **File grandi**: il file 3D viene inviato a blocchi, quindi un GLB da
   centinaia di MB passa anche se il server accetta upload da 2-8 MB. Senza
   JavaScript resta il caricamento classico, entro `upload_max_filesize`.
@@ -873,7 +879,7 @@ Il file JSON deve chiamarsi come la cartella (`modelli/nuova_cavita/nuova_cavita
 | `description` | — | Testo nel popup della mappa, nelle informazioni del modello e nelle anteprime social |
 | `rotation` | — | `x`/`y`/`z` in gradi: corregge l'orientamento di modelli esportati con convenzione Z-up (es. CloudCompare) invece di Y-up come Three.js |
 | `folder` | — | Ignorato: viene sempre preso dal nome della cartella |
-| `published` | — | `false` = **bozza**: il modello resta nella cartella ma non compare da nessuna parte sul sito (mappa, elenco, visualizzatore, sitemap, download offline). Senza il campo è pubblicato |
+| `published` | — | `false` = **bozza**: il modello resta nella cartella ma non compare da nessuna parte sul sito (mappa, elenco, visualizzatore, sitemap, download offline) e i suoi file vengono bloccati con un `.htaccess` generato in automatico. Senza il campo è pubblicato |
 
 > 🧱 **Modelli OBJ (legacy)**: indica i file con i campi `obj` e `mtl`
 > (es. `"obj": "grotta.obj", "mtl": "grotta.mtl"`) e metti in `file` il nome
