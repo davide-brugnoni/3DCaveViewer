@@ -5,36 +5,6 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 [Semantic Versioning](https://semver.org/lang/it/). La versione in uso è
 `APP_VERSION` in `config.php`, mostrata in fondo a `status.php`.
 
-## [Non rilasciato]
-
-### Aggiunto
-- `EXE_GLB_OPTIMIZER/`: il GLB Optimizer come programma per Windows, con
-  installazione guidata in italiano (a cosa serve, cosa viene installato,
-  requisiti; per l'utente corrente, senza permessi di amministratore) e una
-  finestra propria. Include il proprio Node.js: non serve installare nulla.
-  L'installer è compilato dal workflow GitHub `glb-optimizer-windows.yml`.
-- `glb-optimizer/`: variabile `HOST` per scegliere l'indirizzo di ascolto
-  (`127.0.0.1` = raggiungibile solo dal computer stesso).
-- `EXE_GLB_OPTIMIZER/scripts/smoke-test.mjs` (`npm test`): ottimizza GLB con
-  texture di molti tipi usando il programma impacchettato; il workflow lo
-  esegue su Windows prima di creare l'installer.
-
-### Corretto
-- `glb-optimizer/`: una texture che sharp/libvips non riesce a ricomprimere
-  (es. "colourspace: parameter space not set" su Windows) faceva fallire
-  l'intero file. Ora ogni texture è elaborata a sé: quella problematica resta
-  com'era, il resto del modello viene ottimizzato, l'interfaccia mostra un
-  avviso e il registro descrive l'immagine (formato, spazio colore, canali,
-  profilo ICC).
-
-### Corretto
-- Modelli compressi Draco che non si aprivano offline (o con il server che
-  risponde 503) anche con tutti i file scaricati: il service worker metteva
-  in cache il decoder da `libs/draco/gltf/`, mentre il viewer lo carica da
-  `libs/draco/`.
-- Una pagina (es. `viewer.php?m=…`) a cui il server risponde con un errore
-  5xx viene servita dalla copia in cache invece di mostrare l'errore.
-
 ## [1.1.0] — 2026-11-02 — pannello di amministrazione
 
 I modelli si gestiscono dal browser: caricamento, modifica, orientamento,
@@ -94,6 +64,20 @@ amministratore aprendo `admin.php` con la chiave di `custom/.installed`.
   download completo dei modelli e, per chi ha in cache solo quelli aperti
   nel visualizzatore, quando una pagina chiede il catalogo (al massimo ogni
   10 minuti); un elenco vuoto non cancella nulla
+- `EXE_GLB_OPTIMIZER/`: il GLB Optimizer come programma per Windows, con
+  installazione guidata in italiano (a cosa serve, cosa viene installato,
+  requisiti; per l'utente corrente, senza permessi di amministratore) e una
+  finestra propria. Include il proprio Node.js: non serve installare nulla.
+  L'installer è compilato dal workflow GitHub `glb-optimizer-windows.yml`.
+  **In anteprima**: è ancora in lavorazione e su alcuni computer potrebbe
+  non funzionare. L'eseguibile non è ancora firmato digitalmente (la firma
+  è stata richiesta), quindi Windows SmartScreen può segnalarlo come
+  «editore sconosciuto».
+- `glb-optimizer/`: variabile `HOST` per scegliere l'indirizzo di ascolto
+  (`127.0.0.1` = raggiungibile solo dal computer stesso).
+- `EXE_GLB_OPTIMIZER/scripts/smoke-test.mjs` (`npm test`): ottimizza GLB con
+  texture di molti tipi usando il programma impacchettato; il workflow lo
+  esegue su Windows prima di creare l'installer.
 
 ### Modificato
 - Rotazione senza rollio, col mouse e col touch: il modello gira attorno
@@ -147,6 +131,18 @@ amministratore aprendo `admin.php` con la chiave di `custom/.installed`.
     riapertura il modello riparte con texture a risoluzione più bassa (con un
     avviso), e il livello che ha funzionato viene ricordato per quel modello
     su quel dispositivo per 30 giorni
+- `glb-optimizer/`: una texture che sharp/libvips non riesce a ricomprimere
+  (es. "colourspace: parameter space not set" su Windows) faceva fallire
+  l'intero file. Ora ogni texture è elaborata a sé: quella problematica resta
+  com'era, il resto del modello viene ottimizzato, l'interfaccia mostra un
+  avviso e il registro descrive l'immagine (formato, spazio colore, canali,
+  profilo ICC).
+- Modelli compressi Draco che non si aprivano offline (o con il server che
+  risponde 503) anche con tutti i file scaricati: il service worker metteva
+  in cache il decoder da `libs/draco/gltf/`, mentre il viewer lo carica da
+  `libs/draco/`.
+- Una pagina (es. `viewer.php?m=…`) a cui il server risponde con un errore
+  5xx viene servita dalla copia in cache invece di mostrare l'errore.
 
 ## [1.0.0] — 2026-10-29 — prima release pubblica
 

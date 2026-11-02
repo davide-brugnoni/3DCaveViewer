@@ -52,7 +52,7 @@
 | 📲 **Modelli grandi su mobile** | Download a copia singola e texture ridotte automaticamente su telefoni e tablet, per non far chiudere la scheda del browser |
 | 🧭 **Installazione guidata** | Al primo avvio un wizard configura nome, logo, colori, mappa e il primo amministratore, senza toccare file |
 | 🔐 **Pannello di Amministrazione** | Caricamento e modifica dei modelli dal browser (anche file da centinaia di MB), orientamento con anteprima 3D, bozze, cestino, storico delle modifiche e più utenti con ruoli |
-| 🛠️ **Ottimizzatore GLB Incluso** | Due strumenti (Node server e pagina browser-only) per comprimere i modelli, con supporto a file fino a 5 GB |
+| 🛠️ **Ottimizzatore GLB Incluso** | Tre strumenti (server Node, pagina browser-only e programma Windows in anteprima) per comprimere i modelli, con supporto a file fino a 5 GB |
 
 ---
 
@@ -79,6 +79,10 @@ file JSON scritti a mano per pubblicare una grotta.
 - 📴 **PWA offline al primo avvio**, anche subito dopo l'installazione
   sull'iPhone, e cache offline ripulita da sola dai modelli eliminati,
   sostituiti o tornati in bozza
+- 🪟 **GLB Optimizer per Windows** (in anteprima): l'ottimizzatore come
+  programma con installazione guidata, senza Node.js né terminale. È ancora
+  in lavorazione e non è ancora firmato digitalmente (firma richiesta), vedi
+  [Ottimizzatore GLB](#-exe_glb_optimizer--programma-per-windows)
 
 **Aggiornare dalla 1.0.0**: si sovrascrive il codice come sempre (vedi
 [Aggiornare all'ultima versione](#-aggiornare-allultima-versione)), poi si
@@ -1299,6 +1303,15 @@ una finestra propria dal menu Start. Non serve installare Node.js né usare
 il terminale. L'installer (`GLB-Optimizer-Setup-<versione>.exe`) viene
 compilato automaticamente da GitHub Actions; dettagli in
 [`EXE_GLB_OPTIMIZER/README.md`](EXE_GLB_OPTIMIZER/README.md).
+
+> ⚠️ **In anteprima.** Il programma è ancora in lavorazione: su alcuni
+> computer potrebbe non avviarsi o non convertire correttamente i file. In
+> quel caso usa `glb-optimizer/` o `glb-optimizer-static/`, e segnala il
+> problema indicando la versione di Windows e il messaggio d'errore.
+> L'eseguibile **non è ancora firmato digitalmente** (abbiamo richiesto il
+> certificato per autenticare il pacchetto): finché non lo è, Windows può
+> mostrare l'avviso SmartScreen «Windows ha protetto il PC». Per procedere
+> clicca **Ulteriori informazioni → Esegui comunque**.
 
 ### 💻 `glb-optimizer-static/` — Pagina HTML singola
 
