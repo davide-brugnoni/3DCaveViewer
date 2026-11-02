@@ -3561,6 +3561,12 @@
     #share-pane-embed > * {
       flex: none;
     }
+    /* display:flex vincerebbe sull'attributo hidden: senza questa regola la
+       scheda "Incorpora" resta visibile anche sotto "Link". */
+    #share-pane-social[hidden],
+    #share-pane-embed[hidden] {
+      display: none;
+    }
 
     .embed-hint {
       margin: 0;
