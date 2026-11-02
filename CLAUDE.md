@@ -119,6 +119,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   │   └── diagnostics.js      # GPU upload check + ?debug=1 overlay
 │   ├── setup.js                # Setup wizard UI (steps, colours, mini-map)
 │   ├── admin.js                # Admin panel UI (chunked upload, position map, filters)
+│   ├── admin-orientation.js    # Admin panel: 3D orientation preview (ES module, Three.js)
 │   ├── status.js               # Cache management UI (~1,700 lines)
 │   ├── pwa-register.js         # Service worker registration
 │   ├── pwa-service-worker.js   # Offline caching, versioning, background sync
@@ -494,7 +495,7 @@ trashes the current one. Stale form detection: the form carries `rev`
 `admin.php` does a three-way merge and flags fields changed by both users.
 
 The model page (`edit`/`new`) is split into tabs: Informazioni, Posizione,
-Orientamento, File 3D, Anteprima — panels (`[data-panel]`) of the **same**
+File 3D, Orientamento, Anteprima — panels (`[data-panel]`) of the **same**
 `<form>`, so one save covers all of them and the merge/upload logic is
 unchanged — plus Storico and Elimina, panels outside the form (the form is
 hidden while they are shown). The tab system lives in `js/admin.js`: the
@@ -508,6 +509,22 @@ event from a hidden tab opens it; edited tabs get a dot and leaving with
 unsaved changes asks for confirmation. Leaflet is created inside a possibly
 hidden panel, so the map listens for `adm:tabshown` and calls
 `invalidateSize()`.
+
+The Orientamento tab has a 3D preview, `js/admin-orientation.js` (an ES
+module, unlike the classic `admin.js`): the model on a horizontal grid placed
+under its lowest point, with world axes (X red, Y green = up, Z blue). It
+applies `rotX/Y/Z` exactly like `applyModelRotation()` in `viewer.js` (Euler
+XYZ in degrees) and only reads/writes those fields — dispatching `input` so
+`admin.js` marks the tab dirty — so saving, merge and history are untouched.
+The ±90° buttons rotate around **world** axes (quaternion premultiply, then
+back to Euler XYZ). It reuses `fetchBinaryModel()`/`parseGltfLean()` with
+low texture limits, creates the WebGL scene only when the tab enters the
+viewport (IntersectionObserver), loads files above `data-auto-bytes` (60 MB)
+only on request, and previews a file just picked in "File 3D" before it is
+uploaded. A draft's file comes through `api/admin_model.php`. The import map
+is inline, so `admin.php` allows it in the CSP by hash (`ADMIN_IMPORT_MAP`),
+plus `'wasm-unsafe-eval'`, `worker-src blob:` and `connect-src blob:` for
+Draco/KTX2 and embedded textures.
 
 Drafts: `"published": false` in a model's JSON (absent ⇒ published, so
 hand-written metadata keeps working) hides it from the public while its
