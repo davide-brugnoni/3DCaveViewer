@@ -925,7 +925,7 @@ $langMeta = getLanguagesMeta();
   <?php if ($page === 'edit' || $page === 'new'): ?>
   <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
   <?php endif; ?>
-  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="stylesheet" href="<?= e(assetUrl('css/admin.css')); ?>" />
 </head>
 <body class="adm-page-<?= e($page); ?>">
   <header class="adm-header">
@@ -1698,10 +1698,10 @@ $langMeta = getLanguagesMeta();
   <script src="lib/leaflet/leaflet.js"></script>
   <?php endif; ?>
   <script src="js/config.php"></script>
-  <script src="js/admin.js" defer></script>
+  <script src="<?= e(assetUrl('js/admin.js')); ?>" defer></script>
   <?php if ($page === 'edit' || $page === 'new'): ?>
   <script type="importmap"><?= ADMIN_IMPORT_MAP; ?></script>
-  <script type="module" src="js/admin-orientation.js"></script>
+  <script type="module" src="<?= e(assetUrl('js/admin-orientation.js')); ?>"></script>
   <?php endif; ?>
 </body>
 </html>
