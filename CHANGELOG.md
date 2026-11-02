@@ -58,6 +58,16 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   `viewer.mouseRotation = "trackball"` / `viewer.touchRotation = "trackball"`
 
 ### Corretto
+- Scheda Orientamento: il modello si apriva nel visualizzatore diverso da
+  come era stato sistemato nell'anteprima. Trascinare l'anteprima girava la
+  camera, che non viene salvata: si salvano solo i gradi di rotazione. Ora
+  nella vista «Visualizzatore» il trascinamento gira il modello (e scrive i
+  gradi), senza zoom, così ciò che si vede è ciò che si apre; le altre viste
+  sono dichiarate "di controllo, non salvata". Inoltre `api/catalogo.php`
+  era in cache nel browser fino a 6 minuti (`max-age=60,
+  stale-while-revalidate=300`): subito dopo un salvataggio il visualizzatore
+  usava ancora i valori vecchi. Ora è `no-cache` (sempre riconvalidato, di
+  norma con un 304 vuoto) e `If-None-Match` prevale sulla data
 - PWA installata senza rete: non partiva nulla, solo la pagina "offline".
   All'installazione il service worker non salvava le pagine PHP (`index.php`,
   `viewer.php`, `status.php`), `js/config.php` né il catalogo, e la prima
