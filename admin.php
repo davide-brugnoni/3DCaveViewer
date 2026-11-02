@@ -1149,8 +1149,8 @@ $langMeta = getLanguagesMeta();
     $tabs = [
         'info' => at('edit.info', 'Informazioni'),
         'position' => at('tab.position', 'Posizione'),
-        'orientation' => at('edit.orientation', 'Orientamento'),
         'file' => at('edit.modelFile', 'File 3D'),
+        'orientation' => at('edit.orientation', 'Orientamento'),
         'social' => at('tab.social', 'Anteprima'),
     ];
     if (!$isNew) {
@@ -1240,6 +1240,37 @@ $langMeta = getLanguagesMeta();
         </p>
       </section>
 
+      <section class="adm-tab-panel" id="tab-file" role="tabpanel" aria-labelledby="tab-btn-file" data-panel="file">
+        <h2 class="adm-panel-title"><?= e(at('edit.modelFile', 'File 3D')); ?></h2>
+        <?php if (!$isNew): ?>
+        <p class="adm-current">
+          <?php if (is_file($currentPath)): ?>
+          <strong><?= e($currentFile); ?></strong> · <?= e(adminFormatBytes((int) filesize($currentPath))); ?> · <?= e(adminDate((int) filemtime($currentPath))); ?>
+          <?php else: ?>
+          <span class="adm-badge adm-badge-warn"><?= e(at('problem.file_missing', 'file 3D mancante')); ?></span> <?= e($currentFile); ?>
+          <?php endif; ?>
+        </p>
+        <?php endif; ?>
+        <p class="adm-field<?= isset($errors['model_file']) ? ' adm-field-error' : ''; ?>">
+          <label for="f-model-file"><?= e($isNew ? at('edit.uploadFile', 'Carica il file (GLB)') : at('edit.replaceFile', 'Sostituisci con un nuovo file')); ?></label>
+          <input type="file" id="f-model-file" name="model_file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" <?= $isNew && $pendingUpload === '' ? 'required' : ''; ?> />
+          <?php if (isset($errors['model_file'])): ?>
+          <span class="adm-error-text"><?= e(adminMessage($errors['model_file'])); ?></span>
+          <?php endif; ?>
+          <?php if ($pendingMeta !== [] && is_file(adminDataPath('uploads/' . $pendingUpload . '.part'))): ?>
+          <span class="adm-hint adm-pending" id="adm-pending-upload"><?= e(at('edit.pendingUpload', 'Già caricato: {name} ({size}). Salva per usarlo, o scegli un altro file.', ['name' => (string) ($pendingMeta['name'] ?? ''), 'size' => adminFormatBytes((int) ($pendingMeta['size'] ?? 0))])); ?></span>
+          <?php endif; ?>
+          <span class="adm-hint"><?= e($isNew
+              ? at('edit.uploadHint', 'GLB consigliato, meglio se ottimizzato con il GLB Optimizer (Draco, texture JPEG/WebP). I file grandi vengono caricati a blocchi.')
+              : at('edit.replaceHint', 'Il file attuale non viene cancellato: finisce nel cestino, da dove un amministratore può ripristinarlo.')); ?></span>
+        </p>
+        <div class="adm-progress adm-hidden" id="adm-upload-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="adm-progress-bar"></div>
+          <span class="adm-progress-text"></span>
+          <button type="button" class="adm-link" id="adm-upload-cancel"><?= e(at('upload.cancel', 'Annulla')); ?></button>
+        </div>
+      </section>
+
       <section class="adm-tab-panel" id="tab-orientation" role="tabpanel" aria-labelledby="tab-btn-orientation" data-panel="orientation">
         <h2 class="adm-panel-title"><?= e(at('edit.orientation', 'Orientamento')); ?></h2>
         <div class="adm-row adm-row-3">
@@ -1305,37 +1336,6 @@ $langMeta = getLanguagesMeta();
             </p>
             <p class="adm-hint"><?= e(at('edit.orientHint', 'Gira il modello finché il pavimento della grotta è parallelo alla griglia e l\'alto è verso l\'alto, poi salva: i gradi vengono scritti nei campi qui sopra e usati dal visualizzatore. Trascina per girare la vista (non il modello), rotella per lo zoom. I pulsanti ruotano attorno agli assi del mondo: rosso X, verde Y (verticale), blu Z.')); ?></p>
           </div>
-        </div>
-      </section>
-
-      <section class="adm-tab-panel" id="tab-file" role="tabpanel" aria-labelledby="tab-btn-file" data-panel="file">
-        <h2 class="adm-panel-title"><?= e(at('edit.modelFile', 'File 3D')); ?></h2>
-        <?php if (!$isNew): ?>
-        <p class="adm-current">
-          <?php if (is_file($currentPath)): ?>
-          <strong><?= e($currentFile); ?></strong> · <?= e(adminFormatBytes((int) filesize($currentPath))); ?> · <?= e(adminDate((int) filemtime($currentPath))); ?>
-          <?php else: ?>
-          <span class="adm-badge adm-badge-warn"><?= e(at('problem.file_missing', 'file 3D mancante')); ?></span> <?= e($currentFile); ?>
-          <?php endif; ?>
-        </p>
-        <?php endif; ?>
-        <p class="adm-field<?= isset($errors['model_file']) ? ' adm-field-error' : ''; ?>">
-          <label for="f-model-file"><?= e($isNew ? at('edit.uploadFile', 'Carica il file (GLB)') : at('edit.replaceFile', 'Sostituisci con un nuovo file')); ?></label>
-          <input type="file" id="f-model-file" name="model_file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" <?= $isNew && $pendingUpload === '' ? 'required' : ''; ?> />
-          <?php if (isset($errors['model_file'])): ?>
-          <span class="adm-error-text"><?= e(adminMessage($errors['model_file'])); ?></span>
-          <?php endif; ?>
-          <?php if ($pendingMeta !== [] && is_file(adminDataPath('uploads/' . $pendingUpload . '.part'))): ?>
-          <span class="adm-hint adm-pending" id="adm-pending-upload"><?= e(at('edit.pendingUpload', 'Già caricato: {name} ({size}). Salva per usarlo, o scegli un altro file.', ['name' => (string) ($pendingMeta['name'] ?? ''), 'size' => adminFormatBytes((int) ($pendingMeta['size'] ?? 0))])); ?></span>
-          <?php endif; ?>
-          <span class="adm-hint"><?= e($isNew
-              ? at('edit.uploadHint', 'GLB consigliato, meglio se ottimizzato con il GLB Optimizer (Draco, texture JPEG/WebP). I file grandi vengono caricati a blocchi.')
-              : at('edit.replaceHint', 'Il file attuale non viene cancellato: finisce nel cestino, da dove un amministratore può ripristinarlo.')); ?></span>
-        </p>
-        <div class="adm-progress adm-hidden" id="adm-upload-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div class="adm-progress-bar"></div>
-          <span class="adm-progress-text"></span>
-          <button type="button" class="adm-link" id="adm-upload-cancel"><?= e(at('upload.cancel', 'Annulla')); ?></button>
         </div>
       </section>
 

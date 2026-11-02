@@ -495,7 +495,7 @@ trashes the current one. Stale form detection: the form carries `rev`
 `admin.php` does a three-way merge and flags fields changed by both users.
 
 The model page (`edit`/`new`) is split into tabs: Informazioni, Posizione,
-Orientamento, File 3D, Anteprima — panels (`[data-panel]`) of the **same**
+File 3D, Orientamento, Anteprima — panels (`[data-panel]`) of the **same**
 `<form>`, so one save covers all of them and the merge/upload logic is
 unchanged — plus Storico and Elimina, panels outside the form (the form is
 hidden while they are shown). The tab system lives in `js/admin.js`: the

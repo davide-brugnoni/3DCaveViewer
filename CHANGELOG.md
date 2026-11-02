@@ -30,7 +30,7 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
     i campi toccati da uno solo si uniscono, quelli toccati da entrambi
     vengono segnalati invece di sovrascriversi in silenzio
   - pagina del modello divisa in schede (Informazioni, Posizione,
-    Orientamento, File 3D, Anteprima, Storico, Elimina) con un solo
+    File 3D, Orientamento, Anteprima, Storico, Elimina) con un solo
     salvataggio per tutte: la scheda con un errore si apre da sola, quelle
     modificate e non salvate sono segnalate, e dopo il salvataggio si
     torna alla scheda in cui si era
