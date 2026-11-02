@@ -1,7 +1,7 @@
 {
   "name": "glb-optimizer-desktop",
   "productName": "GLB Optimizer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "GLB Optimizer di 3DCaveViewer come applicazione Windows con finestra propria",
   "author": "Davide Brugnoni",
   "license": "GPL-3.0-only",

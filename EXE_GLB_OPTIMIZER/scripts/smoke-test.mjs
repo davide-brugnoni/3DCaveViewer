@@ -47,7 +47,8 @@ async function textures() {
   };
 }
 
-async function buildGlb(name, mimeType, image) {
+// Un GLB con una o più texture, ognuna su un proprio materiale.
+async function buildGlb(name, mimeType, image, extra = []) {
   const doc = new Document();
   const buffer = doc.createBuffer();
   const pos = doc.createAccessor().setType('VEC3').setBuffer(buffer)
@@ -58,7 +59,13 @@ async function buildGlb(name, mimeType, image) {
     .setURI(`${name}.${mimeType === 'image/png' ? 'png' : 'jpg'}`);
   const material = doc.createMaterial().setBaseColorTexture(texture);
   const prim = doc.createPrimitive().setAttribute('POSITION', pos).setAttribute('TEXCOORD_0', uv).setMaterial(material);
-  doc.createScene().addChild(doc.createNode().setMesh(doc.createMesh().addPrimitive(prim)));
+  const mesh = doc.createMesh().addPrimitive(prim);
+  for (const [i, [mime, img]] of extra.entries()) {
+    const tex = doc.createTexture(`${name}-${i}`).setMimeType(mime).setImage(img).setURI(`${name}-${i}.jpg`);
+    mesh.addPrimitive(doc.createPrimitive().setAttribute('POSITION', pos).setAttribute('TEXCOORD_0', uv)
+      .setMaterial(doc.createMaterial().setBaseColorTexture(tex)));
+  }
+  doc.createScene().addChild(doc.createNode().setMesh(mesh));
   return new NodeIO().writeBinary(doc);
 }
 
@@ -91,8 +98,15 @@ try {
     { texture: 'jpeg', textureMaxSize: '4096' },
     { texture: 'same', textureMaxSize: '2048' },
   ];
-  for (const [name, [mime, image]] of Object.entries(await textures())) {
-    const glb = await buildGlb(name, mime, image);
+  const all = await textures();
+  // Una texture che libvips non sa leggere accanto a una buona: il file deve
+  // uscire lo stesso, con la buona ricompressa e un avviso per l'altra.
+  const cases = Object.entries(all).map(([name, [mime, image]]) => [name, mime, image, [], 0]);
+  // (intestazione valida, dati troncati: le dimensioni si leggono, i pixel no).
+  const truncated = all['jpeg-big'][1].subarray(0, Math.floor(all['jpeg-big'][1].length * 0.4));
+  cases.push(['mixed-broken', ...all['jpeg-rgb'], [['image/jpeg', truncated]], 1]);
+  for (const [name, mime, image, extra, expectedWarnings] of cases) {
+    const glb = await buildGlb(name, mime, image, extra);
     for (const mode of modes) {
       const fd = new FormData();
       fd.append('file', new Blob([glb]), `${name}.glb`);
@@ -100,14 +114,16 @@ try {
         dedup: 'true', prune: 'true', textureQuality: '80', ...mode })) fd.append(k, v);
       const res = await fetch(`${url}/optimize`, { method: 'POST', body: fd });
       const body = Buffer.from(await res.arrayBuffer());
-      const ok = res.ok && body.subarray(0, 4).toString('latin1') === 'glTF';
+      const warnings = decodeURIComponent(res.headers.get('X-Warnings') || '').split('\n').filter(Boolean);
+      const ok = res.ok && body.subarray(0, 4).toString('latin1') === 'glTF' && warnings.length === expectedWarnings;
       const label = `${name.padEnd(15)} → ${mode.texture.padEnd(4)} max ${mode.textureMaxSize}`;
       if (ok) {
-        console.log(`  ok    ${label}`);
+        console.log(`  ok    ${label}${warnings.length ? ` (avviso atteso: ${warnings[0]})` : ''}`);
       } else {
         failures++;
         let msg = body.toString('utf8');
         try { msg = JSON.parse(msg).error; } catch { /* non JSON */ }
+        if (res.ok) msg = `avvisi ${warnings.length}, attesi ${expectedWarnings}: ${warnings.join(' | ')}`;
         console.log(`  ERR   ${label}: HTTP ${res.status} ${msg}`);
       }
     }

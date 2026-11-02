@@ -15,6 +15,17 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   L'installer è compilato dal workflow GitHub `glb-optimizer-windows.yml`.
 - `glb-optimizer/`: variabile `HOST` per scegliere l'indirizzo di ascolto
   (`127.0.0.1` = raggiungibile solo dal computer stesso).
+- `EXE_GLB_OPTIMIZER/scripts/smoke-test.mjs` (`npm test`): ottimizza GLB con
+  texture di molti tipi usando il programma impacchettato; il workflow lo
+  esegue su Windows prima di creare l'installer.
+
+### Corretto
+- `glb-optimizer/`: una texture che sharp/libvips non riesce a ricomprimere
+  (es. "colourspace: parameter space not set" su Windows) faceva fallire
+  l'intero file. Ora ogni texture è elaborata a sé: quella problematica resta
+  com'era, il resto del modello viene ottimizzato, l'interfaccia mostra un
+  avviso e il registro descrive l'immagine (formato, spazio colore, canali,
+  profilo ICC).
 
 ## [1.1.0] — 2026-11-02 — pannello di amministrazione
 
