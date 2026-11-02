@@ -1312,10 +1312,11 @@ $langMeta = getLanguagesMeta();
               <button type="button" class="adm-btn adm-btn-small" id="adm-orient-load" hidden><?= e(at('edit.orientLoad', 'Carica l\'anteprima 3D')); ?></button>
             </div>
             <div class="adm-orient-views" role="group" aria-label="<?= e(at('edit.orientViews', 'Punto di vista')); ?>">
-              <button type="button" class="adm-btn adm-btn-small" data-orient-view="iso"><?= e(at('edit.orientViewIso', '3D')); ?></button>
-              <button type="button" class="adm-btn adm-btn-small" data-orient-view="front"><?= e(at('edit.orientViewFront', 'Fronte')); ?></button>
-              <button type="button" class="adm-btn adm-btn-small" data-orient-view="side"><?= e(at('edit.orientViewSide', 'Lato')); ?></button>
-              <button type="button" class="adm-btn adm-btn-small" data-orient-view="top"><?= e(at('edit.orientViewTop', 'Alto')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="viewer" aria-pressed="true" title="<?= e(at('edit.orientViewViewerTitle', 'Il punto di vista con cui il visualizzatore apre il modello')); ?>"><?= e(at('edit.orientViewViewer', 'Visualizzatore')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="iso" aria-pressed="false"><?= e(at('edit.orientViewIso', '3D')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="front" aria-pressed="false"><?= e(at('edit.orientViewFront', 'Fronte')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="side" aria-pressed="false"><?= e(at('edit.orientViewSide', 'Lato')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="top" aria-pressed="false"><?= e(at('edit.orientViewTop', 'Alto')); ?></button>
             </div>
             <span class="adm-orient-up" aria-hidden="true">↑ <?= e(at('edit.orientUp', 'alto')); ?></span>
             <p class="adm-orient-local" id="adm-orient-local" hidden></p>
@@ -1334,7 +1335,7 @@ $langMeta = getLanguagesMeta();
               <button type="button" class="adm-btn adm-btn-small adm-btn-ghost" data-orient-preset="zero"><?= e(at('edit.orientZero', 'Azzera')); ?></button>
               <button type="button" class="adm-btn adm-btn-small adm-btn-ghost" data-orient-preset="saved"><?= e(at('edit.orientRevert', 'Ripristina i valori salvati')); ?></button>
             </p>
-            <p class="adm-hint"><?= e(at('edit.orientHint', 'Gira il modello finché il pavimento della grotta è parallelo alla griglia e l\'alto è verso l\'alto, poi salva: i gradi vengono scritti nei campi qui sopra e usati dal visualizzatore. Trascina per girare la vista (non il modello), rotella per lo zoom. I pulsanti ruotano attorno agli assi del mondo: rosso X, verde Y (verticale), blu Z.')); ?></p>
+            <p class="adm-hint"><?= e(at('edit.orientHint', 'Parti dalla vista «Visualizzatore»: è esattamente quella con cui il visualizzatore apre il modello, e si ricalcola a ogni rotazione. Gira il modello finché l\'ingresso o la parte che vuoi mostrare è inquadrata come preferisci, il pavimento della grotta è parallelo alla griglia e l\'alto è verso l\'alto, poi salva: i gradi vengono scritti nei campi qui sopra e usati dal visualizzatore. Trascina per girare la vista (non il modello), rotella per lo zoom: la vista esce da «Visualizzatore» finché non ci torni. I pulsanti ruotano attorno agli assi del mondo: rosso X, verde Y (verticale), blu Z.')); ?></p>
           </div>
         </div>
       </section>

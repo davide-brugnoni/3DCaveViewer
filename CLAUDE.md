@@ -517,7 +517,12 @@ applies `rotX/Y/Z` exactly like `applyModelRotation()` in `viewer.js` (Euler
 XYZ in degrees) and only reads/writes those fields — dispatching `input` so
 `admin.js` marks the tab dirty — so saving, merge and history are untouched.
 The ±90° buttons rotate around **world** axes (quaternion premultiply, then
-back to Euler XYZ). It reuses `fetchBinaryModel()`/`parseGltfLean()` with
+back to Euler XYZ). The default point of view is "Visualizzatore"
+(`frameLikeViewer()`): the viewer's opening view — FOV 60°, camera on +Z
+looking at the centre of the *rotated* model's box, `computeFrame()` distance
+with margin 1.2 — recomputed after every rotation, so the preview shows what
+the public will see; dragging/zooming the preview leaves that view until the
+button is pressed again. It reuses `fetchBinaryModel()`/`parseGltfLean()` with
 low texture limits, creates the WebGL scene only when the tab enters the
 viewport (IntersectionObserver), loads files above `data-auto-bytes` (60 MB)
 only on request, and previews a file just picked in "File 3D" before it is

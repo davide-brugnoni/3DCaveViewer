@@ -1132,6 +1132,11 @@ h2 {
   background: color-mix(in srgb, var(--panel-bg-solid) 80%, transparent);
 }
 
+.adm-orient-views .adm-btn[aria-pressed="true"] {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
 .adm-orient-up {
   position: absolute;
   top: 10px;
