@@ -14,7 +14,7 @@ con esempi pronti all'uso.
 ## 🧭 Primo passo: l'installazione guidata
 
 Alla prima apertura di un'installazione nuova il sito non mostra la mappa
-ma un wizard (`setup.php`) che raccoglie in cinque passi le scelte più
+ma un wizard (`setup.php`) che raccoglie in sei passi le scelte più
 comuni:
 
 1. **Benvenuto** — controlli tecnici del server e lingua predefinita;
@@ -29,7 +29,12 @@ comuni:
    indirizzo, e i tre livelli di zoom provati sulla mappa stessa; in un
    blocco avanzato, velocità di camminata, unità della barra di scala e
    cupola del cielo del visualizzatore 3D;
-5. **Fine** — riepilogo e salvataggio.
+5. **Amministratore** — facoltativo: nome utente e password del primo
+   account del pannello di amministrazione (`admin.php`), da cui poi si
+   caricano e si gestiscono i modelli; a fine installazione si è già
+   dentro il pannello. Se lo salti, l'account si crea più tardi aprendo
+   `admin.php` con la chiave di configurazione;
+6. **Fine** — riepilogo e salvataggio.
 
 Al salvataggio scrive le stesse chiavi di `custom/settings.ini` descritte
 in questa guida, riga per riga, lasciando intatti i commenti del file (la
@@ -121,6 +126,7 @@ Il resto di questa guida copre ogni sezione in dettaglio.
 | Cambiare nome, testi, colori, mappa, viewer, lingua, social | `custom/settings.ini` — **usa questo nella quasi totalità dei casi** |
 | Vedere **tutte** le opzioni disponibili, anche quelle non attive di default, con spiegazione | `custom/settings.example.ini` (sola consultazione) |
 | Cambiare logo o icone | `custom/logo.*` (le icone si generano da sole); `custom/icon-192.*`, `custom/icon-512.*` solo se le vuoi diverse |
+| Aggiungere, modificare, orientare o nascondere un modello | Il pannello di amministrazione, `admin.php` — non è una personalizzazione: i modelli stanno in `modelli/` (vedi il [`README.md`](../README.md#-pannello-di-amministrazione-adminphp)) |
 | Un valore calcolato o una struttura che l'INI non può esprimere (raro) | `custom/config.local.php` — copia `config.local.example.php` per iniziare |
 
 `custom/settings.ini` è un file di **sole variabili**: niente codice PHP,
@@ -413,6 +419,15 @@ textureBudgetMPMobile = 24
 ; Stessi limiti sul desktop (0 = solo il limite della scheda video)
 textureMaxSize = 0
 textureBudgetMP = 0
+
+; Rotazione col mouse e col dito: "turntable" (default) gira attorno alla
+; verticale e tiene l'orizzonte sempre dritto; "trackball" è la rotazione
+; libera alla CloudCompare, che può inclinare l'orizzonte
+mouseRotation = "turntable"
+touchRotation = "turntable"
+; Sensibilità della rotazione (1.0 = normale)
+mouseRotateSpeed = 1.0
+touchRotateSpeed = 1.0
 ```
 
 Altre voci meno comuni — densità di pixel del rendering
@@ -440,10 +455,11 @@ dell'installazione guidata.
   2048 px e 8 MP). Le texture incorporate conviene che siano JPEG o WebP:
   un PNG non può essere decodificato a dimensione ridotta.
 - Se un modello ha problemi di orientamento (es. asse Z verticale invece di
-  Y, tipico degli export da CloudCompare), la correzione si fa nel file
-  `.json` di quel singolo modello con il campo `rotation` — non è
-  un'impostazione globale, vedi la sezione "Aggiungere un Nuovo Modello 3D"
-  del `README.md`.
+  Y, tipico degli export da CloudCompare), la correzione riguarda quel
+  singolo modello, non è un'impostazione globale: si fa a vista nella
+  scheda **Orientamento** del pannello di amministrazione, oppure a mano
+  con il campo `rotation` del suo file `.json` (vedi la sezione
+  "Aggiungere un Nuovo Modello 3D" del `README.md`).
 
 ---
 

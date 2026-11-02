@@ -25,6 +25,8 @@
 | **Lingue dell'interfaccia** | Italiano, Inglese, Francese, Spagnolo |
 | **Requisiti per l'utente** | Solo un browser moderno — nessuna installazione |
 | **Requisiti per chi lo installa** | Un comune hosting PHP — configurazione guidata, senza toccare il codice |
+| **Gestione dei contenuti** | Pannello di amministrazione nel browser, multiutente, con bozze, cestino e storico |
+| **Versione attuale** | 1.1.0 (novembre 2026) |
 | **Sito del progetto** | https://www.3dcaveviewer.com |
 | **Sito del gruppo** | https://www.buioverticale.it |
 | **Contatto** | davide.brugnoni@gmail.com |
@@ -41,7 +43,8 @@ il Gruppo Speleologico Buio Verticale del CAI di Gubbio, integra strumenti
 professionali di misurazione, sezione e annotazione, funziona offline come app
 installabile, gira anche su smartphone con modelli pesanti e permette di
 incorporare una grotta navigabile dentro un articolo online. Grazie alla licenza
-GNU GPL v3 e a una procedura di installazione guidata, qualsiasi gruppo
+GNU GPL v3, a una procedura di installazione guidata e a un pannello di
+amministrazione da cui si caricano e si gestiscono i rilievi, qualsiasi gruppo
 speleologico può pubblicare la propria versione, con il proprio nome, senza
 scrivere una riga di codice.
 
@@ -61,13 +64,13 @@ Il valore del progetto sta nell'unire due mondi che raramente si incontrano: da 
 
 ### La homepage: mappa e catalogo
 
-L'applicazione si apre su una homepage che presenta il catalogo delle cavità in due modi complementari: una **mappa interattiva** (basata su Leaflet e OpenStreetMap) con i marker GPS reali di ogni rilievo, e un **elenco con ricerca** ordinato alfabeticamente, che si filtra mentre si digita il nome. Un click — sul marker o nella lista — apre il visualizzatore 3D corrispondente. Il catalogo si aggiorna automaticamente: per pubblicare una nuova cavità basta caricare sul server una cartella con il modello e un piccolo file di metadati (nome, coordinate, descrizione). Anche dentro il visualizzatore un menu a tendina con ricerca permette di passare da una cavità all'altra.
+L'applicazione si apre su una homepage che presenta il catalogo delle cavità in due modi complementari: una **mappa interattiva** (basata su Leaflet e OpenStreetMap) con i marker GPS reali di ogni rilievo, e un **elenco con ricerca** ordinato alfabeticamente, che si filtra mentre si digita il nome. Un click — sul marker o nella lista — apre il visualizzatore 3D corrispondente. Il catalogo si aggiorna automaticamente: una nuova cavità si pubblica dal pannello di amministrazione, caricando il modello dal browser (vedi più avanti), oppure copiando sul server una cartella con il modello e un piccolo file di metadati (nome, coordinate, descrizione). Anche dentro il visualizzatore un menu a tendina con ricerca permette di passare da una cavità all'altra.
 
 ### Tre modi di esplorare una cavità
 
 Il visualizzatore è costruito su **Three.js** (WebGL) e offre tre modalità di esplorazione, in ordine crescente di immersività:
 
-1. **Modalità orbitale** — quella classica: ci si muove attorno alla grotta, la si ruota, la si ingrandisce, la si studia dall'esterno come si farebbe con una maquette fisica. Su mobile le stesse operazioni si fanno con gesti a uno o due dita: un dito ruota la vista, due dita fanno pinch-zoom e pan.
+1. **Modalità orbitale** — quella classica: ci si muove attorno alla grotta, la si ruota, la si ingrandisce, la si studia dall'esterno come si farebbe con una maquette fisica. La rotazione avviene attorno al punto della grotta che si sta indicando, con l'orizzonte sempre dritto, così non si perde mai l'orientamento. Su mobile le stesse operazioni si fanno con gesti a uno o due dita: un dito ruota la vista, due dita fanno pinch-zoom e pan.
 
 2. **Modalità POV (prima persona)** — quella che cambia prospettiva: ci si trova letteralmente dentro la cavità, ci si muove con la tastiera (WASD) o, su mobile, con un **joystick virtuale** mentre l'altro pollice guarda intorno, e il sistema di **rilevamento delle collisioni** impedisce di attraversare le pareti, restituendo per quanto possibile la sensazione fisica dello spazio. Un mirino centrale aiuta l'orientamento; su mobile un doppio tocco fa avanzare di un passo.
 
@@ -156,15 +159,30 @@ Entrambi applicano compressione **Draco** della geometria, fusione dei vertici d
 
 La versione server gestisce anche **rilievi molto pesanti, fino a 5 GB**: la conversione da OBJ avviene con un parser streaming, la lettura dei file già compressi procede a memoria costante e le mesh con decine di milioni di vertici vengono suddivise automaticamente prima della compressione, senza alterare il risultato visivo.
 
-I modelli che presentano problemi di orientamento — ad esempio i file esportati da CloudCompare con asse Z verticale invece di Y — possono essere corretti direttamente nel file di metadati JSON della cavità, specificando una rotazione in gradi sui tre assi, senza rielaborare il file 3D.
+I modelli che presentano problemi di orientamento — ad esempio i file esportati da CloudCompare con asse Z verticale invece di Y — si raddrizzano dal pannello di amministrazione, guardando il modello in un'anteprima 3D, senza rielaborare il file 3D (vedi sotto).
 
 L'obiettivo è permettere a **qualsiasi gruppo speleologico** di pubblicare i propri rilievi senza dipendere da strumenti professionali a pagamento.
 
 ---
 
+## Gestire i rilievi dal browser
+
+Dalla versione 1.1.0 i rilievi si pubblicano e si curano da un **pannello di amministrazione** accessibile dal browser, senza programmi FTP e senza scrivere file a mano:
+
+- **caricamento dei modelli**: si sceglie il file 3D, si scrivono nome e descrizione e si fissa la posizione della grotta trascinando un segnaposto sulla mappa. I file vengono inviati a blocchi, quindi passano anche rilievi da centinaia di megabyte su hosting che accettano upload di pochi megabyte;
+- **orientamento a vista**: un'anteprima 3D mostra il modello appoggiato su un pavimento a griglia con gli assi colorati; lo si raddrizza con pulsanti di rotazione a 90°, cursori o trascinandolo, e l'inquadratura dell'anteprima è esattamente quella con cui il pubblico vedrà aprirsi la grotta;
+- **bozze**: un rilievo può essere caricato e controllato in anteprima senza che il pubblico lo veda — non compare sulla mappa, nell'elenco né nei motori di ricerca, e i suoi file non sono scaricabili — e poi pubblicato con un clic, ad esempio quando l'esplorazione può essere resa nota;
+- **cestino**: un modello eliminato o una versione sostituita del file 3D non spariscono, ma si possono ripristinare;
+- **storico**: ogni operazione registra chi l'ha fatta, quando e cosa è cambiato, campo per campo;
+- **lavoro di squadra**: più account con ruoli diversi (editor e amministratori), e se due persone modificano la stessa cavità nello stesso momento il pannello unisce le modifiche e segnala i conflitti invece di perderne una in silenzio.
+
+Il primo account si crea già durante l'installazione guidata. Password conservate solo come hash, blocco dopo tentativi falliti e sessioni a scadenza completano la parte di sicurezza.
+
+---
+
 ## Un'installazione per ogni gruppo
 
-3D Cave Viewer non è un servizio centralizzato: ogni gruppo può installare la propria copia sul proprio spazio web. Al primo accesso una **procedura guidata** in pochi passaggi — identità del gruppo e logo, colori, mappa — accompagna la configurazione direttamente dal browser: si sceglie il centro della mappa cercando un indirizzo o spostando una mini-mappa, si caricano il logo e i testi, si scelgono i colori del proprio gruppo. Le icone dell'app installabile vengono generate da sole a partire dal logo, senza bisogno di strumenti di grafica.
+3D Cave Viewer non è un servizio centralizzato: ogni gruppo può installare la propria copia sul proprio spazio web. Al primo accesso una **procedura guidata** in pochi passaggi — identità del gruppo e logo, colori, mappa, primo amministratore — accompagna la configurazione direttamente dal browser: si sceglie il centro della mappa cercando un indirizzo o spostando una mini-mappa, si caricano il logo e i testi, si scelgono i colori del proprio gruppo. Le icone dell'app installabile vengono generate da sole a partire dal logo, senza bisogno di strumenti di grafica.
 
 Le scelte vengono salvate in un semplice file di impostazioni, che si può modificare anche a mano in seguito; a configurazione conclusa la procedura si blocca e si riapre solo con una chiave personale consegnata al termine. La struttura del progetto separa nettamente il codice dell'applicazione dai contenuti di ciascun gruppo (rilievi 3D e personalizzazioni): un aggiornamento alla versione successiva si applica quindi senza mai rischiare di perdere i propri dati o le proprie personalizzazioni.
 
@@ -172,7 +190,7 @@ Le scelte vengono salvate in un semplice file di impostazioni, che si può modif
 
 ## A chi si rivolge
 
-- **Gruppi speleologici e CAI** — per documentare, archiviare e condividere i propri rilievi in una forma immediatamente fruibile, e per riusare liberamente la piattaforma con il proprio nome, logo e colori.
+- **Gruppi speleologici e CAI** — per documentare, archiviare e condividere i propri rilievi in una forma immediatamente fruibile, gestendo il catalogo in squadra dal browser, e per riusare liberamente la piattaforma con il proprio nome, logo e colori.
 - **Ricercatori e geologi** — per studiare morfologie, effettuare misurazioni e produrre sezioni senza software CAD specialistici.
 - **Soccorso speleologico** — per familiarizzare con la geometria di una cavità prima di un intervento.
 - **Scuole e divulgazione** — per portare "dentro una grotta" studenti e pubblico, anche in VR, senza alcun rischio e senza attrezzatura.
@@ -206,9 +224,11 @@ Dati pronti per infografiche e materiali grafici:
 | **3** | formati 3D supportati (GLB, GLTF, OBJ) |
 | **2** | strumenti di ottimizzazione modelli inclusi (server Node e pagina browser-only) |
 | **5 GB** | dimensione massima dei rilievi gestiti dall'ottimizzatore |
+| **2** | ruoli per chi gestisce il catalogo (editor e amministratore) |
 | **1** | blocco di codice HTML da copiare e incollare per incorporare una grotta in un articolo |
 | **0** | installazioni richieste all'utente |
 | **0** | righe di codice da modificare per installarlo con il proprio branding |
+| **0** | file da copiare via FTP per pubblicare una nuova grotta |
 | **0** | passaggi di build per lo sviluppatore |
 | **100%** | open source (GNU GPL v3) |
 

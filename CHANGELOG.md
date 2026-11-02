@@ -7,6 +7,14 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+## [1.1.0] — 2026-11-02 — pannello di amministrazione
+
+I modelli si gestiscono dal browser: caricamento, modifica, orientamento,
+bozze, cestino e storico, con più utenti, senza FTP e senza scrivere JSON
+a mano. Aggiornare dalla 1.0.0 non richiede nulla: si sovrascrive il codice
+come sempre (preservando `modelli/` e `custom/`) e si crea il primo
+amministratore aprendo `admin.php` con la chiave di `custom/.installed`.
+
 ### Aggiunto
 - Pannello di amministrazione (`admin.php`) per gestire i modelli dal
   browser, senza FTP:
@@ -58,6 +66,8 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   `viewer.mouseRotation = "trackball"` / `viewer.touchRotation = "trackball"`
 
 ### Corretto
+- Pannello Condividi del visualizzatore: nella scheda «Link» comparivano
+  sotto i pulsanti social anche le opzioni della scheda «Incorpora»
 - Scheda Orientamento: il modello si apriva nel visualizzatore diverso da
   come era stato sistemato nell'anteprima. Trascinare l'anteprima girava la
   camera, che non viene salvata: si salvano solo i gradi di rotazione. Ora

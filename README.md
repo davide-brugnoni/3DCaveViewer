@@ -9,7 +9,7 @@
 
 ### Visualizzatore Interattivo di Cavità Sotterranee
 
-[![Versione](https://img.shields.io/badge/versione-1.0.0-2ea44f)](CHANGELOG.md)
+[![Versione](https://img.shields.io/badge/versione-1.1.0-2ea44f)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Three.js](https://img.shields.io/badge/Three.js-v0.160.0-000000?logo=three.js)](https://threejs.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
@@ -50,36 +50,47 @@
 | 🖼️ **Anteprima Social** | Generazione automatica immagine 1200×630 con watermark per condivisione |
 | 💡 **Onboarding Guidato** | Popup introduttivo al primo accesso con opzione "Non mostrare più" |
 | 📲 **Modelli grandi su mobile** | Download a copia singola e texture ridotte automaticamente su telefoni e tablet, per non far chiudere la scheda del browser |
-| 🧭 **Installazione guidata** | Al primo avvio un wizard in cinque passi configura nome, logo, colori e mappa, senza toccare file |
+| 🧭 **Installazione guidata** | Al primo avvio un wizard configura nome, logo, colori, mappa e il primo amministratore, senza toccare file |
+| 🔐 **Pannello di Amministrazione** | Caricamento e modifica dei modelli dal browser (anche file da centinaia di MB), orientamento con anteprima 3D, bozze, cestino, storico delle modifiche e più utenti con ruoli |
 | 🛠️ **Ottimizzatore GLB Incluso** | Due strumenti (Node server e pagina browser-only) per comprimere i modelli, con supporto a file fino a 5 GB |
 
 ---
 
-## 🎉 Versione 1.0.0 — prima release pubblica
+## 🎉 Novità della versione 1.1.0
 
-La 1.0.0 è la prima versione pensata perché **qualunque gruppo speleologico**
-possa installare il proprio catalogo di grotte 3D senza toccare il codice:
+La 1.1.0 porta la gestione dei modelli **nel browser**: niente più FTP né
+file JSON scritti a mano per pubblicare una grotta.
 
-- 🧭 **Installazione guidata** al primo avvio: nome, logo, colori, lingua e
-  centro della mappa si scelgono da un wizard, senza modificare file
-- 🔒 **Aggiornamenti sicuri**: modelli (`modelli/`) e personalizzazioni
-  (`custom/`) non vengono mai toccati quando si carica una nuova versione
-- 📦 **Installazione pulita**: il pacchetto arriva senza modelli e senza dati
-  personali; si carica via FTP così com'è, senza build
-- 🖱️ **Rotazione attorno al punto sotto il cursore** (o sotto il dito),
-  con l'orizzonte sempre dritto, doppio clic per centrare un punto e zoom
-  verso il cursore
-- 📲 **Modelli pesanti su smartphone**: download a copia singola, texture
-  ridotte al volo, memoria liberata dopo il caricamento e ripresa automatica
-  con texture più leggere se il browser chiude la scheda
-- 📰 **Codice da incorporare**: `<iframe>` responsive per articoli e siti,
-  con vista e sezione congelate
-- 🛠️ **Ottimizzatore GLB** (server Node o pagina singola) con conversione
-  OBJ e riduzione delle texture
+- 🔐 **Pannello di amministrazione** (`admin.php`, link **Gestione** nel
+  footer): carica un nuovo rilievo, scegli la posizione sulla mappa,
+  scrivi nome e descrizione, sostituisci il file 3D — anche da centinaia
+  di MB, inviato a blocchi
+- 🧭 **Orientamento con anteprima 3D**: il modello su un pavimento con gli
+  assi colorati, pulsanti ±90° e trascinamento; quello che vedi è quello
+  che si apre nel visualizzatore
+- 📝 **Bozze**: salva un modello senza pubblicarlo, guardalo in anteprima
+  e pubblicalo con un clic; finché è bozza i suoi file non si scaricano
+- 🗑️ **Cestino e storico**: nulla si cancella per sbaglio, e ogni
+  modifica registra chi l'ha fatta, quando e cosa è cambiato
+- 👥 **Più utenti** con ruoli (editor, amministratore); il primo si crea
+  già nell'installazione guidata
+- 🖱️ **Rotazione senza rollio** di serie, col mouse e col dito:
+  l'orizzonte resta sempre dritto
+- 📴 **PWA offline al primo avvio**, anche subito dopo l'installazione
+  sull'iPhone
 
-L'elenco completo di funzionalità e correzioni è nel
-[CHANGELOG](CHANGELOG.md). La versione installata è indicata in fondo alla
-pagina `status.php`.
+**Aggiornare dalla 1.0.0**: si sovrascrive il codice come sempre (vedi
+[Aggiornare all'ultima versione](#-aggiornare-allultima-versione)), poi si
+apre `admin.php` e si crea il primo amministratore con la chiave di
+configurazione salvata in `custom/.installed`.
+
+La **1.0.0** (29 ottobre 2026) è stata la prima release pubblica:
+installazione guidata, aggiornamenti che non toccano `modelli/` e
+`custom/`, modelli pesanti su smartphone, codice da incorporare negli
+articoli e ottimizzatore GLB. L'elenco completo di funzionalità e
+correzioni è nel [CHANGELOG](CHANGELOG.md). La versione installata è
+indicata in fondo alla pagina `status.php` e nel pannello di
+amministrazione.
 
 ---
 
@@ -419,11 +430,14 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   │   ├── measure.js             # Sistema di misurazione + export CSV
 │   │   ├── annotations.js         # Annotazioni POI persistenti (export/import JSON)
 │   │   ├── embed.js               # Generatore del codice <iframe> (scheda «Incorpora»)
+│   │   ├── pivot-orbit.js         # Rotazione attorno al punto sotto il cursore o il dito
 │   │   ├── model-loader.js        # Download del GLB in un unico buffer, interrompibile
-│   │   └── gltf-memory.js         # Parsing GLB senza copie e texture ridotte su mobile
+│   │   ├── gltf-memory.js         # Parsing GLB senza copie e texture ridotte su mobile
+│   │   └── diagnostics.js         # Controllo memoria GPU e riquadro ?debug=1
 │   ├── viewer-pwa.js              # Gestione PWA nel viewer
 │   ├── setup.js                   # Interfaccia dell'installazione guidata
-│   ├── admin.js                   # Pannello: upload a blocchi, mappa, filtri
+│   ├── admin.js                   # Pannello: schede, upload a blocchi, mappa, filtri
+│   ├── admin-orientation.js       # Pannello: anteprima 3D della scheda Orientamento
 │   └── status.js                  # Logica pagina status (~1.700 righe)
 │
 ├── 🌍 i18n/
@@ -521,7 +535,7 @@ di build: i file si caricano così come sono.
   clicca il pulsante verde **Code** → **Download ZIP**.
 
 Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
-`3DCaveViewer-1.0.0` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
+`3DCaveViewer-1.1.0` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
 `css/`, `js/`, `lib/`, `custom/`, `modelli/` e così via.
 
 2️⃣ **Carica i file sul server via FTP**
@@ -531,7 +545,7 @@ Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
   `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
   indirizzo tipo `https://tuodominio.it/grotte/`;
 - trascina lì **il contenuto** della cartella estratta (non la cartella
-  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.0.0/`).
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.1.0/`).
 
 > ⚠️ Controlla che sia arrivato anche il file **`.htaccess`**: inizia con
 > un punto, quindi alcuni programmi lo nascondono. In FileZilla attiva
@@ -549,10 +563,10 @@ te lo dice. Se segnala un problema: in FileZilla clic destro sulla cartella
 4️⃣ **Apri il sito: parte l'installazione guidata**
 
 Visita `https://tuodominio.it/` (o la sottocartella che hai scelto). Alla
-prima visita non compare la mappa ma un installer in cinque passi
+prima visita non compare la mappa ma un installer in sei passi
 (benvenuto e requisiti tecnici, identità del gruppo con il logo, colori,
-mappa, riepilogo). A fine installazione il sito riparte normalmente dalla
-mappa. Dettagli in [🧭 Installazione
+mappa, primo amministratore del pannello — facoltativo — e riepilogo). A
+fine installazione il sito riparte normalmente dalla mappa. Dettagli in [🧭 Installazione
 guidata](#-installazione-guidata-setupphp).
 
 > 🔒 **Completa subito l'installazione guidata.** Finché non è conclusa,
@@ -562,7 +576,12 @@ guidata](#-installazione-guidata-setupphp).
 
 5️⃣ **Aggiungi i tuoi modelli**
 
-Carica via FTP in `modelli/` una cartella per ogni cavità, con dentro il
+Apri `https://tuodominio.it/admin.php` (link **Gestione** in fondo alla
+homepage), entra con l'amministratore creato nell'installazione e scegli
+**Nuovo modello**: carichi il file `.glb`, scrivi nome e descrizione,
+fissi la posizione sulla mappa e salvi — vedi [🔐 Pannello di
+Amministrazione](#-pannello-di-amministrazione-adminphp). In alternativa
+carica via FTP in `modelli/` una cartella per ogni cavità, con dentro il
 file `.glb` e il file `.json` dei dati — vedi [📦 Aggiungere un Nuovo
 Modello 3D](#-aggiungere-un-nuovo-modello-3d). Finché non ne aggiungi uno
 la mappa resta senza segnaposti e lo dice.
@@ -571,6 +590,7 @@ Fatto. Gli indirizzi utili:
 - 🏠 Homepage: `https://tuodominio.it/`
 - 🎨 Viewer diretto: `https://tuodominio.it/viewer.php?m=nome_cartella`
 - 📊 Stato cache offline: `https://tuodominio.it/status.php`
+- 🔐 Pannello di amministrazione: `https://tuodominio.it/admin.php`
 
 ### 🧑‍💻 Per utenti esperti (git, server propri)
 
@@ -697,7 +717,7 @@ il resto**.
 | Cartella/File | Contenuto | Da fare in un aggiornamento |
 |---|---|---|
 | `modelli/` | I tuoi modelli 3D (GLB + metadati JSON) | ❌ Non toccare |
-| `custom/` | I tuoi loghi, le tue icone e `settings.ini` | ❌ Non toccare |
+| `custom/` | I tuoi loghi, le tue icone, `settings.ini` e i dati del pannello di amministrazione (`custom/admin/`) | ❌ Non toccare |
 | Tutto il resto | Codice dell'applicazione (PHP, JS, CSS, librerie) | ✅ Sovrascrivi interamente |
 
 ### 📝 Procedura
@@ -736,7 +756,8 @@ e Icone](#-personalizzare-loghi-e-icone)).
 | `settings.example.ini` | ✅ sì | Copia di **sola consultazione**, commentata, con ogni opzione disponibile (anche quelle non attive di default) |
 | `config.local.php` | ❌ no (gitignored) | Override **avanzati** in PHP, solo per i pochi casi che l'INI non può esprimere |
 | `config.local.example.php` | ✅ sì | Template da copiare per creare `config.local.php` |
-| `.installed` | ❌ no (gitignored) | Marker di [installazione completata](#-installazione-guidata-setupphp); contiene la chiave per riaprire il wizard |
+| `.installed` | ❌ no (gitignored) | Marker di [installazione completata](#-installazione-guidata-setupphp); contiene la chiave per riaprire il wizard (e per creare il primo amministratore del pannello) |
+| `admin/` | ❌ no (gitignored) | Dati del [pannello di amministrazione](#-pannello-di-amministrazione-adminphp): account, storico, caricamenti in corso e cestino. Va incluso nei backup |
 
 ### 🧭 Quale file modifico?
 
@@ -791,16 +812,33 @@ utenti si gestiscono solo dal pannello.
 
 | | Editor | Amministratore |
 |---|:---:|:---:|
-| Caricare un nuovo modello (GLB/GLTF), con nome, descrizione, posizione sulla mappa, rotazione e anteprima social | ✅ | ✅ |
+| Caricare un nuovo modello (GLB/GLTF), con nome, descrizione, posizione sulla mappa, orientamento e anteprima social | ✅ | ✅ |
 | Modificare le informazioni e sostituire il file 3D di un modello | ✅ | ✅ |
+| Salvare un modello come bozza, vederlo in anteprima, pubblicarlo o ritirarlo | ✅ | ✅ |
 | Consultare lo storico delle modifiche | ✅ | ✅ |
 | Eliminare un modello (va nel cestino) e ripristinare dal cestino | — | ✅ |
 | Creare utenti, cambiare ruoli, reimpostare password, disattivare account | — | ✅ |
 
 - **Schede**: la pagina di un modello è divisa in schede (Informazioni,
-  Posizione, Orientamento, File 3D, Anteprima, Storico, Elimina). «Salva»
+  Posizione, File 3D, Orientamento, Anteprima, Storico, Elimina). «Salva»
   salva tutte le schede insieme; un pallino segnala quelle modificate e
-  non ancora salvate, o quella con un errore da correggere.
+  non ancora salvate, o quella con un errore da correggere, e dopo il
+  salvataggio si torna alla scheda in cui si era.
+- **Posizione**: latitudine e longitudine si scelgono cliccando o
+  trascinando il segnaposto sulla mappa (o scrivendole a mano); senza
+  coordinate il modello resta raggiungibile dal selettore del
+  visualizzatore, ma non compare sulla mappa.
+- **Orientamento**: un'anteprima 3D mostra il modello su un pavimento a
+  griglia con gli assi colorati (X rosso, Y verde = alto, Z blu). Lo si
+  raddrizza con i pulsanti **±90°** attorno agli assi, con i cursori per la
+  regolazione fine, con la scorciatoia **«Z in alto → Y in alto»** (tipica
+  degli export da CloudCompare) o trascinandolo direttamente nella vista
+  **«Visualizzatore»**, che è l'inquadratura con cui il modello si aprirà
+  sul sito: ciò che vedi lì è ciò che vedrà il pubblico. Le viste fronte,
+  lato e alto servono solo da controllo e non vengono salvate. I gradi
+  finiscono nei campi Rotazione X/Y/Z e si salvano con il resto del modulo;
+  un file appena scelto in «File 3D» si vede subito, prima di caricarlo, e
+  i file sopra i 60 MB si scaricano solo su richiesta.
 - **Bozze**: un modello si può salvare come **bozza** invece che
   pubblicato (scheda Informazioni → Visibilità). La bozza resta sul server
   con tutti i suoi file ma il sito la ignora: non compare sulla mappa,
@@ -850,6 +888,11 @@ che non serve più per recuperare spazio.
 
 ## 📦 Aggiungere un Nuovo Modello 3D
 
+> 💡 Il modo più semplice è il [pannello di
+> amministrazione](#-pannello-di-amministrazione-adminphp): **Gestione →
+> Nuovo modello**, scegli il file, compila i campi e salva. La procedura
+> manuale qui sotto, via FTP, resta valida e produce gli stessi file.
+
 ### 🛠️ Procedura in 4 Passi
 
 **1️⃣ Crea la cartella** del modello (usa `snake_case`):
@@ -883,7 +926,7 @@ Il file JSON deve chiamarsi come la cartella (`modelli/nuova_cavita/nuova_cavita
 | `file` | ✅ | Nome del file `.glb`/`.gltf` nella cartella. Se il file non esiste il modello viene escluso dal catalogo |
 | `lat`, `lon` | consigliati | Numeri. Senza (o con `null`) il modello non compare sulla mappa, ma resta nel selettore del visualizzatore |
 | `description` | — | Testo nel popup della mappa, nelle informazioni del modello e nelle anteprime social |
-| `rotation` | — | `x`/`y`/`z` in gradi: corregge l'orientamento di modelli esportati con convenzione Z-up (es. CloudCompare) invece di Y-up come Three.js |
+| `rotation` | — | `x`/`y`/`z` in gradi: corregge l'orientamento di modelli esportati con convenzione Z-up (es. CloudCompare) invece di Y-up come Three.js. Dal pannello si imposta a vista nella scheda Orientamento |
 | `folder` | — | Ignorato: viene sempre preso dal nome della cartella |
 | `published` | — | `false` = **bozza**: il modello resta nella cartella ma non compare da nessuna parte sul sito (mappa, elenco, visualizzatore, sitemap, download offline) e i suoi file vengono bloccati con un `.htaccess` generato in automatico. Senza il campo è pubblicato |
 
