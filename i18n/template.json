@@ -333,12 +333,34 @@
 
 
   "setup": {
+    "admin": {
+      "title": "",
+      "intro": "",
+      "optional": "",
+      "username": "",
+      "usernameHint": "",
+      "displayName": "",
+      "displayNameHint": "",
+      "password": "",
+      "passwordHint": "",
+      "password2": "",
+      "exists": "",
+      "unavailable": "",
+      "errUsername": "",
+      "errPasswordShort": "",
+      "errPasswordLong": "",
+      "errMismatch": "",
+      "errExists": "",
+      "errWritable": "",
+      "errWrite": ""
+    },
     "pageTitle": "",
     "tagline": "",
     "stepsLabel": "",
     "advanced": "",
     "license": "",
     "step": {
+      "admin": "",
       "welcome": "",
       "identity": "",
       "theme": "",
@@ -442,6 +464,9 @@
       "save": ""
     },
     "done": {
+      "adminCreated": "",
+      "adminFailed": "",
+      "adminGo": "",
       "title": "",
       "intro": "",
       "skipped": "",
@@ -498,6 +523,10 @@
       }
     },
     "invalid": {
+      "adminUsername": "",
+      "adminPassword": "",
+      "adminMismatch": "",
+      "adminMissing": "",
       "url": "",
       "email": "",
       "copyright": "",
@@ -605,6 +634,7 @@
       "no": ""
     },
     "action": {
+      "setupAdmin": "",
       "login": "",
       "loginFailed": "",
       "logout": "",

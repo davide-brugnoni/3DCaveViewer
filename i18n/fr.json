@@ -352,12 +352,34 @@
 
 
   "setup": {
+    "admin": {
+      "title": "Administrateur du panneau",
+      "intro": "Les mod\u00e8les 3D se chargent et se g\u00e8rent depuis le panneau d'administration (admin.php). Cr\u00e9ez ici le premier compte administrateur : vous pourrez ensuite ajouter d'autres personnes depuis le panneau, comme \u00e9diteurs ou administrateurs.",
+      "optional": "Facultatif : si vous laissez cette \u00e9tape vide, vous cr\u00e9erez l'administrateur plus tard en ouvrant admin.php, avec la cl\u00e9 de configuration re\u00e7ue \u00e0 la fin.",
+      "username": "Nom d'utilisateur",
+      "usernameHint": "Minuscules, chiffres, point, - et _ (3 \u00e0 32 caract\u00e8res). Sert \u00e0 se connecter au panneau.",
+      "displayName": "Nom affich\u00e9",
+      "displayNameHint": "Tel que vous apparaissez dans l'historique des modifications, ex. \u00ab Marie Dupont \u00bb.",
+      "password": "Mot de passe",
+      "passwordHint": "Au moins {min} caract\u00e8res.",
+      "password2": "R\u00e9p\u00e9tez le mot de passe",
+      "exists": "Le panneau a d\u00e9j\u00e0 ses comptes : utilisateurs et mots de passe se g\u00e8rent depuis admin.php, pas d'ici.",
+      "unavailable": "Le dossier custom/ n'est pas accessible en \u00e9criture : le compte ne peut pas \u00eatre cr\u00e9\u00e9 maintenant. Quand il le sera, ouvrez admin.php et cr\u00e9ez-le avec la cl\u00e9 de configuration.",
+      "errUsername": "le nom d'utilisateur n'est pas valide",
+      "errPasswordShort": "le mot de passe est trop court",
+      "errPasswordLong": "le mot de passe est trop long",
+      "errMismatch": "les deux mots de passe ne correspondent pas",
+      "errExists": "un compte a \u00e9t\u00e9 cr\u00e9\u00e9 entre-temps",
+      "errWritable": "le dossier custom/ n'est pas accessible en \u00e9criture",
+      "errWrite": "l'enregistrement a \u00e9chou\u00e9"
+    },
     "pageTitle": "Installation guidée",
     "tagline": "Installation guidée",
     "stepsLabel": "Étapes de l'installation",
     "advanced": "Options avancées",
     "license": "Logiciel libre publié sous licence GNU GPL v3",
     "step": {
+      "admin": "Administrateur",
       "welcome": "Bienvenue",
       "identity": "Identité",
       "theme": "Couleurs",
@@ -461,6 +483,9 @@
       "save": "Enregistrer et ouvrir le site"
     },
     "done": {
+      "adminCreated": "Compte administrateur \u00ab {username} \u00bb cr\u00e9\u00e9 : vous \u00eates d\u00e9j\u00e0 connect\u00e9 au panneau d'administration, o\u00f9 vous chargez les mod\u00e8les et ajoutez d'autres utilisateurs.",
+      "adminFailed": "L'administrateur n'a pas \u00e9t\u00e9 cr\u00e9\u00e9 ({reason}). Les r\u00e9glages du site sont enregistr\u00e9s : cr\u00e9ez le compte depuis admin.php, avec la cl\u00e9 ci-dessus.",
+      "adminGo": "Panneau d'administration",
       "title": "Installation terminée",
       "intro": "Les réglages ont été enregistrés dans custom/settings.ini. Le site démarre désormais sur la carte des cavités.",
       "skipped": "Certaines valeurs n'étaient pas valides et ont été ignorées : les entrées correspondantes gardent leurs valeurs par défaut.",
@@ -517,6 +542,10 @@
       }
     },
     "invalid": {
+      "adminUsername": "Nom d'utilisateur invalide : 3 \u00e0 32 caract\u00e8res parmi minuscules, chiffres, point, - et _.",
+      "adminPassword": "Le mot de passe doit comporter au moins {min} caract\u00e8res.",
+      "adminMismatch": "Les deux mots de passe ne correspondent pas.",
+      "adminMissing": "Pour cr\u00e9er l'administrateur, il faut le nom d'utilisateur et le mot de passe (ou laissez toute l'\u00e9tape vide).",
       "url": "Adresse invalide : elle doit commencer par http:// ou https://",
       "email": "Adresse e-mail invalide.",
       "copyright": "Le texte doit continuer à citer {author} (licence GPL v3).",
@@ -624,6 +653,7 @@
       "no": "non"
     },
     "action": {
+      "setupAdmin": "Premier administrateur cr\u00e9\u00e9 (installation guid\u00e9e)",
       "login": "Connexion",
       "loginFailed": "Connexion \u00e9chou\u00e9e",
       "logout": "D\u00e9connexion",

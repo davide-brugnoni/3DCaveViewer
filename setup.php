@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/setup_lib.php';
+require_once __DIR__ . '/admin_lib.php';
 
 $lang = getCurrentLang();
 
@@ -61,6 +62,16 @@ $savedIni   = '';
 $saveError  = '';
 $fieldErrors = [];
 $newKey     = '';
+
+// Passo "Amministratore": crea il primo account del pannello (admin.php).
+// È facoltativo e compare solo finché non esiste nessun account — come la
+// pagina "Primo accesso" del pannello — e solo se custom/ è scrivibile.
+//   form        → si può creare
+//   exists      → ci sono già account: si gestiscono dal pannello
+//   unavailable → custom/ non scrivibile: lo si crea poi dal pannello
+$adminStep    = adminHasUsers() ? 'exists' : (setupCanWrite() ? 'form' : 'unavailable');
+$adminCreated = '';   // nome utente creato
+$adminError   = '';   // codice d'errore se il tentativo è fallito
 
 // Solo il form del wizard dichiara action=save. Senza questo controllo la
 // POST di sblocco — che porta la sola chiave — verrebbe presa per un
@@ -105,6 +116,28 @@ if ($unlocked && $isSaveRequest) {
             // Chi rientra nel wizard e salva di nuovo mantiene la chiave che
             // ha già conservato: rigenerarla renderebbe muto il file salvato.
             $newKey = ensureInstallKey();
+
+            // Amministratore: solo se il passo l'ha proposto e qualcosa è stato
+            // compilato (vuoto = "lo creo dopo dal pannello")
+            $adminUser = trim((string) ($_POST['adminUsername'] ?? ''));
+            $adminPass = (string) ($_POST['adminPassword'] ?? '');
+            if ($adminStep === 'form' && ($adminUser !== '' || $adminPass !== '')) {
+                $adminError = adminCreateFirstAdminFromSetup(
+                    $adminUser,
+                    (string) ($_POST['adminDisplayName'] ?? ''),
+                    $adminPass,
+                    (string) ($_POST['adminPassword2'] ?? '')
+                );
+                if ($adminError === '') {
+                    $adminCreated = strtolower($adminUser);
+                    $adminStep = 'exists';
+                    // Già dentro il pannello: il link a fine installazione
+                    // porta direttamente all'elenco dei modelli
+                    adminStartSession(dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/setup.php')));
+                    adminLogin($adminCreated, $adminPass);
+                    session_write_close();
+                }
+            }
         }
     }
 }
@@ -126,6 +159,22 @@ $manualKey    = $storedKey !== '' ? $storedKey : newInstallKey();
  */
 function setupText(string $key, string $fallback): string {
     return __t('setup.' . $key, $fallback);
+}
+
+/**
+ * Perché l'amministratore non è stato creato, e cosa fare adesso.
+ */
+function setupAdminErrorNote(string $code): string {
+    $reasons = [
+        'username_invalid'  => setupText('admin.errUsername', 'il nome utente non è valido'),
+        'password_short'    => setupText('admin.errPasswordShort', 'la password è troppo corta'),
+        'password_long'     => setupText('admin.errPasswordLong', 'la password è troppo lunga'),
+        'password_mismatch' => setupText('admin.errMismatch', 'le due password non coincidono'),
+        'users_exist'       => setupText('admin.errExists', 'nel frattempo è già stato creato un account'),
+        'not_writable'      => setupText('admin.errWritable', 'la cartella custom/ non è scrivibile'),
+    ];
+    $reason = $reasons[$code] ?? setupText('admin.errWrite', 'il salvataggio non è riuscito');
+    return str_replace('{reason}', $reason, setupText('done.adminFailed', 'L\'amministratore non è stato creato ({reason}). Le impostazioni del sito sono salvate: crea l\'account da admin.php, con la chiave qui sopra.'));
 }
 
 /**
@@ -339,8 +388,19 @@ function setupColor(string $name, string $label, string $cssVar): void {
                         </div>
                     <?php endif; ?>
 
+                    <?php if ($adminCreated !== '') : ?>
+                        <div class="status-message success">
+                            <?= e(str_replace('{username}', $adminCreated, setupText('done.adminCreated', 'Account amministratore «{username}» creato: sei già entrato nel pannello di amministrazione, da dove carichi i modelli e aggiungi altri utenti.'))) ?>
+                        </div>
+                    <?php elseif ($adminError !== '') : ?>
+                        <div class="status-message warning">
+                            <?= e(setupAdminErrorNote($adminError)) ?>
+                        </div>
+                    <?php endif; ?>
+
                     <p class="setup-actions">
                         <a class="setup-btn" href="index.php"><?= e(setupText('done.go', 'Vai al sito')) ?></a>
+                        <a class="setup-btn<?= $adminCreated !== '' ? ' setup-btn-primary' : '' ?>" href="admin.php"><?= e(setupText('done.adminGo', 'Pannello di amministrazione')) ?></a>
                     </p>
                 </div>
             </section>
@@ -413,11 +473,12 @@ function setupColor(string $name, string $label, string $cssVar): void {
                 <button type="button" class="setup-chip" role="tab" data-target="identity" aria-selected="false">2. <?= e(setupText('step.identity', 'Identità')) ?></button>
                 <button type="button" class="setup-chip" role="tab" data-target="theme" aria-selected="false">3. <?= e(setupText('step.theme', 'Colori')) ?></button>
                 <button type="button" class="setup-chip" role="tab" data-target="map" aria-selected="false">4. <?= e(setupText('step.map', 'Mappa')) ?></button>
-                <button type="button" class="setup-chip" role="tab" data-target="summary" aria-selected="false">5. <?= e(setupText('step.summary', 'Fine')) ?></button>
+                <button type="button" class="setup-chip" role="tab" data-target="admin" aria-selected="false">5. <?= e(setupText('step.admin', 'Amministratore')) ?></button>
+                <button type="button" class="setup-chip" role="tab" data-target="summary" aria-selected="false">6. <?= e(setupText('step.summary', 'Fine')) ?></button>
             </nav>
 
             <div class="progress-bar-bg" aria-hidden="true">
-                <div class="progress-bar-fill" id="setup-progress" style="width:20%"></div>
+                <div class="progress-bar-fill" id="setup-progress" style="width:17%"></div>
             </div>
 
             <?php
@@ -432,6 +493,10 @@ function setupColor(string $name, string $label, string $cssVar): void {
                 'range'          => setupText('invalid.range', 'Valore fuori dall\'intervallo consentito ({min}–{max}).'),
                 'number'         => setupText('invalid.number', 'Serve un numero.'),
                 'minZoom'        => setupText('invalid.minZoom', 'Lo zoom minimo non può essere più stretto dello zoom iniziale o di quello sulla cavità.'),
+                'adminUsername'  => setupText('invalid.adminUsername', 'Nome utente non valido: 3-32 caratteri fra minuscole, numeri, punto, - e _.'),
+                'adminPassword'  => setupText('invalid.adminPassword', 'La password deve avere almeno {min} caratteri.'),
+                'adminMismatch'  => setupText('invalid.adminMismatch', 'Le due password non coincidono.'),
+                'adminMissing'   => setupText('invalid.adminMissing', 'Per creare l\'amministratore servono sia il nome utente sia la password (oppure lascia vuoto tutto il passo).'),
             ];
             $originalAuthorName = (string) config('originalAuthor.name', '');
             ?>
@@ -615,7 +680,49 @@ function setupColor(string $name, string $label, string $cssVar): void {
                     </div>
                 </section>
 
-                <!-- ============ 5. Riepilogo ============ -->
+                <!-- ============ 5. Amministratore ============ -->
+                <section class="card setup-step" id="step-admin" data-step="admin">
+                    <div class="card-header"><span aria-hidden="true">🔐</span> <?= e(setupText('admin.title', 'Amministratore del pannello')) ?></div>
+                    <div class="card-body">
+                        <p class="setup-lead"><?= e(setupText('admin.intro', 'I modelli 3D si caricano e si gestiscono dal pannello di amministrazione (admin.php). Crea qui il primo account amministratore: potrai poi aggiungere altre persone dal pannello, come editor o amministratori.')) ?></p>
+
+                        <?php if ($adminStep === 'form') : ?>
+                            <p class="setup-hint"><?= e(setupText('admin.optional', 'Facoltativo: se lasci vuoto questo passo, l\'amministratore lo crei più tardi aprendo admin.php, con la chiave di configurazione che ricevi alla fine.')) ?></p>
+                            <div class="setup-grid">
+                                <p class="setup-field">
+                                    <label for="f-adminUsername"><?= e(setupText('admin.username', 'Nome utente')) ?></label>
+                                    <input type="text" id="f-adminUsername" name="adminUsername" maxlength="32"
+                                           autocomplete="username" autocapitalize="none" spellcheck="false"
+                                           data-admin-field="username" />
+                                    <span class="setup-hint"><?= e(setupText('admin.usernameHint', 'Minuscole, numeri, punto, - e _ (3-32 caratteri). Serve per entrare nel pannello.')) ?></span>
+                                </p>
+                                <p class="setup-field">
+                                    <label for="f-adminDisplayName"><?= e(setupText('admin.displayName', 'Nome visualizzato')) ?></label>
+                                    <input type="text" id="f-adminDisplayName" name="adminDisplayName" maxlength="80" autocomplete="name" />
+                                    <span class="setup-hint"><?= e(setupText('admin.displayNameHint', 'Come compari nello storico delle modifiche, es. «Mario Rossi».')) ?></span>
+                                </p>
+                                <p class="setup-field">
+                                    <label for="f-adminPassword"><?= e(setupText('admin.password', 'Password')) ?></label>
+                                    <input type="password" id="f-adminPassword" name="adminPassword" maxlength="200"
+                                           autocomplete="new-password" data-admin-field="password"
+                                           data-min-length="<?= ADMIN_PASSWORD_MIN ?>" />
+                                    <span class="setup-hint"><?= e(str_replace('{min}', (string) ADMIN_PASSWORD_MIN, setupText('admin.passwordHint', 'Almeno {min} caratteri.'))) ?></span>
+                                </p>
+                                <p class="setup-field">
+                                    <label for="f-adminPassword2"><?= e(setupText('admin.password2', 'Ripeti la password')) ?></label>
+                                    <input type="password" id="f-adminPassword2" name="adminPassword2" maxlength="200"
+                                           autocomplete="new-password" data-admin-field="password2" />
+                                </p>
+                            </div>
+                        <?php elseif ($adminStep === 'exists') : ?>
+                            <div class="status-message info"><?= e(setupText('admin.exists', 'Il pannello ha già i suoi account: utenti e password si gestiscono da admin.php, non da qui.')) ?></div>
+                        <?php else : ?>
+                            <div class="status-message warning"><?= e(setupText('admin.unavailable', 'La cartella custom/ non è scrivibile, quindi l\'account non si può creare adesso. Quando sarà scrivibile, apri admin.php e crealo con la chiave di configurazione.')) ?></div>
+                        <?php endif; ?>
+                    </div>
+                </section>
+
+                <!-- ============ 6. Riepilogo ============ -->
                 <section class="card setup-step" id="step-summary" data-step="summary">
                     <div class="card-header"><span aria-hidden="true">💾</span> <?= e(setupText('summary.title', 'Riepilogo')) ?></div>
                     <div class="card-body">

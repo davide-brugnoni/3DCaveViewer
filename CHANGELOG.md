@@ -20,7 +20,10 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   - cestino: modelli eliminati e versioni sostituite si ripristinano o si
     eliminano definitivamente
   - più account con ruoli (editor, amministratore); il primo amministratore
-    si crea con la chiave di configurazione di `custom/.installed`
+    si crea nell'installazione guidata (nuovo passo **Amministratore**,
+    facoltativo, che a fine installazione lascia già dentro il pannello)
+    oppure dopo, da `admin.php`, con la chiave di configurazione di
+    `custom/.installed`
   - storico di chi ha modificato cosa e quando, con il dettaglio dei campi
     (valore precedente → nuovo), filtrabile per modello, utente e tipo
   - salvataggi contemporanei di due utenti sullo stesso modello rilevati:

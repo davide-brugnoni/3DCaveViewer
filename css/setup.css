@@ -226,6 +226,7 @@ body {
 .setup-field input[type="text"],
 .setup-field input[type="url"],
 .setup-field input[type="email"],
+.setup-field input[type="password"],
 .setup-field input[type="number"],
 .setup-search input[type="search"],
 .setup-field select,

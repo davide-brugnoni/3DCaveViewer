@@ -352,12 +352,34 @@
 
 
   "setup": {
+    "admin": {
+      "title": "Administrador del panel",
+      "intro": "Los modelos 3D se suben y se gestionan desde el panel de administraci\u00f3n (admin.php). Crea aqu\u00ed la primera cuenta de administrador: despu\u00e9s podr\u00e1s a\u00f1adir otras personas desde el panel, como editores o administradores.",
+      "optional": "Opcional: si dejas vac\u00edo este paso, creas el administrador m\u00e1s tarde abriendo admin.php, con la clave de configuraci\u00f3n que recibes al final.",
+      "username": "Nombre de usuario",
+      "usernameHint": "Min\u00fasculas, n\u00fameros, punto, - y _ (3-32 caracteres). Sirve para entrar en el panel.",
+      "displayName": "Nombre visible",
+      "displayNameHint": "C\u00f3mo apareces en el historial de cambios, p. ej. \u00abAna Garc\u00eda\u00bb.",
+      "password": "Contrase\u00f1a",
+      "passwordHint": "Al menos {min} caracteres.",
+      "password2": "Repite la contrase\u00f1a",
+      "exists": "El panel ya tiene sus cuentas: usuarios y contrase\u00f1as se gestionan desde admin.php, no desde aqu\u00ed.",
+      "unavailable": "La carpeta custom/ no tiene permisos de escritura, as\u00ed que la cuenta no se puede crear ahora. Cuando los tenga, abre admin.php y cr\u00e9ala con la clave de configuraci\u00f3n.",
+      "errUsername": "el nombre de usuario no es v\u00e1lido",
+      "errPasswordShort": "la contrase\u00f1a es demasiado corta",
+      "errPasswordLong": "la contrase\u00f1a es demasiado larga",
+      "errMismatch": "las dos contrase\u00f1as no coinciden",
+      "errExists": "mientras tanto ya se cre\u00f3 una cuenta",
+      "errWritable": "la carpeta custom/ no tiene permisos de escritura",
+      "errWrite": "no se pudo guardar"
+    },
     "pageTitle": "Instalación guiada",
     "tagline": "Instalación guiada",
     "stepsLabel": "Pasos de la instalación",
     "advanced": "Opciones avanzadas",
     "license": "Software libre publicado bajo licencia GNU GPL v3",
     "step": {
+      "admin": "Administrador",
       "welcome": "Bienvenida",
       "identity": "Identidad",
       "theme": "Colores",
@@ -461,6 +483,9 @@
       "save": "Guardar y abrir el sitio"
     },
     "done": {
+      "adminCreated": "Cuenta de administrador \u00ab{username}\u00bb creada: ya has entrado en el panel de administraci\u00f3n, desde donde subes los modelos y a\u00f1ades otros usuarios.",
+      "adminFailed": "El administrador no se ha creado ({reason}). Los ajustes del sitio est\u00e1n guardados: crea la cuenta desde admin.php, con la clave de arriba.",
+      "adminGo": "Panel de administraci\u00f3n",
       "title": "Instalación completada",
       "intro": "Los ajustes se han guardado en custom/settings.ini. El sitio arranca ya desde el mapa de cavidades.",
       "skipped": "Algunos valores no eran válidos y se han ignorado: esas entradas mantienen sus valores predeterminados.",
@@ -517,6 +542,10 @@
       }
     },
     "invalid": {
+      "adminUsername": "Nombre de usuario no v\u00e1lido: 3-32 caracteres entre min\u00fasculas, n\u00fameros, punto, - y _.",
+      "adminPassword": "La contrase\u00f1a debe tener al menos {min} caracteres.",
+      "adminMismatch": "Las dos contrase\u00f1as no coinciden.",
+      "adminMissing": "Para crear el administrador hacen falta el nombre de usuario y la contrase\u00f1a (o deja vac\u00edo todo el paso).",
       "url": "Dirección no válida: debe empezar por http:// o https://",
       "email": "Dirección de correo no válida.",
       "copyright": "El texto debe seguir citando a {author} (licencia GPL v3).",
@@ -624,6 +653,7 @@
       "no": "no"
     },
     "action": {
+      "setupAdmin": "Primer administrador creado (instalaci\u00f3n guiada)",
       "login": "Inicio de sesi\u00f3n",
       "loginFailed": "Inicio de sesi\u00f3n fallido",
       "logout": "Cierre de sesi\u00f3n",

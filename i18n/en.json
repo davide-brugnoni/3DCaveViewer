@@ -352,12 +352,34 @@
 
 
   "setup": {
+    "admin": {
+      "title": "Panel administrator",
+      "intro": "3D models are uploaded and managed from the admin panel (admin.php). Create the first administrator account here: you can then add other people from the panel, as editors or administrators.",
+      "optional": "Optional: if you leave this step empty, you create the administrator later by opening admin.php, with the configuration key you receive at the end.",
+      "username": "Username",
+      "usernameHint": "Lowercase letters, digits, dot, - and _ (3-32 characters). Used to sign in to the panel.",
+      "displayName": "Display name",
+      "displayNameHint": "How you appear in the change history, e.g. “Jane Smith”.",
+      "password": "Password",
+      "passwordHint": "At least {min} characters.",
+      "password2": "Repeat the password",
+      "exists": "The panel already has its accounts: users and passwords are managed from admin.php, not from here.",
+      "unavailable": "The custom/ folder is not writable, so the account cannot be created now. Once it is writable, open admin.php and create it with the configuration key.",
+      "errUsername": "the username is not valid",
+      "errPasswordShort": "the password is too short",
+      "errPasswordLong": "the password is too long",
+      "errMismatch": "the two passwords do not match",
+      "errExists": "an account was created in the meantime",
+      "errWritable": "the custom/ folder is not writable",
+      "errWrite": "saving failed"
+    },
     "pageTitle": "Setup wizard",
     "tagline": "Setup wizard",
     "stepsLabel": "Setup steps",
     "advanced": "Advanced options",
     "license": "Free software released under the GNU GPL v3 licence",
     "step": {
+      "admin": "Administrator",
       "welcome": "Welcome",
       "identity": "Identity",
       "theme": "Colours",
@@ -461,6 +483,9 @@
       "save": "Save and open the site"
     },
     "done": {
+      "adminCreated": "Administrator account “{username}” created: you are already signed in to the admin panel, where you upload models and add other users.",
+      "adminFailed": "The administrator was not created ({reason}). The site settings are saved: create the account from admin.php, with the key above.",
+      "adminGo": "Admin panel",
       "title": "Setup complete",
       "intro": "The settings have been saved to custom/settings.ini. The site now starts from the cave map.",
       "skipped": "Some values were not valid and were ignored: those entries keep their default values.",
@@ -517,6 +542,10 @@
       }
     },
     "invalid": {
+      "adminUsername": "Invalid username: 3-32 characters among lowercase letters, digits, dot, - and _.",
+      "adminPassword": "The password must be at least {min} characters long.",
+      "adminMismatch": "The two passwords do not match.",
+      "adminMissing": "To create the administrator you need both the username and the password (or leave the whole step empty).",
       "url": "Invalid address: it must start with http:// or https://",
       "email": "Invalid email address.",
       "copyright": "The text must keep crediting {author} (GPL v3 licence).",
@@ -624,6 +653,7 @@
       "no": "no"
     },
     "action": {
+      "setupAdmin": "First administrator created (setup wizard)",
       "login": "Sign-in",
       "loginFailed": "Failed sign-in",
       "logout": "Sign-out",

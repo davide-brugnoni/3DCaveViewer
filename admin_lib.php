@@ -361,6 +361,57 @@ function adminUpdateUser(string $username, array $changes): string {
     });
 }
 
+/**
+ * Crea il primo amministratore dall'installazione guidata (setup.php).
+ *
+ * Vale solo finché non esiste nessun account, come la pagina "Primo
+ * accesso" del pannello: il wizard non può mai servire ad aggiungere un
+ * amministratore a un'installazione che ne ha già. Il controllo sta dentro
+ * il lock, così due salvataggi contemporanei non creano due "primi".
+ *
+ * @return string '' se creato, altrimenti il codice d'errore
+ *                (users_exist, username_invalid, password_short, password_long,
+ *                password_mismatch, not_writable, write_failed)
+ */
+function adminCreateFirstAdminFromSetup(string $username, string $displayName, string $password, string $password2): string {
+    $username = strtolower(trim($username));
+    if (!adminValidUsername($username)) {
+        return 'username_invalid';
+    }
+    $problem = adminPasswordProblem($password);
+    if ($problem !== '') {
+        return $problem;
+    }
+    if ($password !== $password2) {
+        return 'password_mismatch';
+    }
+    if (!adminStorageWritable()) {
+        return 'not_writable';
+    }
+
+    $error = adminLocked(static function () use ($username, $displayName, $password): string {
+        if (adminHasUsers()) {
+            return 'users_exist';
+        }
+        $users = [$username => [
+            'displayName' => adminCleanLine($displayName, 80),
+            'role' => 'admin',
+            'hash' => password_hash($password, PASSWORD_DEFAULT),
+            'passwordChanged' => time(),
+            'created' => time(),
+            'createdBy' => '',
+            'lastLogin' => 0,
+            'disabled' => false,
+        ]];
+        return adminSaveUsers($users) ? '' : 'write_failed';
+    });
+
+    if ($error === '') {
+        adminLog('admin.setup', $username, ['username' => $username], $username);
+    }
+    return $error;
+}
+
 function adminDeleteUser(string $username): string {
     return adminLocked(static function () use ($username): string {
         $users = adminUsers();

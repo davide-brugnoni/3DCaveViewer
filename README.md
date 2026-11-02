@@ -618,11 +618,12 @@ progetto; il resto di `custom/` e `modelli/` è ignorato da git.
 Finché il file `custom/.installed` non esiste, le pagine del sito
 (`index.php`, `viewer.php`, `status.php`) rimandano a `setup.php`; le API,
 il manifest, `robots.txt` e la sitemap continuano invece a rispondere. Il
-wizard raccoglie le impostazioni in cinque passi — **Benvenuto** (requisiti
+wizard raccoglie le impostazioni in sei passi — **Benvenuto** (requisiti
 e lingua predefinita), **Identità** (nomi, sito, email, copyright, logo e,
 nel blocco avanzato, i testi della homepage), **Colori**, **Mappa** (centro,
 zoom e, nel blocco avanzato, velocità di camminata, unità della barra di
-scala e cupola del cielo), **Fine** — e le scrive in
+scala e cupola del cielo), **Amministratore** (il primo account del pannello
+di amministrazione, facoltativo), **Fine** — e le scrive in
 `custom/settings.ini`, riscrivendo solo le righe che cambiano: i commenti
 che documentano ogni voce restano al loro posto, e una copia di sicurezza
 del file precedente resta in `custom/settings.ini.bak`.
@@ -775,11 +776,16 @@ Da `admin.php` (link **Gestione** nel footer della homepage) si caricano e
 si modificano i modelli direttamente dal browser, senza FTP e senza
 scrivere JSON a mano.
 
-**Primo accesso.** Finché non esiste nessun account, la pagina chiede di
-creare il primo amministratore. Per dimostrare di gestire l'installazione
-serve la **chiave di configurazione**: quella mostrata (e fatta scaricare)
-alla fine dell'installazione guidata, salvata in `custom/.installed`. Si può
-incollare o scegliere il file salvato.
+**Primo accesso.** Il primo amministratore si crea di solito già
+nell'installazione guidata, al passo **Amministratore**: a fine installazione
+sei già dentro il pannello. Il passo è facoltativo; se lo salti, o se il
+server non poteva scrivere in `custom/`, la prima volta che apri `admin.php`
+la pagina chiede di creare il primo amministratore. In quel caso, per
+dimostrare di gestire l'installazione, serve la **chiave di configurazione**:
+quella mostrata (e fatta scaricare) alla fine dell'installazione guidata,
+salvata in `custom/.installed`. Si può incollare o scegliere il file salvato.
+Riaprendo il wizard più avanti, quel passo non crea altri account: gli
+utenti si gestiscono solo dal pannello.
 
 **Cosa si può fare**
 

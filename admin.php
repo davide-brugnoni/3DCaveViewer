@@ -190,6 +190,7 @@ function adminActionLabel(string $action): string {
         'login_failed' => at('action.loginFailed', 'Accesso fallito'),
         'logout' => at('action.logout', 'Uscita'),
         'admin.bootstrap' => at('action.bootstrap', 'Primo amministratore creato'),
+        'admin.setup' => at('action.setupAdmin', 'Primo amministratore creato (installazione guidata)'),
         'model.create' => at('action.modelCreate', 'Modello creato'),
         'model.update' => at('action.modelUpdate', 'Informazioni modificate'),
         'model.file' => at('action.modelFile', 'File 3D sostituito'),

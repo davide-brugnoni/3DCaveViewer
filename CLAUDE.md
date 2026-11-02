@@ -470,8 +470,15 @@ user, display name at that time, action, target and `details.changes`
 
 Accounts: roles `editor` (create/edit models, view history) and `admin`
 (also delete/restore, trash, users) — see `adminCan()`. The first admin is
-created with the install key from `custom/.installed`; at least one active
-admin always remains. Passwords use `password_hash()`; a session is tied to
+created either in the setup wizard's optional "Amministratore" step
+(`setup.php` → `adminCreateFirstAdminFromSetup()`, which re-checks
+`adminHasUsers()` inside `adminLocked()`, logs `admin.setup` and signs the
+user in) or, if that step was skipped or `custom/` was not writable, from
+`admin.php` with the install key from `custom/.installed`. The step only
+offers the form while no account exists (`$adminStep`: `form` / `exists` /
+`unavailable`), so a reopened wizard can never add or overwrite admins;
+`js/setup.js` mirrors its rules in `crossFieldErrors()` and keeps password
+fields out of the summary. At least one active admin always remains. Passwords use `password_hash()`; a session is tied to
 `passwordChanged`, so a password change, disable or deletion logs the user
 out everywhere. Login is throttled per hashed IP (5 failures / 15 min).
 

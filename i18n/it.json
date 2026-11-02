@@ -352,12 +352,34 @@
 
 
   "setup": {
+    "admin": {
+      "title": "Amministratore del pannello",
+      "intro": "I modelli 3D si caricano e si gestiscono dal pannello di amministrazione (admin.php). Crea qui il primo account amministratore: potrai poi aggiungere altre persone dal pannello, come editor o amministratori.",
+      "optional": "Facoltativo: se lasci vuoto questo passo, l'amministratore lo crei più tardi aprendo admin.php, con la chiave di configurazione che ricevi alla fine.",
+      "username": "Nome utente",
+      "usernameHint": "Minuscole, numeri, punto, - e _ (3-32 caratteri). Serve per entrare nel pannello.",
+      "displayName": "Nome visualizzato",
+      "displayNameHint": "Come compari nello storico delle modifiche, es. «Mario Rossi».",
+      "password": "Password",
+      "passwordHint": "Almeno {min} caratteri.",
+      "password2": "Ripeti la password",
+      "exists": "Il pannello ha già i suoi account: utenti e password si gestiscono da admin.php, non da qui.",
+      "unavailable": "La cartella custom/ non è scrivibile, quindi l'account non si può creare adesso. Quando sarà scrivibile, apri admin.php e crealo con la chiave di configurazione.",
+      "errUsername": "il nome utente non è valido",
+      "errPasswordShort": "la password è troppo corta",
+      "errPasswordLong": "la password è troppo lunga",
+      "errMismatch": "le due password non coincidono",
+      "errExists": "nel frattempo è già stato creato un account",
+      "errWritable": "la cartella custom/ non è scrivibile",
+      "errWrite": "il salvataggio non è riuscito"
+    },
     "pageTitle": "Installazione guidata",
     "tagline": "Installazione guidata",
     "stepsLabel": "Passi dell'installazione",
     "advanced": "Opzioni avanzate",
     "license": "Software libero rilasciato sotto licenza GNU GPL v3",
     "step": {
+      "admin": "Amministratore",
       "welcome": "Benvenuto",
       "identity": "Identità",
       "theme": "Colori",
@@ -461,6 +483,9 @@
       "save": "Salva e avvia il sito"
     },
     "done": {
+      "adminCreated": "Account amministratore «{username}» creato: sei già entrato nel pannello di amministrazione, da dove carichi i modelli e aggiungi altri utenti.",
+      "adminFailed": "L'amministratore non è stato creato ({reason}). Le impostazioni del sito sono salvate: crea l'account da admin.php, con la chiave qui sopra.",
+      "adminGo": "Pannello di amministrazione",
       "title": "Installazione completata",
       "intro": "Le impostazioni sono state salvate in custom/settings.ini. Il sito parte ora dalla mappa delle cavità.",
       "skipped": "Alcuni valori non erano validi e sono stati ignorati: le voci corrispondenti restano ai valori predefiniti.",
@@ -517,6 +542,10 @@
       }
     },
     "invalid": {
+      "adminUsername": "Nome utente non valido: 3-32 caratteri fra minuscole, numeri, punto, - e _.",
+      "adminPassword": "La password deve avere almeno {min} caratteri.",
+      "adminMismatch": "Le due password non coincidono.",
+      "adminMissing": "Per creare l'amministratore servono sia il nome utente sia la password (oppure lascia vuoto tutto il passo).",
       "url": "Indirizzo non valido: deve iniziare con http:// o https://",
       "email": "Indirizzo email non valido.",
       "copyright": "Il testo deve continuare a citare {author} (licenza GPL v3).",
@@ -624,6 +653,7 @@
       "no": "no"
     },
     "action": {
+      "setupAdmin": "Primo amministratore creato (installazione guidata)",
       "login": "Accesso",
       "loginFailed": "Accesso fallito",
       "logout": "Uscita",
