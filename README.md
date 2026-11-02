@@ -62,7 +62,7 @@ La 1.1.0 porta la gestione dei modelli **nel browser**: niente più FTP né
 file JSON scritti a mano per pubblicare una grotta.
 
 - 🔐 **Pannello di amministrazione** (`admin.php`, link **Gestione** nel
-  footer): carica un nuovo rilievo, scegli la posizione sulla mappa,
+  footer di ogni pagina): carica un nuovo rilievo, scegli la posizione sulla mappa,
   scrivi nome e descrizione, sostituisci il file 3D — anche da centinaia
   di MB, inviato a blocchi
 - 🧭 **Orientamento con anteprima 3D**: il modello su un pavimento con gli
@@ -77,7 +77,8 @@ file JSON scritti a mano per pubblicare una grotta.
 - 🖱️ **Rotazione senza rollio** di serie, col mouse e col dito:
   l'orizzonte resta sempre dritto
 - 📴 **PWA offline al primo avvio**, anche subito dopo l'installazione
-  sull'iPhone
+  sull'iPhone, e cache offline ripulita da sola dai modelli eliminati,
+  sostituiti o tornati in bozza
 
 **Aggiornare dalla 1.0.0**: si sovrascrive il codice come sempre (vedi
 [Aggiornare all'ultima versione](#-aggiornare-allultima-versione)), poi si
@@ -318,6 +319,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 ✓ Funzionamento offline dei modelli già aperti nel visualizzatore
 ✓ Download di tutti i modelli per l'offline solo su consenso (banner, riproposto dopo 7 giorni se rifiutato)
 ✓ Offline anche la vista standard della mappa in homepage
+✓ Modelli eliminati, sostituiti o tornati in bozza tolti da soli dalla cache offline
 ✓ Service worker per caching intelligente
 ✓ Icone e manifest configurati
 ✓ Notifiche di aggiornamento disponibile
@@ -576,8 +578,8 @@ guidata](#-installazione-guidata-setupphp).
 
 5️⃣ **Aggiungi i tuoi modelli**
 
-Apri `https://tuodominio.it/admin.php` (link **Gestione** in fondo alla
-homepage), entra con l'amministratore creato nell'installazione e scegli
+Apri `https://tuodominio.it/admin.php` (link **Gestione** in fondo a ogni
+pagina), entra con l'amministratore creato nell'installazione e scegli
 **Nuovo modello**: carichi il file `.glb`, scrivi nome e descrizione,
 fissi la posizione sulla mappa e salvi — vedi [🔐 Pannello di
 Amministrazione](#-pannello-di-amministrazione-adminphp). In alternativa
@@ -793,7 +795,8 @@ il sito — le righe non valide vengono semplicemente ignorate.
 
 ## 🔐 Pannello di Amministrazione (`admin.php`)
 
-Da `admin.php` (link **Gestione** nel footer della homepage) si caricano e
+Da `admin.php` (link **Gestione** nel footer di homepage, visualizzatore e
+`status.php`) si caricano e
 si modificano i modelli direttamente dal browser, senza FTP e senza
 scrivere JSON a mano.
 
@@ -859,7 +862,9 @@ utenti si gestiscono solo dal pannello.
 - **Sostituire il file 3D** non cancella niente: la versione precedente va
   nel **cestino**, da dove si ripristina con un clic. Il nuovo file prende
   un nome nuovo (`cartella_AAAAMMGG_hhmmss.glb`), così browser e app
-  installate lo scaricano davvero invece di mostrare quello già in cache.
+  installate lo scaricano davvero invece di mostrare quello già in cache;
+  la versione vecchia viene poi tolta da sola dalla cache offline degli
+  utenti, come i file dei modelli eliminati o tornati in bozza.
 - **Storico**: ogni operazione registra chi l'ha fatta, quando e cosa è
   cambiato (es. *Latitudine: 43.35 → 43.5*), filtrabile per modello, utente
   e tipo. Ci sono anche accessi e tentativi falliti.

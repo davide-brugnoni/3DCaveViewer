@@ -58,6 +58,14 @@ amministratore aprendo `admin.php` con la chiave di `custom/.installed`.
     cartella (403 anche a chi conosce l'indirizzo esatto, su Apache) e
     l'anteprima li riceve da `api/admin_model.php`
   - dati in `custom/admin/` (escluso da git, mai toccato dagli aggiornamenti)
+  - link **Gestione** al pannello nel footer di homepage, visualizzatore e
+    `status.php` (nascosto nella modalità incorporata)
+- PWA: i file dei modelli non più pubblicati vengono tolti dalla cache
+  offline degli utenti — modelli eliminati, GLB sostituiti (che prendono un
+  nome nuovo) e modelli tornati in bozza. La pulizia avviene a ogni
+  download completo dei modelli e, per chi ha in cache solo quelli aperti
+  nel visualizzatore, quando una pagina chiede il catalogo (al massimo ogni
+  10 minuti); un elenco vuoto non cancella nulla
 
 ### Modificato
 - Rotazione senza rollio, col mouse e col touch: il modello gira attorno

@@ -172,7 +172,7 @@ Dalla versione 1.1.0 i rilievi si pubblicano e si curano da un **pannello di amm
 - **caricamento dei modelli**: si sceglie il file 3D, si scrivono nome e descrizione e si fissa la posizione della grotta trascinando un segnaposto sulla mappa. I file vengono inviati a blocchi, quindi passano anche rilievi da centinaia di megabyte su hosting che accettano upload di pochi megabyte;
 - **orientamento a vista**: un'anteprima 3D mostra il modello appoggiato su un pavimento a griglia con gli assi colorati; lo si raddrizza con pulsanti di rotazione a 90°, cursori o trascinandolo, e l'inquadratura dell'anteprima è esattamente quella con cui il pubblico vedrà aprirsi la grotta;
 - **bozze**: un rilievo può essere caricato e controllato in anteprima senza che il pubblico lo veda — non compare sulla mappa, nell'elenco né nei motori di ricerca, e i suoi file non sono scaricabili — e poi pubblicato con un clic, ad esempio quando l'esplorazione può essere resa nota;
-- **cestino**: un modello eliminato o una versione sostituita del file 3D non spariscono, ma si possono ripristinare;
+- **cestino**: un modello eliminato o una versione sostituita del file 3D non spariscono, ma si possono ripristinare; dal lato del pubblico, invece, l'app installata elimina da sola dalla memoria offline i rilievi rimossi o sostituiti, senza occupare spazio inutile;
 - **storico**: ogni operazione registra chi l'ha fatta, quando e cosa è cambiato, campo per campo;
 - **lavoro di squadra**: più account con ruoli diversi (editor e amministratori), e se due persone modificano la stessa cavità nello stesso momento il pannello unisce le modifiche e segnala i conflitti invece di perderne una in silenzio.
 
