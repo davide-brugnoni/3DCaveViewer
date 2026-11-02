@@ -507,6 +507,10 @@
         console.log('PWA: Download modelli completato');
         break;
 
+      case 'MODELS_CACHE_PRUNED':
+        console.log('PWA: Rimossi dalla cache', event.data.removed, 'file di modelli non più pubblicati');
+        break;
+
       default:
         console.log('PWA: Messaggio sconosciuto:', event.data);
     }
