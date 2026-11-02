@@ -3291,6 +3291,7 @@
     body.embed-mode #coach-bubble,
     body.embed-mode #panel-mini-bar,
     body.embed-mode #copyright .cache-status-link,
+    body.embed-mode #copyright .admin-link,
     body.embed-mode #copyright .footer-separator:not(.footer-separator-ribbon) {
       display: none !important;
     }

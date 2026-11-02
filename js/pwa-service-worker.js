@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-offline-v67';
+const CACHE_VERSION = 'pwa-offline-v68';
 const CACHE_PREFIX = 'pwa-offline-'; // Prefisso per identificare le cache dell'app
 const FETCH_TIMEOUT = 15000; // 15 secondi (aumentato per connessioni lente)
 // I modelli 3D (GLB/GLTF) possono superare i 100MB: con FETCH_TIMEOUT il download
@@ -548,6 +548,77 @@ async function broadcastToClients(message) {
   }
 }
 
+// ===== PULIZIA DEI MODELLI NON PIÙ PUBBLICATI =====
+// La cache si riempie di file che il catalogo può smettere di elencare: un
+// modello eliminato, un GLB sostituito (il pannello admin dà sempre un nome
+// nuovo al file, quindi il vecchio resta orfano), un modello ritirato in
+// bozza. Senza pulizia restano sul dispositivo per sempre.
+// Si cancellano le voci sotto modelli/ il cui percorso non è nell'elenco di
+// api/catalogo_assets.php, che è l'elenco completo dei file pubblici.
+async function pruneModelCache(cache, assets) {
+  // Un elenco vuoto o non valido non basta per svuotare la cache: può essere
+  // una cartella momentaneamente illeggibile o una risposta anomala, e
+  // cancellare tutti i modelli offline per un errore del server è peggio che
+  // tenere qualche file in più.
+  if (!Array.isArray(assets) || assets.length === 0) return 0;
+
+  const baseUrl = self.registration.scope;
+  const modelsPath = new URL(MODELS_FOLDER, baseUrl).pathname;
+  const wanted = new Set();
+  for (const asset of assets) {
+    const path = typeof asset === 'string' ? asset : asset?.path;
+    if (typeof path !== 'string' || path === '') continue;
+    try {
+      wanted.add(new URL(path, baseUrl).pathname);
+    } catch {}
+  }
+  if (wanted.size === 0) return 0;
+
+  let removed = 0;
+  for (const request of await cache.keys()) {
+    let pathname;
+    try {
+      pathname = new URL(request.url).pathname;
+    } catch {
+      continue;
+    }
+    // Il confronto è sul percorso, senza query: ?v=… non rende un file diverso
+    if (!pathname.startsWith(modelsPath) || wanted.has(pathname)) continue;
+    if (await cache.delete(request)) removed++;
+  }
+
+  if (removed > 0) {
+    console.log(`PWA: Rimossi dalla cache ${removed} file di modelli non più pubblicati`);
+    broadcastToClients({ type: 'MODELS_CACHE_PRUNED', removed });
+  }
+  return removed;
+}
+
+// Pulizia anche per chi non ha dato il consenso al download completo: i
+// modelli aperti nel viewer finiscono comunque in cache (cacheFirst). Parte
+// quando una pagina chiede il catalogo, al massimo una volta ogni
+// PRUNE_INTERVAL_MS per vita del worker; la richiesta dell'elenco si
+// rivalida con l'ETag, quindi di norma costa una risposta 304 vuota.
+const PRUNE_INTERVAL_MS = 10 * 60 * 1000;
+let lastPruneAt = 0;
+async function maybePruneModelCache() {
+  // La sincronizzazione completa pulisce da sé, con l'elenco che ha già
+  if (catalogRun || Date.now() - lastPruneAt < PRUNE_INTERVAL_MS) return;
+  lastPruneAt = Date.now();
+  try {
+    const response = await fetchWithTimeout(new Request(
+      new URL('api/catalogo_assets.php', self.registration.scope).toString(),
+      { mode: 'same-origin', credentials: 'same-origin', cache: 'no-cache' }
+    ));
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!data || !Array.isArray(data.assets)) return;
+    await pruneModelCache(await caches.open(CACHE_VERSION), data.assets);
+  } catch {
+    // Offline o risposta non valida: la cache resta com'è
+  }
+}
+
 // Cache asset del catalogo modelli con versioning per singolo file
 // Scarica solo i file nuovi o modificati, preservando quelli già in cache
 async function cacheCatalogAssets(cache, force = false) {
@@ -588,6 +659,20 @@ async function cacheCatalogAssets(cache, force = false) {
       cachedVersions = {};
     }
 
+    // File spariti dal catalogo: fuori dalla cache e dall'elenco delle versioni
+    await pruneModelCache(cache, data.assets);
+    lastPruneAt = Date.now();
+    let versionsPruned = false;
+    if (data.assets.length > 0) {
+      const listed = new Set(data.assets.map(a => (typeof a === 'string' ? a : a?.path)));
+      for (const path of Object.keys(cachedVersions)) {
+        if (!listed.has(path)) {
+          delete cachedVersions[path];
+          versionsPruned = true;
+        }
+      }
+    }
+
     // Determina quali file devono essere scaricati
     // - Nuovi file (non in cache)
     // - File con versione cambiata (modificati sul server)
@@ -622,6 +707,12 @@ async function cacheCatalogAssets(cache, force = false) {
     }
 
     if (assetsToDownload.length === 0) {
+      if (versionsPruned) {
+        await cache.put(
+          versionsUrlString,
+          new Response(JSON.stringify({ ...cachedVersions, ...newVersions }), { headers: { 'Content-Type': 'application/json' } })
+        ).catch(() => {});
+      }
       console.log('PWA: Tutti gli asset sono già in cache e aggiornati');
       broadcastToClients({ type: 'MODELS_CACHE_DONE', downloaded: 0, failed: 0, total: 0 });
       return;
@@ -878,6 +969,9 @@ self.addEventListener('fetch', (event) => {
     if (url.pathname === apiPathPrefix + 'catalogo.php' ||
         url.pathname === apiPathPrefix + 'catalogo_assets.php') {
       event.respondWith(networkFirst(request, event));
+      if (url.pathname === apiPathPrefix + 'catalogo.php') {
+        keepAlive(event, maybePruneModelCache());
+      }
       return;
     }
 

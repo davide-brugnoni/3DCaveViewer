@@ -287,7 +287,8 @@ sendSecurityHeaders("default-src 'self'; script-src 'self' 'unsafe-inline'; styl
         <strong><?= e(config('branding.appName')); ?></strong> © <?= date('Y'); ?>
         · 3DCaveViewer v<?= e(APP_VERSION); ?>
         <a href="<?= e(config('originalAuthor.website')); ?>" target="_blank" rel="noopener noreferrer">GitHub</a> |
-        <a href="<?= e(config('branding.organizationUrl')); ?>" target="_blank" rel="noopener noreferrer"><?= e(config('branding.organizationName')); ?></a>
+        <a href="<?= e(config('branding.organizationUrl')); ?>" target="_blank" rel="noopener noreferrer"><?= e(config('branding.organizationName')); ?></a> |
+        <a href="admin.php" class="admin-link" rel="nofollow" title="<?= e(__t('footer.adminTitle', 'Area riservata: gestione dei modelli')); ?>"><?= e(__t('footer.admin', 'Gestione')); ?></a>
         <br />
         <?= e(__t('status.license', 'Rilasciato sotto licenza GNU GPL v3')); ?>
       </p>
