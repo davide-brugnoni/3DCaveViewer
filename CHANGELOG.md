@@ -34,6 +34,13 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
     salvataggio per tutte: la scheda con un errore si apre da sola, quelle
     modificate e non salvate sono segnalate, e dopo il salvataggio si
     torna alla scheda in cui si era
+  - scheda Orientamento con anteprima 3D del modello su una griglia
+    orizzontale (il pavimento, con gli assi colorati): pulsanti per ruotarlo
+    di ±90° attorno agli assi, cursori per la regolazione fine, scorciatoia
+    "Z in alto → Y in alto", viste fronte/lato/alto. I gradi finiscono nei
+    campi Rotazione X/Y/Z e si salvano con il modulo; il modello si scarica
+    solo all'apertura della scheda (sopra i 60 MB su richiesta) e un file
+    appena scelto in "File 3D" si vede subito, prima di salvarlo
   - bozze: un modello può essere salvato senza pubblicarlo
     (`"published": false` nei metadati). Resta in `modelli/` ma catalogo,
     mappa, visualizzatore, sitemap, anteprime social e download offline lo

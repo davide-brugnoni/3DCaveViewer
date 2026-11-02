@@ -35,7 +35,13 @@ redirectToSetupIfNeeded();
 
 $lang = getCurrentLang();
 
-sendSecurityHeaders("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self'; form-action 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none';");
+// Import map dell'anteprima 3D (scheda Orientamento): è uno <script> in
+// linea, ammesso dalla CSP solo con il suo hash. Draco e KTX2 decodificano in
+// WebAssembly dentro worker creati da blob:, e GLTFLoader legge le texture
+// incorporate da URL blob:.
+const ADMIN_IMPORT_MAP = '{"imports":{"three":"./lib/three/build/three.module.js","three/addons/":"./lib/three/examples/jsm/"}}';
+$adminImportMapHash = "'sha256-" . base64_encode(hash('sha256', ADMIN_IMPORT_MAP, true)) . "'";
+sendSecurityHeaders("default-src 'self'; script-src 'self' $adminImportMapHash 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' blob: data:; worker-src 'self' blob:; form-action 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none';");
 header('Cache-Control: no-store, private');
 header('X-Robots-Tag: noindex, nofollow');
 
@@ -1242,6 +1248,64 @@ $langMeta = getLanguagesMeta();
           <?php adminInput('rotZ', at('field.rotZ', 'Rotazione Z'), $values['rotZ'], $errors, ['inputmode' => 'decimal', 'placeholder' => '0']); ?>
         </div>
         <p class="adm-hint"><?= e(at('edit.orientationHint', 'In gradi. Serve ai modelli esportati con l\'asse Z verso l\'alto (es. CloudCompare): di solito X = -90.')); ?></p>
+        <?php
+        // Anteprima 3D: il file salvato (una bozza passa dal pannello, la
+        // sua cartella è chiusa al web) o quello appena scelto in "File 3D".
+        // Costruita da js/admin-orientation.js; senza JavaScript resta nascosta.
+        $previewExt = strtolower((string) pathinfo($currentFile, PATHINFO_EXTENSION));
+        $previewUrl = '';
+        $previewSize = 0;
+        if (!$isNew && is_file($currentPath) && ($previewExt === 'glb' || $previewExt === 'gltf')) {
+            $previewUrl = $isPublished
+                ? $modelsUrl . '/' . rawurlencode($folder) . '/' . rawurlencode($currentFile)
+                : 'api/admin_model.php?m=' . rawurlencode($folder) . '&f=' . rawurlencode($currentFile);
+            $previewSize = (int) filesize($currentPath);
+        }
+        ?>
+        <div class="adm-orient" id="adm-orient" hidden
+             data-model-url="<?= e($previewUrl); ?>"
+             data-model-size="<?= $previewSize; ?>"
+             data-auto-bytes="<?= 60 * 1024 * 1024; ?>"
+             data-msg-loading="<?= e(at('edit.orientLoading', 'Caricamento del modello… {percent}%')); ?>"
+             data-msg-parsing="<?= e(at('edit.orientParsing', 'Preparazione del modello…')); ?>"
+             data-msg-error="<?= e(at('edit.orientError', 'Impossibile mostrare il modello: {error}')); ?>"
+             data-msg-none="<?= e(at('edit.orientNone', 'Carica un file 3D (scheda «File 3D») per vedere qui l\'anteprima.')); ?>"
+             data-msg-unsupported="<?= e(at('edit.orientUnsupported', 'L\'anteprima è disponibile solo per i file GLB/glTF.')); ?>"
+             data-msg-big="<?= e(at('edit.orientBig', 'Il modello pesa {size}: caricalo solo se serve.')); ?>"
+             data-msg-local="<?= e(at('edit.orientLocal', 'Anteprima del file scelto ({name}), non ancora salvato.')); ?>"
+             data-msg-nowebgl="<?= e(at('edit.orientNoWebgl', 'Il browser non supporta WebGL: imposta i gradi a mano.')); ?>">
+          <div class="adm-orient-stage">
+            <div class="adm-orient-canvas" id="adm-orient-canvas" role="img" aria-label="<?= e(at('edit.orientCanvas', 'Anteprima 3D del modello con la griglia del pavimento')); ?>"></div>
+            <div class="adm-orient-status" id="adm-orient-status">
+              <span class="adm-orient-status-text"></span>
+              <button type="button" class="adm-btn adm-btn-small" id="adm-orient-load" hidden><?= e(at('edit.orientLoad', 'Carica l\'anteprima 3D')); ?></button>
+            </div>
+            <div class="adm-orient-views" role="group" aria-label="<?= e(at('edit.orientViews', 'Punto di vista')); ?>">
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="iso"><?= e(at('edit.orientViewIso', '3D')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="front"><?= e(at('edit.orientViewFront', 'Fronte')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="side"><?= e(at('edit.orientViewSide', 'Lato')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-view="top"><?= e(at('edit.orientViewTop', 'Alto')); ?></button>
+            </div>
+            <span class="adm-orient-up" aria-hidden="true">↑ <?= e(at('edit.orientUp', 'alto')); ?></span>
+            <p class="adm-orient-local" id="adm-orient-local" hidden></p>
+          </div>
+          <div class="adm-orient-tools">
+            <?php foreach (['x' => 'rotX', 'y' => 'rotY', 'z' => 'rotZ'] as $axis => $field): ?>
+            <div class="adm-orient-axis adm-orient-axis-<?= $axis; ?>">
+              <span class="adm-orient-axis-name"><?= strtoupper($axis); ?></span>
+              <button type="button" class="adm-btn adm-btn-small" data-orient-turn="<?= $axis; ?>" data-orient-deg="-90" title="<?= e(at('edit.orientTurn', 'Ruota di {deg}° attorno all\'asse {axis}', ['deg' => '-90', 'axis' => strtoupper($axis)])); ?>">↺ 90°</button>
+              <input type="range" min="-180" max="180" step="1" value="0" data-orient-slider="<?= e($field); ?>" aria-label="<?= e(at('field.' . $field, 'Rotazione ' . strtoupper($axis))); ?>" />
+              <button type="button" class="adm-btn adm-btn-small" data-orient-turn="<?= $axis; ?>" data-orient-deg="90" title="<?= e(at('edit.orientTurn', 'Ruota di {deg}° attorno all\'asse {axis}', ['deg' => '+90', 'axis' => strtoupper($axis)])); ?>">↻ 90°</button>
+            </div>
+            <?php endforeach; ?>
+            <p class="adm-orient-actions">
+              <button type="button" class="adm-btn adm-btn-small" data-orient-preset="zup"><?= e(at('edit.orientZup', 'Z in alto → Y in alto')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small adm-btn-ghost" data-orient-preset="zero"><?= e(at('edit.orientZero', 'Azzera')); ?></button>
+              <button type="button" class="adm-btn adm-btn-small adm-btn-ghost" data-orient-preset="saved"><?= e(at('edit.orientRevert', 'Ripristina i valori salvati')); ?></button>
+            </p>
+            <p class="adm-hint"><?= e(at('edit.orientHint', 'Gira il modello finché il pavimento della grotta è parallelo alla griglia e l\'alto è verso l\'alto, poi salva: i gradi vengono scritti nei campi qui sopra e usati dal visualizzatore. Trascina per girare la vista (non il modello), rotella per lo zoom. I pulsanti ruotano attorno agli assi del mondo: rosso X, verde Y (verticale), blu Z.')); ?></p>
+          </div>
+        </div>
       </section>
 
       <section class="adm-tab-panel" id="tab-file" role="tabpanel" aria-labelledby="tab-btn-file" data-panel="file">
@@ -1635,5 +1699,9 @@ $langMeta = getLanguagesMeta();
   <?php endif; ?>
   <script src="js/config.php"></script>
   <script src="js/admin.js" defer></script>
+  <?php if ($page === 'edit' || $page === 'new'): ?>
+  <script type="importmap"><?= ADMIN_IMPORT_MAP; ?></script>
+  <script type="module" src="js/admin-orientation.js"></script>
+  <?php endif; ?>
 </body>
 </html>
