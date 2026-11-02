@@ -464,6 +464,8 @@ $linkTarget = $isEmbed ? ' target="_blank" rel="noopener"' : '';
       <span class="cache-status-dot" id="cache-status-dot"></span>
       <span class="cache-status-text"><?= e(__t('footer.cache', 'Cache')); ?></span>
     </a>
+    <span class="footer-separator">|</span>
+    <a href="admin.php" class="admin-link" rel="nofollow" title="<?= e(__t('footer.adminTitle', 'Area riservata: gestione dei modelli')); ?>"><?= e(__t('footer.admin', 'Gestione')); ?></a>
     <span class="footer-separator footer-separator-ribbon">|</span>
     <?= projectRibbon(); ?>
   </div>
