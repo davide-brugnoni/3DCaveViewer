@@ -7,6 +7,14 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+## [1.1.0] — 2026-11-02 — pannello di amministrazione
+
+I modelli si gestiscono dal browser: caricamento, modifica, orientamento,
+bozze, cestino e storico, con più utenti, senza FTP e senza scrivere JSON
+a mano. Aggiornare dalla 1.0.0 non richiede nulla: si sovrascrive il codice
+come sempre (preservando `modelli/` e `custom/`) e si crea il primo
+amministratore aprendo `admin.php` con la chiave di `custom/.installed`.
+
 ### Aggiunto
 - Pannello di amministrazione (`admin.php`) per gestire i modelli dal
   browser, senza FTP:
@@ -50,6 +58,14 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
     cartella (403 anche a chi conosce l'indirizzo esatto, su Apache) e
     l'anteprima li riceve da `api/admin_model.php`
   - dati in `custom/admin/` (escluso da git, mai toccato dagli aggiornamenti)
+  - link **Gestione** al pannello nel footer di homepage, visualizzatore e
+    `status.php` (nascosto nella modalità incorporata)
+- PWA: i file dei modelli non più pubblicati vengono tolti dalla cache
+  offline degli utenti — modelli eliminati, GLB sostituiti (che prendono un
+  nome nuovo) e modelli tornati in bozza. La pulizia avviene a ogni
+  download completo dei modelli e, per chi ha in cache solo quelli aperti
+  nel visualizzatore, quando una pagina chiede il catalogo (al massimo ogni
+  10 minuti); un elenco vuoto non cancella nulla
 
 ### Modificato
 - Rotazione senza rollio, col mouse e col touch: il modello gira attorno
@@ -58,6 +74,8 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   `viewer.mouseRotation = "trackball"` / `viewer.touchRotation = "trackball"`
 
 ### Corretto
+- Pannello Condividi del visualizzatore: nella scheda «Link» comparivano
+  sotto i pulsanti social anche le opzioni della scheda «Incorpora»
 - Scheda Orientamento: il modello si apriva nel visualizzatore diverso da
   come era stato sistemato nell'anteprima. Trascinare l'anteprima girava la
   camera, che non viene salvata: si salvano solo i gradi di rotazione. Ora
