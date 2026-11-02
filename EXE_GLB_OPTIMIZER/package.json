@@ -21,7 +21,8 @@
     "prepare-app": "node scripts/prepare.mjs",
     "start": "node scripts/prepare.mjs --no-runtime && electron .",
     "pack": "node scripts/prepare.mjs && electron-builder --win dir --x64",
-    "dist": "npm run pack && node scripts/build-installer.mjs"
+    "dist": "npm run pack && node scripts/build-installer.mjs",
+    "test": "node scripts/smoke-test.mjs"
   },
   "dependencies": {
     "@gltf-transform/core": "^4.1.0",

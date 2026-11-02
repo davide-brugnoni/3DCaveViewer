@@ -41,6 +41,9 @@ jobs:
       - name: Applicazione (electron-builder)
         run: npm run pack
 
+      - name: Prova di funzionamento (server e texture con il node.exe incluso)
+        run: node scripts/smoke-test.mjs dist/win-unpacked
+
       - name: Inno Setup
         shell: pwsh
         run: |
