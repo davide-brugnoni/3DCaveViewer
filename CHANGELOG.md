@@ -16,6 +16,14 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 - `glb-optimizer/`: variabile `HOST` per scegliere l'indirizzo di ascolto
   (`127.0.0.1` = raggiungibile solo dal computer stesso).
 
+### Corretto
+- Modelli compressi Draco che non si aprivano offline (o con il server che
+  risponde 503) anche con tutti i file scaricati: il service worker metteva
+  in cache il decoder da `libs/draco/gltf/`, mentre il viewer lo carica da
+  `libs/draco/`.
+- Una pagina (es. `viewer.php?m=…`) a cui il server risponde con un errore
+  5xx viene servita dalla copia in cache invece di mostrare l'errore.
+
 ## [1.1.0] — 2026-11-02 — pannello di amministrazione
 
 I modelli si gestiscono dal browser: caricamento, modifica, orientamento,

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-offline-v68';
+const CACHE_VERSION = 'pwa-offline-v69';
 const CACHE_PREFIX = 'pwa-offline-'; // Prefisso per identificare le cache dell'app
 const FETCH_TIMEOUT = 15000; // 15 secondi (aumentato per connessioni lente)
 // I modelli 3D (GLB/GLTF) possono superare i 100MB: con FETCH_TIMEOUT il download
@@ -80,9 +80,12 @@ const LOCAL_ASSETS = [
   'lib/three/examples/jsm/libs/zstddec.module.js',
   'lib/three/examples/jsm/utils/WorkerPool.js',
   'lib/three/examples/jsm/utils/BufferGeometryUtils.js',
-  'lib/three/examples/jsm/libs/draco/gltf/draco_decoder.js',
-  'lib/three/examples/jsm/libs/draco/gltf/draco_decoder.wasm',
-  'lib/three/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js',
+  // Decoder Draco: stessa cartella di setDecoderPath() in viewer.js e
+  // admin-orientation.js (draco/, non draco/gltf/). Con il percorso sbagliato
+  // i modelli compressi Draco non si aprono offline anche se il GLB è in cache.
+  'lib/three/examples/jsm/libs/draco/draco_decoder.js',
+  'lib/three/examples/jsm/libs/draco/draco_decoder.wasm',
+  'lib/three/examples/jsm/libs/draco/draco_wasm_wrapper.js',
   'lib/three/examples/jsm/libs/basis/basis_transcoder.js',
   'lib/three/examples/jsm/libs/basis/basis_transcoder.wasm',
   'lib/three/examples/jsm/controls/OrbitControls.js',
@@ -1177,6 +1180,13 @@ function keepAlive(event, promise) {
   return promise;
 }
 
+function stripQuery(url) {
+  const u = new URL(url);
+  u.search = '';
+  u.hash = '';
+  return u.toString();
+}
+
 // Network-First: Prioritizza la rete, fallback a cache
 async function networkFirst(request, event, preloadResponse) {
   const cache = await caches.open(CACHE_VERSION);
@@ -1192,8 +1202,12 @@ async function networkFirst(request, event, preloadResponse) {
       return response;
     }
 
-    // Response non cacheable, prova la cache
-    const cached = await cache.match(requestUrl, { ignoreVary: true });
+    // Response non cacheable (es. 503 del server), prova la cache. Per una
+    // pagina anche senza query: viewer.php?m=… è in cache come viewer.php
+    const cached = await cache.match(requestUrl, { ignoreVary: true })
+      || (request.mode === 'navigate' && response.status >= 500
+        ? await cache.match(stripQuery(requestUrl), { ignoreVary: true })
+        : null);
     if (cached) {
       return cached;
     }
@@ -1209,10 +1223,7 @@ async function networkFirst(request, event, preloadResponse) {
 
     // Prova a rimuovere query params e hash
     try {
-      const fallbackUrl = new URL(requestUrl);
-      fallbackUrl.search = '';
-      fallbackUrl.hash = '';
-      const fallback = await cache.match(fallbackUrl.toString(), { ignoreVary: true });
+      const fallback = await cache.match(stripQuery(requestUrl), { ignoreVary: true });
 
       if (fallback) {
         return fallback;
