@@ -79,10 +79,9 @@ file JSON scritti a mano per pubblicare una grotta.
 - 📴 **PWA offline al primo avvio**, anche subito dopo l'installazione
   sull'iPhone, e cache offline ripulita da sola dai modelli eliminati,
   sostituiti o tornati in bozza
-- 🪟 **GLB Optimizer per Windows** (in anteprima): l'ottimizzatore come
-  programma con installazione guidata, senza Node.js né terminale. È ancora
-  in lavorazione e non è ancora firmato digitalmente (firma richiesta), vedi
-  [Ottimizzatore GLB](#-exe_glb_optimizer--programma-per-windows)
+- 🚀 **GLB Optimizer con un doppio clic** su Windows, macOS e Linux: lo
+  script di avvio installa da solo ciò che serve (anche Node.js) e apre il
+  browser, vedi [Ottimizzatore GLB](#-glb-optimizer--server-nodejs)
 
 **Aggiornare dalla 1.0.0**: si sovrascrive il codice come sempre (vedi
 [Aggiornare all'ultima versione](#-aggiornare-allultima-versione)), poi si
@@ -475,6 +474,10 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   └── fonts/                     # Font Poppins self-hosted
 │
 ├── 🛠️  glb-optimizer/              # Ottimizzatore GLB — server Node/Express
+│   ├── avvia-windows.bat          # Avvio con doppio clic (installa tutto da solo)
+│   ├── avvia-mac.command          #   … su macOS
+│   ├── avvia-linux.sh             #   … su Linux
+│   ├── launcher/                  # Logica degli script di avvio
 │   ├── package.json
 │   ├── server.js                  # Server Express con upload via browser
 │   ├── obj-stream-converter.js    # Conversione OBJ→GLB in streaming (file grandi)
@@ -483,11 +486,8 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── public/index.html          # Interfaccia web dell'ottimizzatore
 │   └── README.md
 │
-├── 🛠️  glb-optimizer-static/       # Ottimizzatore GLB — versione browser-only
-│   └── index.html                 # Pagina HTML singola, nessun server necessario
-│
-└── 🪟  EXE_GLB_OPTIMIZER/          # Ottimizzatore GLB come programma Windows (installer)
-    └── README.md
+└── 🛠️  glb-optimizer-static/       # Ottimizzatore GLB — versione browser-only
+    └── index.html                 # Pagina HTML singola, nessun server necessario
 ```
 
 ---
@@ -1287,31 +1287,32 @@ GLB Draco avviene a memoria costante e le mesh con decine di milioni di
 vertici vengono suddivise automaticamente prima della codifica Draco.
 Dettagli e limiti in `glb-optimizer/README.md`.
 
+**Avvio con un doppio clic** (consigliato, nessuna conoscenza tecnica
+richiesta): nella cartella `glb-optimizer/` apri il file del tuo sistema.
+
+| Sistema | File da aprire |
+|---|---|
+| Windows | `avvia-windows.bat` |
+| macOS | `avvia-mac.command` (la prima volta: clic destro → **Apri**) |
+| Linux | `avvia-linux.sh` (dal terminale `./avvia-linux.sh`, o "Esegui" dal file manager) |
+
+Al primo avvio lo script installa da solo tutto il necessario — se nel
+computer non c'è Node.js 22 ne scarica una copia portatile dentro
+`glb-optimizer/.runtime/` (verificata con SHA-256, senza permessi di
+amministratore, nulla installato nel sistema) e poi i componenti npm — quindi
+avvia il programma e **apre il browser** sull'interfaccia. Dagli avvii
+successivi parte in pochi secondi. Lascia aperta la finestra del terminale
+mentre lavori; chiudila per spegnere il programma. Serve la connessione a
+Internet solo la prima volta.
+
+Chi ha già Node.js ≥ 22 può anche avviarlo a mano:
+
 ```bash
 cd glb-optimizer
 npm install
 npm start
 # → apri http://localhost:3000 nel browser
 ```
-
-### 🪟 `EXE_GLB_OPTIMIZER/` — Programma per Windows
-
-Lo stesso ottimizzatore della versione server, ma come programma Windows
-da installare con un doppio clic: un'installazione guidata in italiano
-spiega a cosa serve e cosa viene installato, poi il programma si apre in
-una finestra propria dal menu Start. Non serve installare Node.js né usare
-il terminale. L'installer (`GLB-Optimizer-Setup-<versione>.exe`) viene
-compilato automaticamente da GitHub Actions; dettagli in
-[`EXE_GLB_OPTIMIZER/README.md`](EXE_GLB_OPTIMIZER/README.md).
-
-> ⚠️ **In anteprima.** Il programma è ancora in lavorazione: su alcuni
-> computer potrebbe non avviarsi o non convertire correttamente i file. In
-> quel caso usa `glb-optimizer/` o `glb-optimizer-static/`, e segnala il
-> problema indicando la versione di Windows e il messaggio d'errore.
-> L'eseguibile **non è ancora firmato digitalmente** (abbiamo richiesto il
-> certificato per autenticare il pacchetto): finché non lo è, Windows può
-> mostrare l'avviso SmartScreen «Windows ha protetto il PC». Per procedere
-> clicca **Ulteriori informazioni → Esegui comunque**.
 
 ### 💻 `glb-optimizer-static/` — Pagina HTML singola
 
@@ -1335,7 +1336,7 @@ Nessun upload verso server esterni.
 | Esigenza | Strumento consigliato |
 |----------|----------------------|
 | Ottimizzazione saltuaria, zero setup | `glb-optimizer-static/` |
-| Su Windows, senza terminale né Node.js | `EXE_GLB_OPTIMIZER/` (installer) |
+| Doppio clic, senza installare nulla a mano | `glb-optimizer/` (script `avvia-*`) |
 | Ambiente condiviso / batch ripetuti | `glb-optimizer/` (server Node) |
 | Massima privacy (nessun upload) | Entrambi: anche il server Node gira in locale |
 | Ricompressione texture WebP/JPEG | `glb-optimizer/` (server Node) |

@@ -1,7 +1,0 @@
-# Generati da scripts/prepare.mjs e dalla build: mai versionati
-node_modules/
-server/
-runtime/
-build/
-dist/
-app/icon.png

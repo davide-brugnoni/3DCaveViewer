@@ -16,10 +16,43 @@ Trasformazioni disponibili (basate su [glTF Transform](https://gltf-transform.de
 | **Texture → Formato output** | Stesso formato | *WebP* (massima compressione) o *JPEG* (massima compatibilità), con slider *Qualità* 1–100 (default 80). Le texture usate per la trasparenza non diventano JPEG. |
 | **Texture → Lato massimo** | 4096 px | Riduce le texture più grandi mantenendo le proporzioni (*Originale*, 8192, 4096, 2048 px); quelle già entro il limite non vengono toccate. Vale anche con *Stesso formato*. |
 
-## Avvio
+## Avvio con un doppio clic (consigliato)
 
-Su Windows c'è anche il programma installabile, senza terminale né
-Node.js: vedi [`EXE_GLB_OPTIMIZER/`](../EXE_GLB_OPTIMIZER/README.md).
+Apri il file del tuo sistema, in questa cartella:
+
+| Sistema | File | Note |
+|---|---|---|
+| Windows 10/11 | `avvia-windows.bat` | Se Windows chiede conferma: **Esegui** (o, con «Windows ha protetto il PC», **Ulteriori informazioni → Esegui comunque**). È un normale file di testo, si può leggere prima con il Blocco note |
+| macOS | `avvia-mac.command` | La prima volta: clic destro → **Apri** → **Apri** (Gatekeeper blocca il doppio clic sui file scaricati) |
+| Linux | `avvia-linux.sh` | `./avvia-linux.sh` dal terminale, o "Esegui" dal file manager |
+
+Cosa fa lo script, ogni volta:
+
+1. **Node.js**: usa quello del computer se è la versione 22 o successiva;
+   altrimenti scarica da nodejs.org una copia *portatile* di Node.js 22 in
+   `.runtime/` (verificata con lo SHA-256 ufficiale). Non servono permessi
+   di amministratore e non viene installato nulla nel sistema: per
+   rimuovere tutto basta cancellare la cartella `glb-optimizer/`.
+2. **Componenti**: alla prima esecuzione (o quando `package-lock.json`
+   cambia dopo un aggiornamento) esegue `npm ci` per installare le
+   dipendenze in `node_modules/`.
+3. **Avvio**: lancia il server solo su `127.0.0.1` (non raggiungibile dalla
+   rete, nessuna richiesta del firewall), con memoria massima pari al 75%
+   della RAM (tetto 16 GB), sulla porta 3000 o su una libera se è occupata.
+4. **Browser**: quando il server risponde apre il browser predefinito
+   sull'interfaccia. Se il programma è già in esecuzione, apre solo il
+   browser.
+
+Serve la connessione a Internet solo al primo avvio. Lascia aperta la
+finestra del terminale mentre lavori: chiudendola (o con Ctrl+C) il
+programma si spegne. Variabili opzionali: `PORT`, `HOST` (vedi sotto) e
+`GLBOPT_NO_BROWSER=1` per non aprire il browser.
+
+La logica sta in `launcher/`: `avvia.sh` (macOS/Linux) e
+`installa-node.ps1` (Windows) procurano Node.js, `launcher.mjs` fa il resto
+ed è identico su tutti i sistemi.
+
+## Avvio manuale
 
 Richiede **Node.js ≥ 22**.
 

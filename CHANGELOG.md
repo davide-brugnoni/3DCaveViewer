@@ -5,6 +5,24 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 [Semantic Versioning](https://semver.org/lang/it/). La versione in uso è
 `APP_VERSION` in `config.php`, mostrata in fondo a `status.php`.
 
+## [Non rilasciato]
+
+### Aggiunto
+- `glb-optimizer/`: avvio con un doppio clic su Windows
+  (`avvia-windows.bat`), macOS (`avvia-mac.command`) e Linux
+  (`avvia-linux.sh`). Al primo avvio lo script installa tutto da solo — se
+  manca Node.js 22 ne scarica una copia portatile in `glb-optimizer/.runtime/`
+  (verificata con SHA-256, senza permessi di amministratore), poi i
+  componenti npm — quindi avvia il server solo su `127.0.0.1` e apre il
+  browser sull'interfaccia. Gli avvii successivi partono in pochi secondi;
+  se il programma è già aperto si apre solo il browser.
+
+### Rimosso
+- `EXE_GLB_OPTIMIZER/` (programma e installer per Windows) e il workflow
+  `glb-optimizer-windows.yml`: senza firma digitale veniva bloccato da
+  SmartScreen e su diversi computer non funzionava. Lo sostituiscono gli
+  script di avvio qui sopra.
+
 ## [1.1.0] — 2026-11-02 — pannello di amministrazione
 
 I modelli si gestiscono dal browser: caricamento, modifica, orientamento,

@@ -117,7 +117,7 @@ const uploadOBJ = multer({
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', activeJobs, maxConcurrent: MAX_CONCURRENT });
+  res.json({ status: 'ok', app: 'glb-optimizer', activeJobs, maxConcurrent: MAX_CONCURRENT });
 });
 
 // NodeIO singleton con moduli Draco. La variante "streaming" della lettura
@@ -558,9 +558,9 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-// HOST vuoto = tutte le interfacce (comportamento storico); l'app Windows
-// (EXE_GLB_OPTIMIZER) passa 127.0.0.1: nessun accesso dalla rete e nessuna
-// richiesta del firewall di Windows.
+// HOST vuoto = tutte le interfacce (comportamento storico); gli script di
+// avvio (launcher/launcher.mjs) passano 127.0.0.1: nessun accesso dalla rete
+// e nessuna richiesta del firewall di Windows.
 const HOST = process.env.HOST || undefined;
 const server = app.listen(PORT, HOST, () => console.log(`\n✓ GLB Optimizer pronto → http://${HOST || 'localhost'}:${PORT} (max ${MAX_CONCURRENT} job concorrenti)\n`));
 

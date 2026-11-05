@@ -30,3 +30,6 @@ custom/admin/
 
 # Dependencies
 node_modules/
+
+# Node.js portatile scaricato dagli script di avvio del GLB Optimizer
+glb-optimizer/.runtime/

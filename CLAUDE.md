@@ -67,8 +67,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 ├── offline.html                # Offline fallback page
 ├── .htaccess                   # Apache rules, security headers, caching
 ├── .github/
-│   ├── FUNDING.yml             # Sponsor link
-│   └── workflows/glb-optimizer-windows.yml # Builds the Windows installer (only workflow)
+│   └── FUNDING.yml             # Sponsor link (no CI workflows)
 │
 ├── api/
 │   ├── catalogo.php            # API endpoint: returns model list as JSON
@@ -151,6 +150,10 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   └── fonts/                  # Poppins, latin 400/600/700 only (vendored, OFL.txt)
 │
 ├── glb-optimizer/              # Optional Node.js tool for GLB compression
+│   ├── avvia-windows.bat       # One-click start (Windows), CRLF via .gitattributes
+│   ├── avvia-mac.command       # One-click start (macOS)
+│   ├── avvia-linux.sh          # One-click start (Linux)
+│   ├── launcher/               # avvia.sh / installa-node.ps1 (get Node ≥ 22) + launcher.mjs
 │   ├── package.json            # Its own deps (gltf-transform, obj2gltf, draco3d, sharp)
 │   ├── server.js               # Express server (port 3000, `PORT`/`HOST` env)
 │   ├── public/index.html       # Upload UI
@@ -161,16 +164,6 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │
 ├── glb-optimizer-static/       # Static HTML version (no Node.js required)
 │   └── index.html
-│
-├── EXE_GLB_OPTIMIZER/          # glb-optimizer as a Windows desktop app + installer (see below)
-│   ├── package.json            # Electron app; `dependencies` must equal glb-optimizer's
-│   ├── app/main.cjs            # Electron main: spawns the server, window, menu, downloads
-│   ├── app/splash.html         # Startup / error screen
-│   ├── scripts/prepare.mjs     # Copies glb-optimizer/ → server/, icon, downloads node.exe
-│   ├── scripts/build-installer.mjs # Runs Inno Setup (ISCC) on Windows
-│   ├── installer/              # glb-optimizer.iss + info pages shown by the installer (Italian)
-│   ├── build-windows.bat       # One-click local build on Windows
-│   └── README.md
 │
 ├── docs/
 │   ├── PERSONALIZZAZIONE.md    # Step-by-step customization guide for deployers (Italian)
@@ -949,25 +942,28 @@ map: {
 - First visit generates `modelli/catalogo.cache.json` automatically
 
 ### GLB Optimization
-Two options available:
+Options available:
 - **Node.js server** (`glb-optimizer/`): Upload GLB files via browser UI at `localhost:3000`
 - **Static tool** (`glb-optimizer-static/index.html`): Single HTML file, runs entirely in browser
-- **Windows app** (`EXE_GLB_OPTIMIZER/`): the Node.js server packaged as an
-  installable Windows program (Inno Setup wizard in Italian, Electron window)
+- **One-click launchers** (`glb-optimizer/avvia-*`): start that same server for
+  non-technical users, installing Node.js and the npm deps first, then open the browser
 
-`EXE_GLB_OPTIMIZER/` never duplicates the optimizer: `scripts/prepare.mjs`
-copies `glb-optimizer/*.js` + `public/` into the gitignored `server/` at
-build time and fails if the two `dependencies` blocks differ, so change them
-in both. The server runs on a bundled `node.exe` (nodejs.org `latest-v22.x`,
-SHA-256 checked), not inside Electron, whose V8 caps the heap at 4 GB;
-`app/main.cjs` passes `--max-old-space-size` = 75% of RAM (max 16384),
-`HOST=127.0.0.1` (no Windows firewall prompt) and a free `PORT`, waits for
-`/health`, then loads it in the window. `asar` is off and `npmRebuild` is
-false (sharp is N-API, run by node.exe, not Electron). The installer
-(`installer/glb-optimizer.iss`, per-user, no admin) lists three fixed
-components; keep its `AppId` unchanged. The `.exe` is built by the
-`glb-optimizer-windows.yml` workflow (Actions artifact; a
-`glb-optimizer-v*` tag also makes a release) or `npm run dist` on Windows.
+The launchers are thin per-OS wrappers. `launcher/avvia.sh` (macOS/Linux)
+and `launcher/installa-node.ps1` (Windows, called by the `.bat`) only make
+sure a Node.js ≥ 22 exists: the system one if new enough, else a portable
+copy from `nodejs.org/dist/latest-v22.x` (SHA-256 checked against
+`SHASUMS256.txt`) unpacked into the gitignored `glb-optimizer/.runtime/` —
+no admin rights, nothing installed system-wide. Everything else is
+`launcher/launcher.mjs`, identical on every OS: `npm ci` (run through the
+`npm-cli.js` next to `process.execPath`, so the portable Node works without
+being on `PATH`) whenever the fingerprint in `node_modules/.glbopt-installed`
+(lockfile + platform/arch, since sharp is native) changes; then `server.js`
+on `HOST=127.0.0.1` with `--max-old-space-size` = 75% of RAM (2–16 GB), on
+port 3000 or a free one; waits for `/health` (which answers
+`app: 'glb-optimizer'`, so an instance already running is detected and only
+the browser is opened) and opens the default browser. Keep the `.bat`
+ASCII-only and CRLF. The former Electron/Inno Setup Windows installer
+(`EXE_GLB_OPTIMIZER/`) was removed: it was unsigned and unreliable.
 
 ---
 
@@ -1021,9 +1017,8 @@ When adding new static assets (CSS/JS files), add them to the `LOCAL_ASSETS` lis
 
 ## No Automated Tests
 
-There are currently no automated tests in this project. The only CI is
-`.github/workflows/glb-optimizer-windows.yml`, which builds the Windows
-installer of the GLB optimizer. Manual verification is performed via:
+There are currently no automated tests and no CI workflows in this
+project. Manual verification is performed via:
 - The browser's DevTools console (check for errors)
 - `status.php` for PWA cache inspection
 - Direct navigation to `viewer.php?m=[folder]` with various model folders
