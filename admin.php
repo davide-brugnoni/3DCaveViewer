@@ -1173,6 +1173,7 @@ $langMeta = getLanguagesMeta();
       <?php endforeach; ?>
     </nav>
     <form method="post" action="admin.php?p=<?= e($page); ?><?= $isNew ? '' : '&amp;m=' . e(rawurlencode($folder)); ?>" enctype="multipart/form-data" class="adm-form adm-card adm-tab-host" id="adm-model-form"
+          <?= $isNew ? 'data-wizard="1" data-msg-step="' . e(at('tab.stepOf', 'Passo {n} di {total}')) . '"' : ''; ?>
           data-upload-url="api/admin_upload.php"
           data-csrf="<?= e($csrf); ?>"
           data-max-bytes="<?= ADMIN_MAX_MODEL_BYTES; ?>"
@@ -1253,7 +1254,19 @@ $langMeta = getLanguagesMeta();
         <?php endif; ?>
         <p class="adm-field<?= isset($errors['model_file']) ? ' adm-field-error' : ''; ?>">
           <label for="f-model-file"><?= e($isNew ? at('edit.uploadFile', 'Carica il file (GLB)') : at('edit.replaceFile', 'Sostituisci con un nuovo file')); ?></label>
-          <input type="file" id="f-model-file" name="model_file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" <?= $isNew && $pendingUpload === '' ? 'required' : ''; ?> />
+          <span class="adm-dropzone" id="adm-dropzone"
+                data-msg-none="<?= e(at('drop.none', 'Nessun file selezionato')); ?>"
+                data-msg-chosen="<?= e(at('drop.chosen', 'File scelto: {name} ({size})')); ?>">
+            <input type="file" id="f-model-file" name="model_file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" <?= $isNew && $pendingUpload === '' ? 'required' : ''; ?> />
+            <?php // Interfaccia di trascinamento: mostrata da js/admin.js, senza JavaScript resta il campo classico ?>
+            <span class="adm-dropzone-ui" aria-hidden="true">
+              <span class="adm-dropzone-icon">⬆</span>
+              <span class="adm-dropzone-title"><?= e(at('drop.title', 'Trascina qui il file GLB')); ?></span>
+              <span class="adm-dropzone-or"><?= e(at('drop.or', 'oppure')); ?></span>
+              <span class="adm-btn adm-btn-small adm-dropzone-pick"><?= e(at('drop.pick', 'Scegli un file dal computer')); ?></span>
+              <span class="adm-dropzone-file" id="adm-dropzone-file"></span>
+            </span>
+          </span>
           <?php if (isset($errors['model_file'])): ?>
           <span class="adm-error-text"><?= e(adminMessage($errors['model_file'])); ?></span>
           <?php endif; ?>
@@ -1362,8 +1375,22 @@ $langMeta = getLanguagesMeta();
         </p>
       </section>
 
+      <?php if ($isNew): ?>
+      <?php // Nuovo modello: procedura a passi. Con JavaScript "Crea modello"
+            // compare solo all'ultimo passo (prima c'è "Avanti"); senza, il
+            // modulo è una pagina unica con il solo pulsante di creazione. ?>
+      <p class="adm-actions adm-sticky-actions adm-wizard-actions">
+        <a href="admin.php" class="adm-btn adm-btn-ghost"><?= e(at('edit.cancel', 'Annulla')); ?></a>
+        <span class="adm-tab-steps" hidden>
+          <span class="adm-step-count" id="adm-step-count" aria-live="polite"></span>
+          <button type="button" class="adm-btn adm-btn-ghost" data-tab-step="-1">← <?= e(at('tab.prev', 'Indietro')); ?></button>
+          <button type="button" class="adm-btn adm-btn-primary" data-tab-step="1"><?= e(at('tab.next', 'Avanti')); ?> →</button>
+        </span>
+        <button type="submit" class="adm-btn adm-btn-primary" id="adm-save"><?= e(at('new.submit', 'Crea modello')); ?></button>
+      </p>
+      <?php else: ?>
       <p class="adm-actions adm-sticky-actions">
-        <button type="submit" class="adm-btn adm-btn-primary" id="adm-save"><?= e($isNew ? at('new.submit', 'Crea modello') : at('edit.submit', 'Salva modifiche')); ?></button>
+        <button type="submit" class="adm-btn adm-btn-primary" id="adm-save"><?= e(at('edit.submit', 'Salva modifiche')); ?></button>
         <a href="admin.php" class="adm-btn adm-btn-ghost"><?= e(at('edit.cancel', 'Annulla')); ?></a>
         <span class="adm-unsaved" id="adm-unsaved" hidden><?= e(at('tab.unsavedShort', 'Modifiche non salvate')); ?></span>
         <span class="adm-tab-steps" hidden>
@@ -1371,6 +1398,7 @@ $langMeta = getLanguagesMeta();
           <button type="button" class="adm-btn adm-btn-small" data-tab-step="1"><?= e(at('tab.next', 'Avanti')); ?> →</button>
         </span>
       </p>
+      <?php endif; ?>
     </form>
 
     <?php if (!$isNew): ?>

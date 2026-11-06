@@ -90,6 +90,13 @@
     const steps = form.querySelector('.adm-tab-steps');
     const unsaved = document.getElementById('adm-unsaved');
     const baseAction = form.getAttribute('action').split('#')[0];
+    // Nuovo modello: procedura a passi, "Crea modello" solo all'ultimo.
+    // Se il server ha rimandato il modulo con errori (o un caricamento è
+    // fallito) il pulsante resta visibile ovunque: i dati ci sono già.
+    const wizard = form.dataset.wizard === '1';
+    const saveBtn = document.getElementById('adm-save');
+    const stepCount = document.getElementById('adm-step-count');
+    let wizardOpen = wizard && !!form.querySelector('.adm-field-error');
     let current = '';
 
     const tabOf = (el) => {
@@ -129,6 +136,15 @@
         const index = formTabs.findIndex((tab) => tab.dataset.tab === name);
         steps.querySelector('[data-tab-step="-1"]').disabled = index <= 0;
         steps.querySelector('[data-tab-step="1"]').disabled = index < 0 || index >= formTabs.length - 1;
+        if (wizard) {
+          const last = index === formTabs.length - 1;
+          steps.querySelector('[data-tab-step="1"]').hidden = last;
+          if (saveBtn) saveBtn.hidden = !(last || wizardOpen);
+          if (stepCount && index >= 0) {
+            stepCount.textContent = (form.dataset.msgStep || '{n} / {total}')
+              .replace('{n}', String(index + 1)).replace('{total}', String(formTabs.length));
+          }
+        }
       }
       if (opts.remember !== false) {
         try { history.replaceState(null, '', `#tab=${name}`); } catch (e) { /* file:// o sandbox */ }
@@ -162,8 +178,36 @@
         const button = event.target.closest('[data-tab-step]');
         if (!button) return;
         const index = formTabs.findIndex((tab) => tab.dataset.tab === current);
-        const target = formTabs[index + Number(button.dataset.tabStep)];
+        const step = Number(button.dataset.tabStep);
+        // Nella procedura si va avanti solo con i campi del passo validi
+        if (wizard && step > 0 && !panelValid(panels.get(current))) return;
+        const target = formTabs[index + step];
         if (target) showTab(target.dataset.tab);
+      });
+    }
+
+    const panelValid = (panel) => {
+      const fields = Array.from(panel ? panel.querySelectorAll('input, textarea, select') : []);
+      const invalid = fields.find((field) => !field.disabled && field.willValidate && !field.checkValidity());
+      if (invalid) invalid.reportValidity();
+      return !invalid;
+    };
+
+    // Invio in un campo, a metà procedura, passa al passo successivo
+    // invece di creare il modello con le schede successive ancora da vedere
+    if (wizard && steps) {
+      form.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.isComposing) return;
+        const target = event.target;
+        if (!target.matches('input') || ['button', 'submit', 'checkbox', 'radio', 'file', 'range'].includes(target.type)) return;
+        if (saveBtn && !saveBtn.hidden) return;
+        event.preventDefault();
+        steps.querySelector('[data-tab-step="1"]').click();
+      });
+      // Caricamento fallito o altro errore: da lì in poi si può creare da ogni passo
+      document.addEventListener('adm:wizardopen', () => {
+        wizardOpen = true;
+        if (saveBtn) saveBtn.hidden = false;
       });
     }
 
@@ -445,8 +489,67 @@
     return form.dataset.msgLeave;
   };
 
+  // ===== Trascinamento del file =====
+  // Il campo file resta nel modulo (e nel DOM) ma è coperto da un'area in
+  // cui trascinare il file o fare clic per sceglierlo. Un file lasciato
+  // cadere in qualsiasi punto della pagina va qui, invece di far aprire
+  // il file al browser abbandonando il modulo.
+  const dropzone = document.getElementById('adm-dropzone');
+  const dropFile = document.getElementById('adm-dropzone-file');
+  const showChosen = () => {
+    if (!dropzone || !dropFile) return;
+    const file = fileInput.files && fileInput.files[0];
+    dropzone.classList.toggle('has-file', !!file);
+    dropFile.textContent = file
+      ? format(dropzone.dataset.msgChosen, { name: file.name, size: bytes(file.size) })
+      : dropzone.dataset.msgNone;
+  };
+  const hasFiles = (event) => !!event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files');
+  if (dropzone && typeof DataTransfer === 'function') {
+    dropzone.classList.add('adm-dropzone-ready');
+    showChosen();
+    let depth = 0;
+    const setOver = (on) => {
+      dropzone.classList.toggle('is-over', on);
+      document.body.classList.toggle('adm-dragging', on);
+    };
+    document.addEventListener('dragenter', (event) => {
+      if (!hasFiles(event)) return;
+      depth++;
+      setOver(true);
+    });
+    document.addEventListener('dragleave', (event) => {
+      if (!hasFiles(event)) return;
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) setOver(false);
+    });
+    document.addEventListener('dragover', (event) => {
+      if (!hasFiles(event)) return;
+      // Sul campo dell'immagine social il browser fa da sé
+      if (event.target.matches && event.target.matches('input[type="file"]') && event.target !== fileInput) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = uploading ? 'none' : 'copy';
+    });
+    document.addEventListener('drop', (event) => {
+      depth = 0;
+      setOver(false);
+      if (!hasFiles(event)) return;
+      if (event.target.matches && event.target.matches('input[type="file"]') && event.target !== fileInput) return;
+      event.preventDefault();
+      if (uploading) return;
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      fileInput.files = transfer.files;
+      showTab('file');
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
   fileInput.addEventListener('change', () => {
     progress.classList.add('adm-hidden');
+    showChosen();
     const pending = document.getElementById('adm-pending-upload');
     if (pending && fileInput.files.length > 0) pending.classList.add('adm-muted');
     const file = fileInput.files[0];
@@ -471,6 +574,9 @@
     // La barra di avanzamento sta nella scheda "File 3D"
     // (senza cambiare la scheda a cui si torna dopo il salvataggio)
     showTab('file', { remember: false, keepAction: true });
+    // Nella procedura del nuovo modello il pulsante resta visibile (e,
+    // se il caricamento fallisce, lo si può ripetere da qui)
+    document.dispatchEvent(new CustomEvent('adm:wizardopen'));
     controller = new AbortController();
     saveButton.disabled = true;
     cancelButton.hidden = false;

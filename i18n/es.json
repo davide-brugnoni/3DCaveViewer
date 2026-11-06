@@ -563,7 +563,15 @@
       "unsaved": "Hay cambios sin guardar: si sales se perder\u00e1n.",
       "unsavedShort": "Cambios sin guardar",
       "prev": "Atr\u00e1s",
-      "next": "Siguiente"
+      "next": "Siguiente",
+      "stepOf": "Paso {n} de {total}"
+    },
+    "drop": {
+      "title": "Arrastra aqu\u00ed el archivo GLB",
+      "or": "o",
+      "pick": "Elegir un archivo del ordenador",
+      "none": "Ning\u00fan archivo seleccionado",
+      "chosen": "Archivo elegido: {name} ({size})"
     },
     "msg": {
       "saved": "Cambios guardados.",

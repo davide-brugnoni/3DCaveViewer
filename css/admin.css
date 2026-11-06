@@ -636,6 +636,116 @@ h2 {
   cursor: default;
 }
 
+/* Nuovo modello: procedura a passi. Annulla a sinistra, a destra il
+   contatore, Indietro e l'azione principale (Avanti, poi Crea modello) */
+.adm-wizard-actions {
+  align-items: center;
+}
+
+.adm-wizard-actions .adm-tab-steps {
+  align-items: center;
+}
+
+.adm-step-count {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+/* Area di trascinamento del file 3D (attivata da js/admin.js) */
+.adm-dropzone {
+  display: block;
+}
+
+.adm-dropzone-ui {
+  display: none;
+}
+
+.adm-dropzone-ready {
+  position: relative;
+  display: flex;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  min-height: 180px;
+  margin: 4px 0 6px;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.adm-dropzone-ready input[type='file'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.adm-dropzone-ready .adm-dropzone-ui {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.adm-dropzone-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--accent-hover);
+}
+
+.adm-dropzone-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.adm-dropzone-or {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.adm-dropzone-file {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.adm-dropzone-ready:hover,
+.adm-dropzone-ready:focus-within {
+  border-color: var(--accent-color);
+}
+
+.adm-dropzone-ready:hover .adm-dropzone-pick,
+.adm-dropzone-ready:focus-within .adm-dropzone-pick {
+  border-color: var(--accent-color);
+}
+
+.adm-dropzone-ready.has-file {
+  border-style: solid;
+  border-color: var(--accent-color);
+}
+
+.adm-dropzone-ready.has-file .adm-dropzone-file {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.adm-dropzone-ready.is-over {
+  border-color: var(--accent-hover);
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+}
+
+.adm-field-error .adm-dropzone-ready {
+  border-color: var(--danger-color);
+}
+
 .adm-danger .adm-delete-form {
   max-width: 420px;
 }
@@ -1248,6 +1358,21 @@ h2 {
     margin-left: 0;
     width: 100%;
     justify-content: space-between;
+  }
+
+  /* Procedura: Annulla e contatore sopra, Indietro e azione sotto */
+  .adm-wizard-actions .adm-tab-steps {
+    width: auto;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .adm-wizard-actions .adm-step-count {
+    margin-right: auto;
+  }
+
+  .adm-dropzone-ready {
+    min-height: 140px;
   }
 
   .adm-search {

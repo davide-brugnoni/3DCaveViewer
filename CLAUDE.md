@@ -511,7 +511,15 @@ panel `id` and make the browser jump to it) and written into the form's
 `action`, so the 303 after saving comes back to the same tab. On load the
 first tab containing `.adm-field-error` wins over the hash; an `invalid`
 event from a hidden tab opens it; edited tabs get a dot and leaving with
-unsaved changes asks for confirmation. Leaflet is created inside a possibly
+unsaved changes asks for confirmation. On `new` the form carries
+`data-wizard="1"`: the bar shows "Passo n di N", Indietro and a primary
+Avanti (which `reportValidity()`s the current panel), and `#adm-save`
+("Crea modello") only on the last tab — or everywhere once the page came
+back with errors or an upload started (`adm:wizardopen`); Enter in a field
+steps forward. The model file input sits inside `#adm-dropzone`, turned into
+a drag-and-drop area by `js/admin.js`; a file dropped anywhere on the page
+goes there (dropping onto another file input keeps the browser default).
+Leaflet is created inside a possibly
 hidden panel, so the map listens for `adm:tabshown` and calls
 `invalidateSize()`.
 

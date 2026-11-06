@@ -16,6 +16,16 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   componenti npm — quindi avvia il server solo su `127.0.0.1` e apre il
   browser sull'interfaccia. Gli avvii successivi partono in pochi secondi;
   se il programma è già aperto si apre solo il browser.
+- Pannello, «Nuovo modello»: il file 3D si può trascinare nella scheda
+  «File 3D» (o in qualsiasi punto della pagina), oltre che sceglierlo dal
+  computer.
+
+### Modificato
+- Pannello, «Nuovo modello»: è una procedura a passi («Passo 3 di 5»).
+  Fino all'ultima scheda il pulsante principale è «Avanti», che controlla i
+  campi obbligatori del passo; «Crea modello» compare solo all'ultimo passo
+  (o ovunque, se il modulo torna con errori). Invio in un campo porta al
+  passo successivo invece di creare il modello.
 
 ### Rimosso
 - `EXE_GLB_OPTIMIZER/` (programma e installer per Windows) e il workflow
