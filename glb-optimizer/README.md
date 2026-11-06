@@ -5,6 +5,16 @@ ottimizza file `.glb`/`.gltf` e converte modelli `.obj` in GLB ottimizzati.
 Tutta l'elaborazione avviene sul tuo computer: i file non vengono inviati a
 servizi esterni.
 
+> [!IMPORTANT]
+> ## 🚫 Questa cartella NON va caricata sul server
+> `glb-optimizer/` si usa **sul tuo computer** (Windows, macOS o Linux):
+> prepari qui i modelli e poi carichi sul sito solo i file `.glb`
+> ottimizzati, dal pannello di amministrazione o via FTP. Quando installi o
+> aggiorni il sito, **escludi questa cartella** dal caricamento: gli
+> hosting PHP non eseguono Node.js e la cartella `node_modules/` occupa
+> centinaia di MB. Se finisce sul server per sbaglio, il `.htaccess` del
+> sito ne blocca l'accesso.
+
 Trasformazioni disponibili (basate su [glTF Transform](https://gltf-transform.dev/)):
 
 | Opzione | Default | Cosa fa |
@@ -150,26 +160,6 @@ Il tool supporta file grandi (fino a **5 GB** per file caricato). Requisiti e li
 - Se dopo l'ottimizzazione la geometria risulta sparita (o il file è
   sospettosamente piccolo) l'elaborazione si interrompe con un errore che
   suggerisce di disattivare Prune e Dedup.
-
-## Alternativa senza Node.js: `glb-optimizer-static/`
-
-[`glb-optimizer-static/index.html`](../glb-optimizer-static/index.html) è una
-pagina HTML unica che fa il lavoro interamente nel browser: si apre
-direttamente nel browser, nessuna installazione, i file non lasciano il computer (le
-librerie vengono caricate da CDN, quindi serve la connessione la prima volta).
-
-Rispetto alla versione server:
-
-- accetta `.glb` oppure `.obj` + `.mtl` + texture (non `.gltf`);
-- offre Draco, Unisci vertici, Deduplica e Prune, senza slider di
-  velocità/tolleranza;
-- per le texture offre *Lato massimo* (default 4096 px) e *PNG → JPEG*
-  (attivo; le PNG usate per la trasparenza restano PNG), ma non WebP né lo
-  slider di qualità (JPEG al 90%);
-- nella conversione da OBJ le texture vengono incorporate come **PNG**
-  (comportamento di `GLTFExporter`): lascia attivo *PNG → JPEG*;
-- è limitata dalla memoria del browser: oltre ~100 MB l'elaborazione è lenta,
-  e gli OBJ oltre ~500 MB possono fallire. Per i file grandi usa il server.
 
 ## Compatibilità output
 

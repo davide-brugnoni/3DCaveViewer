@@ -149,7 +149,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── leaflet/                # Leaflet v1.9.4 (vendored)
 │   └── fonts/                  # Poppins, latin 400/600/700 only (vendored, OFL.txt)
 │
-├── glb-optimizer/              # Optional Node.js tool for GLB compression
+├── glb-optimizer/              # Optional Node.js tool for GLB compression — runs on the user's computer, never deployed (.htaccess denies it)
 │   ├── avvia-windows.bat       # One-click start (Windows), CRLF via .gitattributes
 │   ├── avvia-mac.command       # One-click start (macOS)
 │   ├── avvia-linux.sh          # One-click start (Linux)
@@ -161,9 +161,6 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── split-large-primitives.js # Splits primitives the Draco encoder can't handle
 │   ├── obj-stream-converter.js # Streaming OBJ conversion for very large files
 │   └── README.md
-│
-├── glb-optimizer-static/       # Static HTML version (no Node.js required)
-│   └── index.html
 │
 ├── docs/
 │   ├── PERSONALIZZAZIONE.md    # Step-by-step customization guide for deployers (Italian)
@@ -945,14 +942,14 @@ map: {
 4. No build step needed — edit PHP/JS/CSS directly
 
 ### Deployment
-- Upload all files to a PHP-capable HTTPS server
+- Upload all files to a PHP-capable HTTPS server — **except `glb-optimizer/`**,
+  a desktop tool (`.htaccess` answers 403 for it if uploaded anyway)
 - Ensure `.htaccess` is applied (Apache `AllowOverride All`)
 - First visit generates `modelli/catalogo.cache.json` automatically
 
 ### GLB Optimization
 Options available:
 - **Node.js server** (`glb-optimizer/`): Upload GLB files via browser UI at `localhost:3000`
-- **Static tool** (`glb-optimizer-static/index.html`): Single HTML file, runs entirely in browser
 - **One-click launchers** (`glb-optimizer/avvia-*`): start that same server for
   non-technical users, installing Node.js and the npm deps first, then open the browser
 

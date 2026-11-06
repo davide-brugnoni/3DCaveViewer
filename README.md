@@ -52,7 +52,16 @@
 | 📲 **Modelli grandi su mobile** | Download a copia singola e texture ridotte automaticamente su telefoni e tablet, per non far chiudere la scheda del browser |
 | 🧭 **Installazione guidata** | Al primo avvio un wizard configura nome, logo, colori, mappa e il primo amministratore, senza toccare file |
 | 🔐 **Pannello di Amministrazione** | Caricamento e modifica dei modelli dal browser (anche file da centinaia di MB), orientamento con anteprima 3D, bozze, cestino, storico delle modifiche e più utenti con ruoli |
-| 🛠️ **Ottimizzatore GLB Incluso** | Tre strumenti (server Node, pagina browser-only e programma Windows in anteprima) per comprimere i modelli, con supporto a file fino a 5 GB |
+| 🛠️ **Ottimizzatore GLB Incluso** | Un programma da usare sul proprio computer (non sul server), avviabile con un doppio clic, per comprimere i modelli, con supporto a file fino a 5 GB |
+
+> [!IMPORTANT]
+> ## 🚫 `glb-optimizer/` NON va caricata sul server
+> La cartella **`glb-optimizer/`** è un programma da usare **sul tuo
+> computer** per preparare i modelli prima di pubblicarli: non fa parte del
+> sito. Quando carichi i file via FTP **escludila**: sul server non
+> servirebbe a nulla (gli hosting PHP non eseguono Node.js) e occuperebbe
+> spazio inutilmente. Se la carichi per sbaglio, `.htaccess` ne blocca
+> comunque l'accesso.
 
 ---
 
@@ -79,9 +88,18 @@ file JSON scritti a mano per pubblicare una grotta.
 - 📴 **PWA offline al primo avvio**, anche subito dopo l'installazione
   sull'iPhone, e cache offline ripulita da sola dai modelli eliminati,
   sostituiti o tornati in bozza
+
+**In arrivo nella prossima versione** (già nel codice, vedi la sezione «Non
+rilasciato» del [CHANGELOG](CHANGELOG.md)):
+
 - 🚀 **GLB Optimizer con un doppio clic** su Windows, macOS e Linux: lo
   script di avvio installa da solo ciò che serve (anche Node.js) e apre il
-  browser, vedi [Ottimizzatore GLB](#-glb-optimizer--server-nodejs)
+  browser, vedi [Ottimizzatore GLB](#-glb-optimizer--server-nodejs). Prende
+  il posto del programma per Windows e della vecchia pagina HTML singola,
+  entrambi rimossi
+- 🪜 **«Nuovo modello» a passi**: la creazione di un modello guida scheda
+  per scheda («Passo 3 di 5», Indietro / Avanti) e il file 3D si carica
+  anche trascinandolo nella pagina
 
 **Aggiornare dalla 1.0.0**: si sovrascrive il codice come sempre (vedi
 [Aggiornare all'ultima versione](#-aggiornare-allultima-versione)), poi si
@@ -485,9 +503,6 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── split-large-primitives.js  # Suddivisione mesh enormi per l'encoder Draco
 │   ├── public/index.html          # Interfaccia web dell'ottimizzatore
 │   └── README.md
-│
-└── 🛠️  glb-optimizer-static/       # Ottimizzatore GLB — versione browser-only
-    └── index.html                 # Pagina HTML singola, nessun server necessario
 ```
 
 ---
@@ -506,6 +521,18 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 > ℹ️ Il primo passo dell'installazione guidata controlla da solo questi
 > requisiti (versione PHP, GD, fileinfo, cartelle scrivibili, HTTPS,
 > mod_rewrite) e segnala quello che manca.
+
+### 🧰 Computer (solo per l'ottimizzatore GLB, facoltativo)
+
+| Componente | Requisito |
+|------------|-----------|
+| **Sistema** | Windows 10/11, macOS o Linux |
+| **Node.js** | 22 o successivo — se manca lo scarica da solo lo script `avvia-*` |
+| **RAM** | Circa 2–3 volte la dimensione del file per gli OBJ grandi (16 GB per un OBJ da 5 GB); il server usa fino al 75% della memoria |
+| **Internet** | Solo al primo avvio, per scaricare Node.js e i componenti |
+
+Il sito pubblicato non usa Node.js: l'ottimizzatore gira sul tuo computer
+e serve solo a preparare i file prima di caricarli.
 
 ### 🌐 Browser Supportati
 
@@ -554,7 +581,9 @@ Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
   `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
   indirizzo tipo `https://tuodominio.it/grotte/`;
 - trascina lì **il contenuto** della cartella estratta (non la cartella
-  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.1.0/`).
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.1.0/`);
+- ⚠️ **tutto tranne la cartella `glb-optimizer/`**: è l'ottimizzatore dei
+  modelli, si usa sul tuo computer e sul server non serve.
 
 > ⚠️ Controlla che sia arrivato anche il file **`.htaccess`**: inizia con
 > un punto, quindi alcuni programmi lo nascondono. In FileZilla attiva
@@ -587,8 +616,9 @@ guidata](#-installazione-guidata-setupphp).
 
 Apri `https://tuodominio.it/admin.php` (link **Gestione** in fondo a ogni
 pagina), entra con l'amministratore creato nell'installazione e scegli
-**Nuovo modello**: carichi il file `.glb`, scrivi nome e descrizione,
-fissi la posizione sulla mappa e salvi — vedi [🔐 Pannello di
+**Nuovo modello**: una procedura a passi ti fa scrivere nome e
+descrizione, fissare la posizione sulla mappa e caricare il file `.glb`
+(anche trascinandolo nella pagina), poi **Crea modello** — vedi [🔐 Pannello di
 Amministrazione](#-pannello-di-amministrazione-adminphp). In alternativa
 carica via FTP in `modelli/` una cartella per ogni cavità, con dentro il
 file `.glb` e il file `.json` dei dati — vedi [📦 Aggiungere un Nuovo
@@ -727,6 +757,7 @@ il resto**.
 |---|---|---|
 | `modelli/` | I tuoi modelli 3D (GLB + metadati JSON) | ❌ Non toccare |
 | `custom/` | I tuoi loghi, le tue icone, `settings.ini` e i dati del pannello di amministrazione (`custom/admin/`) | ❌ Non toccare |
+| `glb-optimizer/` | Ottimizzatore dei modelli, da usare sul tuo computer | 🚫 Non caricarla sul server |
 | Tutto il resto | Codice dell'applicazione (PHP, JS, CSS, librerie) | ✅ Sovrascrivi interamente |
 
 ### 📝 Procedura
@@ -834,6 +865,17 @@ utenti si gestiscono solo dal pannello.
   salva tutte le schede insieme; un pallino segnala quelle modificate e
   non ancora salvate, o quella con un errore da correggere, e dopo il
   salvataggio si torna alla scheda in cui si era.
+- **Nuovo modello a passi**: per un modello nuovo le schede diventano una
+  procedura guidata («Passo 3 di 5»). **Avanti** controlla i campi
+  obbligatori del passo prima di proseguire, **Indietro** torna al
+  precedente, e Invio in un campo porta al passo successivo; **Crea
+  modello** compare all'ultimo passo (o su tutti, se il modulo torna con un
+  errore da correggere).
+- **File 3D**: il file si sceglie dal computer o si **trascina** nel
+  riquadro della scheda (o in qualsiasi punto della pagina). Viene inviato
+  a blocchi, quindi passano anche file da centinaia di MB su hosting con
+  limiti di upload bassi; un caricamento interrotto riprende da dove si era
+  fermato.
 - **Posizione**: latitudine e longitudine si scelgono cliccando o
   trascinando il segnaposto sulla mappa (o scrivendole a mano); senza
   coordinate il modello resta raggiungibile dal selettore del
@@ -902,7 +944,8 @@ che non serve più per recuperare spazio.
 
 > 💡 Il modo più semplice è il [pannello di
 > amministrazione](#-pannello-di-amministrazione-adminphp): **Gestione →
-> Nuovo modello**, scegli il file, compila i campi e salva. La procedura
+> Nuovo modello**, segui i passi (informazioni, posizione, file 3D,
+> orientamento, anteprima) e premi **Crea modello**. La procedura
 > manuale qui sotto, via FTP, resta valida e produce gli stessi file.
 
 ### 🛠️ Procedura in 4 Passi
@@ -1255,20 +1298,27 @@ pageTitle[en] = "Our caves"
 ✓ Poligoni: < 500k per dispositivi mobili
 ```
 
-> 💡 Il progetto include **due strumenti pronti all'uso** per preparare e
+> 💡 Il progetto include un **ottimizzatore pronto all'uso** per preparare e
 > comprimere i modelli GLB. Vedi la sezione successiva.
 
 ---
 
 ## 🛠️ Ottimizzazione Modelli GLB
 
-Il repository include due ottimizzatori GLB pronti all'uso, pensati per
+> [!IMPORTANT]
+> **L'ottimizzatore si usa sul tuo computer, non sul server.** Tieni la
+> cartella `glb-optimizer/` sul PC (Windows, macOS o Linux), prepara lì i
+> modelli e carica sul sito solo i file `.glb` ottimizzati, dal pannello di
+> amministrazione o via FTP. La cartella `glb-optimizer/` non va caricata
+> sull'hosting.
+
+Il repository include un ottimizzatore GLB pronto all'uso, pensato per
 aiutare qualsiasi gruppo speleologico a ridurre il peso dei propri rilievi
-prima di pubblicarli nel visualizzatore. Entrambi applicano compressione
-**Draco**, fusione di vertici duplicati (**weld**), deduplicazione
-(**dedup**) e rimozione delle risorse inutilizzate (**prune**), e producono
-file compatibili con il viewer. Solo la versione server ricomprime inoltre
-le texture in **WebP/JPEG** (consigliate per il mobile).
+prima di pubblicarli nel visualizzatore. Applica compressione **Draco**,
+fusione di vertici duplicati (**weld**), deduplicazione (**dedup**) e
+rimozione delle risorse inutilizzate (**prune**), ricomprime le texture in
+**WebP/JPEG** (consigliate per il mobile) e produce file compatibili con il
+viewer.
 
 ### 🌐 `glb-optimizer/` — Server Node.js
 
@@ -1313,35 +1363,6 @@ npm install
 npm start
 # → apri http://localhost:3000 nel browser
 ```
-
-### 💻 `glb-optimizer-static/` — Pagina HTML singola
-
-Un'unica pagina HTML che esegue l'ottimizzazione **interamente nel
-browser**, senza server né dipendenze da installare (le librerie vengono
-caricate da CDN, quindi serve una connessione a Internet; i file invece non
-lasciano il computer). Non ricomprime le texture: per quelle usa la
-versione server o convertile prima di esportare. Ideale per chi vuole
-ottimizzare occasionalmente un modello senza configurare Node.js, o per
-mantenere i file in locale per motivi di privacy.
-
-Supporta drag-and-drop di **OBJ + MTL + texture** in un'unica operazione.
-
-```
-Apri semplicemente glb-optimizer-static/index.html nel browser.
-Nessun upload verso server esterni.
-```
-
-### 🤔 Quale scegliere?
-
-| Esigenza | Strumento consigliato |
-|----------|----------------------|
-| Ottimizzazione saltuaria, zero setup | `glb-optimizer-static/` |
-| Doppio clic, senza installare nulla a mano | `glb-optimizer/` (script `avvia-*`) |
-| Ambiente condiviso / batch ripetuti | `glb-optimizer/` (server Node) |
-| Massima privacy (nessun upload) | Entrambi: anche il server Node gira in locale |
-| Ricompressione texture WebP/JPEG | `glb-optimizer/` (server Node) |
-| File molto grandi (fino a 5 GB) | `glb-optimizer/` (server Node) |
-| Integrazione in workflow automatizzati | `glb-optimizer/` (API HTTP) |
 
 ---
 

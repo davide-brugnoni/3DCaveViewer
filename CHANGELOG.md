@@ -26,8 +26,16 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   campi obbligatori del passo; «Crea modello» compare solo all'ultimo passo
   (o ovunque, se il modulo torna con errori). Invio in un campo porta al
   passo successivo invece di creare il modello.
+- `glb-optimizer/` va usata sul proprio computer e non caricata sul server:
+  README e guida dell'ottimizzatore lo dicono in evidenza (installazione,
+  aggiornamento, sezione dell'ottimizzatore), e `.htaccess` risponde 403
+  se la cartella finisce comunque sull'hosting.
 
 ### Rimosso
+- `glb-optimizer-static/`, l'ottimizzatore in una sola pagina HTML: non
+  ricomprimeva le texture, caricava le librerie da CDN e falliva con i file
+  grandi. Resta solo `glb-optimizer/`, che con gli script di avvio non
+  richiede più di installare nulla a mano.
 - `EXE_GLB_OPTIMIZER/` (programma e installer per Windows) e il workflow
   `glb-optimizer-windows.yml`: senza firma digitale veniva bloccato da
   SmartScreen e su diversi computer non funzionava. Lo sostituiscono gli

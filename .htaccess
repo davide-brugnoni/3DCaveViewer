@@ -144,6 +144,10 @@ ServerSignature Off
     # Se l'app è installata alla root di un dominio dedicato, aggiungere il
     # redirect nel .htaccess principale o nella configurazione di Apache/Nginx.
 
+    # glb-optimizer/ è un programma da usare sul computer locale, non sul
+    # server: se è stata caricata per sbaglio, non è raggiungibile dal web
+    RewriteRule ^glb-optimizer(/|$) - [F,L]
+
     # Allow social media crawlers (Facebook, Twitter/X, LinkedIn, WhatsApp, Telegram, Pinterest, Discord)
     RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Pinterestbot|Discordbot) [NC]
     RewriteRule .* - [L]
