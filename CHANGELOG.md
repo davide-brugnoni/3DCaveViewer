@@ -7,6 +7,16 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+## [1.2.0] — 2026-11-06 — ottimizzatore con un doppio clic
+
+L'ottimizzatore GLB si avvia con un doppio clic su Windows, macOS e Linux,
+senza installare nulla a mano, e il «Nuovo modello» del pannello guida passo
+per passo. Aggiornare dalla 1.1.0 non richiede nulla: si sovrascrive il
+codice come sempre (preservando `modelli/` e `custom/`). Chi usava il
+programma per Windows (`EXE_GLB_OPTIMIZER/`) o la pagina
+`glb-optimizer-static/` passa agli script `avvia-*` di `glb-optimizer/`; se
+quelle cartelle erano state caricate sul server si possono cancellare.
+
 ### Aggiunto
 - `glb-optimizer/`: avvio con un doppio clic su Windows
   (`avvia-windows.bat`), macOS (`avvia-mac.command`) e Linux
