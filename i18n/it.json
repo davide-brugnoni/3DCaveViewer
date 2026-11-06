@@ -563,7 +563,15 @@
       "unsaved": "Ci sono modifiche non salvate: uscendo andranno perse.",
       "unsavedShort": "Modifiche non salvate",
       "prev": "Indietro",
-      "next": "Avanti"
+      "next": "Avanti",
+      "stepOf": "Passo {n} di {total}"
+    },
+    "drop": {
+      "title": "Trascina qui il file GLB",
+      "or": "oppure",
+      "pick": "Scegli un file dal computer",
+      "none": "Nessun file selezionato",
+      "chosen": "File scelto: {name} ({size})"
     },
     "msg": {
       "saved": "Modifiche salvate.",

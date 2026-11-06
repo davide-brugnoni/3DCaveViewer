@@ -563,7 +563,15 @@
       "unsaved": "Des modifications ne sont pas enregistr\u00e9es : en quittant, elles seront perdues.",
       "unsavedShort": "Modifications non enregistr\u00e9es",
       "prev": "Pr\u00e9c\u00e9dent",
-      "next": "Suivant"
+      "next": "Suivant",
+      "stepOf": "\u00c9tape {n} sur {total}"
+    },
+    "drop": {
+      "title": "Glissez le fichier GLB ici",
+      "or": "ou",
+      "pick": "Choisir un fichier sur l'ordinateur",
+      "none": "Aucun fichier s\u00e9lectionn\u00e9",
+      "chosen": "Fichier choisi : {name} ({size})"
     },
     "msg": {
       "saved": "Modifications enregistr\u00e9es.",

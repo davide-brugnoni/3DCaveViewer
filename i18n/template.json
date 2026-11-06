@@ -544,7 +544,15 @@
       "unsaved": "",
       "unsavedShort": "",
       "prev": "",
-      "next": ""
+      "next": "",
+      "stepOf": ""
+    },
+    "drop": {
+      "title": "",
+      "or": "",
+      "pick": "",
+      "none": "",
+      "chosen": ""
     },
     "msg": {
       "saved": "",

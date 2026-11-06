@@ -563,7 +563,15 @@
       "unsaved": "There are unsaved changes: leaving will lose them.",
       "unsavedShort": "Unsaved changes",
       "prev": "Back",
-      "next": "Next"
+      "next": "Next",
+      "stepOf": "Step {n} of {total}"
+    },
+    "drop": {
+      "title": "Drag the GLB file here",
+      "or": "or",
+      "pick": "Choose a file from your computer",
+      "none": "No file selected",
+      "chosen": "Selected file: {name} ({size})"
     },
     "msg": {
       "saved": "Changes saved.",
