@@ -519,7 +519,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 |------------|-----------|
 | **Sistema** | Windows 10/11, macOS o Linux |
 | **Node.js** | 22 o successivo — se manca lo scarica da solo lo script `avvia-*` |
-| **RAM** | Almeno 8 GB consigliati per i rilievi grandi (il server usa fino al 75% della memoria) |
+| **RAM** | Circa 2–3 volte la dimensione del file per gli OBJ grandi (16 GB per un OBJ da 5 GB); il server usa fino al 75% della memoria |
 | **Internet** | Solo al primo avvio, per scaricare Node.js e i componenti |
 
 Il sito pubblicato non usa Node.js: l'ottimizzatore gira sul tuo computer
