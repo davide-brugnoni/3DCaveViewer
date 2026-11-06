@@ -1,0 +1,6 @@
+# Script di avvio del GLB Optimizer: il .bat vuole CRLF su Windows, gli
+# script Unix devono restare LF anche se il repository passa da Windows.
+*.bat     text eol=crlf
+*.ps1     text eol=crlf
+*.sh      text eol=lf
+*.command text eol=lf
