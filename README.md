@@ -79,9 +79,18 @@ file JSON scritti a mano per pubblicare una grotta.
 - 📴 **PWA offline al primo avvio**, anche subito dopo l'installazione
   sull'iPhone, e cache offline ripulita da sola dai modelli eliminati,
   sostituiti o tornati in bozza
+
+**In arrivo nella prossima versione** (già nel codice, vedi la sezione «Non
+rilasciato» del [CHANGELOG](CHANGELOG.md)):
+
 - 🚀 **GLB Optimizer con un doppio clic** su Windows, macOS e Linux: lo
   script di avvio installa da solo ciò che serve (anche Node.js) e apre il
-  browser, vedi [Ottimizzatore GLB](#-glb-optimizer--server-nodejs)
+  browser, vedi [Ottimizzatore GLB](#-glb-optimizer--server-nodejs). Prende
+  il posto del programma per Windows e della vecchia pagina HTML singola,
+  entrambi rimossi
+- 🪜 **«Nuovo modello» a passi**: la creazione di un modello guida scheda
+  per scheda («Passo 3 di 5», Indietro / Avanti) e il file 3D si carica
+  anche trascinandolo nella pagina
 
 **Aggiornare dalla 1.0.0**: si sovrascrive il codice come sempre (vedi
 [Aggiornare all'ultima versione](#-aggiornare-allultima-versione)), poi si
@@ -504,6 +513,18 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 > requisiti (versione PHP, GD, fileinfo, cartelle scrivibili, HTTPS,
 > mod_rewrite) e segnala quello che manca.
 
+### 🧰 Computer (solo per l'ottimizzatore GLB, facoltativo)
+
+| Componente | Requisito |
+|------------|-----------|
+| **Sistema** | Windows 10/11, macOS o Linux |
+| **Node.js** | 22 o successivo — se manca lo scarica da solo lo script `avvia-*` |
+| **RAM** | Almeno 8 GB consigliati per i rilievi grandi (il server usa fino al 75% della memoria) |
+| **Internet** | Solo al primo avvio, per scaricare Node.js e i componenti |
+
+Il sito pubblicato non usa Node.js: l'ottimizzatore gira sul tuo computer
+e serve solo a preparare i file prima di caricarli.
+
 ### 🌐 Browser Supportati
 
 | Browser | Versione Minima |
@@ -584,8 +605,9 @@ guidata](#-installazione-guidata-setupphp).
 
 Apri `https://tuodominio.it/admin.php` (link **Gestione** in fondo a ogni
 pagina), entra con l'amministratore creato nell'installazione e scegli
-**Nuovo modello**: carichi il file `.glb`, scrivi nome e descrizione,
-fissi la posizione sulla mappa e salvi — vedi [🔐 Pannello di
+**Nuovo modello**: una procedura a passi ti fa scrivere nome e
+descrizione, fissare la posizione sulla mappa e caricare il file `.glb`
+(anche trascinandolo nella pagina), poi **Crea modello** — vedi [🔐 Pannello di
 Amministrazione](#-pannello-di-amministrazione-adminphp). In alternativa
 carica via FTP in `modelli/` una cartella per ogni cavità, con dentro il
 file `.glb` e il file `.json` dei dati — vedi [📦 Aggiungere un Nuovo
@@ -831,6 +853,17 @@ utenti si gestiscono solo dal pannello.
   salva tutte le schede insieme; un pallino segnala quelle modificate e
   non ancora salvate, o quella con un errore da correggere, e dopo il
   salvataggio si torna alla scheda in cui si era.
+- **Nuovo modello a passi**: per un modello nuovo le schede diventano una
+  procedura guidata («Passo 3 di 5»). **Avanti** controlla i campi
+  obbligatori del passo prima di proseguire, **Indietro** torna al
+  precedente, e Invio in un campo porta al passo successivo; **Crea
+  modello** compare all'ultimo passo (o su tutti, se il modulo torna con un
+  errore da correggere).
+- **File 3D**: il file si sceglie dal computer o si **trascina** nel
+  riquadro della scheda (o in qualsiasi punto della pagina). Viene inviato
+  a blocchi, quindi passano anche file da centinaia di MB su hosting con
+  limiti di upload bassi; un caricamento interrotto riprende da dove si era
+  fermato.
 - **Posizione**: latitudine e longitudine si scelgono cliccando o
   trascinando il segnaposto sulla mappa (o scrivendole a mano); senza
   coordinate il modello resta raggiungibile dal selettore del
@@ -899,7 +932,8 @@ che non serve più per recuperare spazio.
 
 > 💡 Il modo più semplice è il [pannello di
 > amministrazione](#-pannello-di-amministrazione-adminphp): **Gestione →
-> Nuovo modello**, scegli il file, compila i campi e salva. La procedura
+> Nuovo modello**, segui i passi (informazioni, posizione, file 3D,
+> orientamento, anteprima) e premi **Crea modello**. La procedura
 > manuale qui sotto, via FTP, resta valida e produce gli stessi file.
 
 ### 🛠️ Procedura in 4 Passi
