@@ -5,6 +5,16 @@ ottimizza file `.glb`/`.gltf` e converte modelli `.obj` in GLB ottimizzati.
 Tutta l'elaborazione avviene sul tuo computer: i file non vengono inviati a
 servizi esterni.
 
+> [!IMPORTANT]
+> ## 🚫 Questa cartella NON va caricata sul server
+> `glb-optimizer/` si usa **sul tuo computer** (Windows, macOS o Linux):
+> prepari qui i modelli e poi carichi sul sito solo i file `.glb`
+> ottimizzati, dal pannello di amministrazione o via FTP. Quando installi o
+> aggiorni il sito, **escludi questa cartella** dal caricamento: gli
+> hosting PHP non eseguono Node.js e la cartella `node_modules/` occupa
+> centinaia di MB. Se finisce sul server per sbaglio, il `.htaccess` del
+> sito ne blocca l'accesso.
+
 Trasformazioni disponibili (basate su [glTF Transform](https://gltf-transform.dev/)):
 
 | Opzione | Default | Cosa fa |

@@ -52,7 +52,16 @@
 | 📲 **Modelli grandi su mobile** | Download a copia singola e texture ridotte automaticamente su telefoni e tablet, per non far chiudere la scheda del browser |
 | 🧭 **Installazione guidata** | Al primo avvio un wizard configura nome, logo, colori, mappa e il primo amministratore, senza toccare file |
 | 🔐 **Pannello di Amministrazione** | Caricamento e modifica dei modelli dal browser (anche file da centinaia di MB), orientamento con anteprima 3D, bozze, cestino, storico delle modifiche e più utenti con ruoli |
-| 🛠️ **Ottimizzatore GLB Incluso** | Un server Node locale, avviabile con un doppio clic, per comprimere i modelli, con supporto a file fino a 5 GB |
+| 🛠️ **Ottimizzatore GLB Incluso** | Un programma da usare sul proprio computer (non sul server), avviabile con un doppio clic, per comprimere i modelli, con supporto a file fino a 5 GB |
+
+> [!IMPORTANT]
+> ## 🚫 `glb-optimizer/` NON va caricata sul server
+> La cartella **`glb-optimizer/`** è un programma da usare **sul tuo
+> computer** per preparare i modelli prima di pubblicarli: non fa parte del
+> sito. Quando carichi i file via FTP **escludila**: sul server non
+> servirebbe a nulla (gli hosting PHP non eseguono Node.js) e occuperebbe
+> spazio inutilmente. Se la carichi per sbaglio, `.htaccess` ne blocca
+> comunque l'accesso.
 
 ---
 
@@ -572,7 +581,9 @@ Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
   `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
   indirizzo tipo `https://tuodominio.it/grotte/`;
 - trascina lì **il contenuto** della cartella estratta (non la cartella
-  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.1.0/`).
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.1.0/`);
+- ⚠️ **tutto tranne la cartella `glb-optimizer/`**: è l'ottimizzatore dei
+  modelli, si usa sul tuo computer e sul server non serve.
 
 > ⚠️ Controlla che sia arrivato anche il file **`.htaccess`**: inizia con
 > un punto, quindi alcuni programmi lo nascondono. In FileZilla attiva
@@ -746,6 +757,7 @@ il resto**.
 |---|---|---|
 | `modelli/` | I tuoi modelli 3D (GLB + metadati JSON) | ❌ Non toccare |
 | `custom/` | I tuoi loghi, le tue icone, `settings.ini` e i dati del pannello di amministrazione (`custom/admin/`) | ❌ Non toccare |
+| `glb-optimizer/` | Ottimizzatore dei modelli, da usare sul tuo computer | 🚫 Non caricarla sul server |
 | Tutto il resto | Codice dell'applicazione (PHP, JS, CSS, librerie) | ✅ Sovrascrivi interamente |
 
 ### 📝 Procedura
@@ -1292,6 +1304,13 @@ pageTitle[en] = "Our caves"
 ---
 
 ## 🛠️ Ottimizzazione Modelli GLB
+
+> [!IMPORTANT]
+> **L'ottimizzatore si usa sul tuo computer, non sul server.** Tieni la
+> cartella `glb-optimizer/` sul PC (Windows, macOS o Linux), prepara lì i
+> modelli e carica sul sito solo i file `.glb` ottimizzati, dal pannello di
+> amministrazione o via FTP. La cartella `glb-optimizer/` non va caricata
+> sull'hosting.
 
 Il repository include un ottimizzatore GLB pronto all'uso, pensato per
 aiutare qualsiasi gruppo speleologico a ridurre il peso dei propri rilievi

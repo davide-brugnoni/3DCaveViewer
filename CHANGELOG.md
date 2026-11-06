@@ -26,6 +26,10 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   campi obbligatori del passo; «Crea modello» compare solo all'ultimo passo
   (o ovunque, se il modulo torna con errori). Invio in un campo porta al
   passo successivo invece di creare il modello.
+- `glb-optimizer/` va usata sul proprio computer e non caricata sul server:
+  README e guida dell'ottimizzatore lo dicono in evidenza (installazione,
+  aggiornamento, sezione dell'ottimizzatore), e `.htaccess` risponde 403
+  se la cartella finisce comunque sull'hosting.
 
 ### Rimosso
 - `glb-optimizer-static/`, l'ottimizzatore in una sola pagina HTML: non
