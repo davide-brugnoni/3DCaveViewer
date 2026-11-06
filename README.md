@@ -9,7 +9,7 @@
 
 ### Visualizzatore Interattivo di Cavità Sotterranee
 
-[![Versione](https://img.shields.io/badge/versione-1.1.0-2ea44f)](CHANGELOG.md)
+[![Versione](https://img.shields.io/badge/versione-1.2.0-2ea44f)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Three.js](https://img.shields.io/badge/Three.js-v0.160.0-000000?logo=three.js)](https://threejs.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
@@ -65,46 +65,41 @@
 
 ---
 
-## 🎉 Novità della versione 1.1.0
+## 🎉 Novità della versione 1.2.0
 
-La 1.1.0 porta la gestione dei modelli **nel browser**: niente più FTP né
-file JSON scritti a mano per pubblicare una grotta.
+La 1.2.0 rende l'ottimizzatore GLB **un programma da doppio clic** e
+semplifica la creazione dei modelli nel pannello.
 
-- 🔐 **Pannello di amministrazione** (`admin.php`, link **Gestione** nel
-  footer di ogni pagina): carica un nuovo rilievo, scegli la posizione sulla mappa,
-  scrivi nome e descrizione, sostituisci il file 3D — anche da centinaia
-  di MB, inviato a blocchi
-- 🧭 **Orientamento con anteprima 3D**: il modello su un pavimento con gli
-  assi colorati, pulsanti ±90° e trascinamento; quello che vedi è quello
-  che si apre nel visualizzatore
-- 📝 **Bozze**: salva un modello senza pubblicarlo, guardalo in anteprima
-  e pubblicalo con un clic; finché è bozza i suoi file non si scaricano
-- 🗑️ **Cestino e storico**: nulla si cancella per sbaglio, e ogni
-  modifica registra chi l'ha fatta, quando e cosa è cambiato
-- 👥 **Più utenti** con ruoli (editor, amministratore); il primo si crea
-  già nell'installazione guidata
-- 🖱️ **Rotazione senza rollio** di serie, col mouse e col dito:
-  l'orizzonte resta sempre dritto
-- 📴 **PWA offline al primo avvio**, anche subito dopo l'installazione
-  sull'iPhone, e cache offline ripulita da sola dai modelli eliminati,
-  sostituiti o tornati in bozza
-
-**In arrivo nella prossima versione** (già nel codice, vedi la sezione «Non
-rilasciato» del [CHANGELOG](CHANGELOG.md)):
-
-- 🚀 **GLB Optimizer con un doppio clic** su Windows, macOS e Linux: lo
-  script di avvio installa da solo ciò che serve (anche Node.js) e apre il
-  browser, vedi [Ottimizzatore GLB](#-glb-optimizer--server-nodejs). Prende
-  il posto del programma per Windows e della vecchia pagina HTML singola,
-  entrambi rimossi
+- 🚀 **GLB Optimizer con un doppio clic** su Windows, macOS e Linux
+  (`avvia-windows.bat`, `avvia-mac.command`, `avvia-linux.sh`): al primo
+  avvio installa da solo ciò che serve — anche Node.js, in una copia
+  portatile senza permessi di amministratore — e apre il browser
+  sull'interfaccia, vedi [Ottimizzatore GLB](#-glb-optimizer--server-nodejs).
+  Prende il posto del programma per Windows e della vecchia pagina HTML
+  singola, entrambi rimossi
 - 🪜 **«Nuovo modello» a passi**: la creazione di un modello guida scheda
-  per scheda («Passo 3 di 5», Indietro / Avanti) e il file 3D si carica
-  anche trascinandolo nella pagina
+  per scheda («Passo 3 di 5», Indietro / Avanti) e «Crea modello» compare
+  solo all'ultimo passo
+- 📂 **Trascina e rilascia**: il file 3D si carica anche trascinandolo in
+  qualsiasi punto della pagina
+- 🛡️ **`glb-optimizer/` resta sul tuo computer**: la documentazione lo dice
+  chiaramente e `.htaccess` ne blocca l'accesso se finisce sul server
 
-**Aggiornare dalla 1.0.0**: si sovrascrive il codice come sempre (vedi
-[Aggiornare all'ultima versione](#-aggiornare-allultima-versione)), poi si
-apre `admin.php` e si crea il primo amministratore con la chiave di
-configurazione salvata in `custom/.installed`.
+**Aggiornare dalla 1.1.0**: si sovrascrive il codice come sempre (vedi
+[Aggiornare all'ultima versione](#-aggiornare-allultima-versione)). Se sul
+server c'erano le cartelle `EXE_GLB_OPTIMIZER/`, `glb-optimizer-static/` o
+`glb-optimizer/`, si possono cancellare: non servono al sito. **Dalla
+1.0.0** serve in più creare il primo amministratore, aprendo `admin.php`
+con la chiave di configurazione salvata in `custom/.installed`.
+
+### Versioni precedenti
+
+La **1.1.0** (2 novembre 2026) ha portato la gestione dei modelli **nel
+browser**: pannello di amministrazione (`admin.php`) multiutente con
+caricamento a blocchi dei file grandi, orientamento con anteprima 3D,
+bozze, cestino e storico delle modifiche; rotazione senza rollio col mouse
+e col dito; PWA offline fin dal primo avvio, con la cache ripulita da sola
+dai modelli eliminati o sostituiti.
 
 La **1.0.0** (29 ottobre 2026) è stata la prima release pubblica:
 installazione guidata, aggiornamenti che non toccano `modelli/` e
@@ -571,7 +566,7 @@ di build: i file si caricano così come sono.
   clicca il pulsante verde **Code** → **Download ZIP**.
 
 Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
-`3DCaveViewer-1.1.0` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
+`3DCaveViewer-1.2.0` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
 `css/`, `js/`, `lib/`, `custom/`, `modelli/` e così via.
 
 2️⃣ **Carica i file sul server via FTP**
@@ -581,7 +576,7 @@ Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
   `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
   indirizzo tipo `https://tuodominio.it/grotte/`;
 - trascina lì **il contenuto** della cartella estratta (non la cartella
-  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.1.0/`);
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.2.0/`);
 - ⚠️ **tutto tranne la cartella `glb-optimizer/`**: è l'ottimizzatore dei
   modelli, si usa sul tuo computer e sul server non serve.
 
