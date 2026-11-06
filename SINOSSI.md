@@ -150,14 +150,11 @@ Dal pannello di condivisione, la scheda **"Incorpora"** genera il codice HTML da
 
 ## Preparare i modelli
 
-Poiché i rilievi grezzi prodotti da scanner e software CAD tendono a essere pesanti, il progetto include **due strumenti dedicati alla loro ottimizzazione**, entrambi open source e pronti all'uso:
+Poiché i rilievi grezzi prodotti da scanner e software CAD tendono a essere pesanti, il progetto include uno **strumento dedicato alla loro ottimizzazione**, open source e pronto all'uso: un piccolo **server locale in Node.js** che si avvia con un doppio clic (installando da solo ciò che serve), accetta i file tramite drag-and-drop nel browser e li elabora senza che lascino il proprio computer — adatto anche ai rilievi più grandi e a un'istanza condivisa in un team.
 
-- un piccolo **server locale in Node.js** che si avvia con un comando e accetta i file tramite drag-and-drop nel browser — lo strumento completo, adatto anche ai rilievi più grandi e a un'istanza condivisa in un team;
-- una **singola pagina HTML** che esegue l'ottimizzazione interamente nel browser, senza server né programmi da installare — ideale per l'uso occasionale e per chi vuole che i file non lascino il proprio computer.
+Applica compressione **Draco** della geometria, fusione dei vertici duplicati, deduplicazione delle risorse ed eliminazione dei dati inutilizzati, producendo file compatibili con il visualizzatore, e supporta la **conversione diretta da OBJ**: è sufficiente trascinare insieme il file `.obj`, uno o più file `.mtl` e le immagini delle texture. Ricomprime inoltre le **texture in WebP o JPEG** — il formato consigliato per il visualizzatore, che sugli smartphone può così ridimensionarle senza sprecare memoria.
 
-Entrambi applicano compressione **Draco** della geometria, fusione dei vertici duplicati, deduplicazione delle risorse ed eliminazione dei dati inutilizzati, producendo file compatibili con il visualizzatore, e supportano la **conversione diretta da OBJ**: è sufficiente trascinare insieme il file `.obj`, uno o più file `.mtl` e le immagini delle texture. La versione server ricomprime inoltre le **texture in WebP o JPEG** — il formato consigliato per il visualizzatore, che sugli smartphone può così ridimensionarle senza sprecare memoria.
-
-La versione server gestisce anche **rilievi molto pesanti, fino a 5 GB**: la conversione da OBJ avviene con un parser streaming, la lettura dei file già compressi procede a memoria costante e le mesh con decine di milioni di vertici vengono suddivise automaticamente prima della compressione, senza alterare il risultato visivo.
+Gestisce anche **rilievi molto pesanti, fino a 5 GB**: la conversione da OBJ avviene con un parser streaming, la lettura dei file già compressi procede a memoria costante e le mesh con decine di milioni di vertici vengono suddivise automaticamente prima della compressione, senza alterare il risultato visivo.
 
 I modelli che presentano problemi di orientamento — ad esempio i file esportati da CloudCompare con asse Z verticale invece di Y — si raddrizzano dal pannello di amministrazione, guardando il modello in un'anteprima 3D, senza rielaborare il file 3D (vedi sotto).
 
@@ -222,7 +219,7 @@ Dati pronti per infografiche e materiali grafici:
 | **6** | viste ortogonali predefinite (alto, basso, fronte, retro, lati) |
 | **8** | colori per misurazioni simultanee |
 | **3** | formati 3D supportati (GLB, GLTF, OBJ) |
-| **2** | strumenti di ottimizzazione modelli inclusi (server Node e pagina browser-only) |
+| **1** | ottimizzatore di modelli incluso (server Node locale, avvio con doppio clic) |
 | **5 GB** | dimensione massima dei rilievi gestiti dall'ottimizzatore |
 | **2** | ruoli per chi gestisce il catalogo (editor e amministratore) |
 | **1** | blocco di codice HTML da copiare e incollare per incorporare una grotta in un articolo |

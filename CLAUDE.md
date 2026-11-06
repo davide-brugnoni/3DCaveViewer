@@ -162,9 +162,6 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── obj-stream-converter.js # Streaming OBJ conversion for very large files
 │   └── README.md
 │
-├── glb-optimizer-static/       # Static HTML version (no Node.js required)
-│   └── index.html
-│
 ├── docs/
 │   ├── PERSONALIZZAZIONE.md    # Step-by-step customization guide for deployers (Italian)
 │   └── img/                    # Wordmark logos (dark/light) used by README.md only
@@ -952,7 +949,6 @@ map: {
 ### GLB Optimization
 Options available:
 - **Node.js server** (`glb-optimizer/`): Upload GLB files via browser UI at `localhost:3000`
-- **Static tool** (`glb-optimizer-static/index.html`): Single HTML file, runs entirely in browser
 - **One-click launchers** (`glb-optimizer/avvia-*`): start that same server for
   non-technical users, installing Node.js and the npm deps first, then open the browser
 

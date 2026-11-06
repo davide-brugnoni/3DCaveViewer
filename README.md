@@ -52,7 +52,7 @@
 | 📲 **Modelli grandi su mobile** | Download a copia singola e texture ridotte automaticamente su telefoni e tablet, per non far chiudere la scheda del browser |
 | 🧭 **Installazione guidata** | Al primo avvio un wizard configura nome, logo, colori, mappa e il primo amministratore, senza toccare file |
 | 🔐 **Pannello di Amministrazione** | Caricamento e modifica dei modelli dal browser (anche file da centinaia di MB), orientamento con anteprima 3D, bozze, cestino, storico delle modifiche e più utenti con ruoli |
-| 🛠️ **Ottimizzatore GLB Incluso** | Tre strumenti (server Node, pagina browser-only e programma Windows in anteprima) per comprimere i modelli, con supporto a file fino a 5 GB |
+| 🛠️ **Ottimizzatore GLB Incluso** | Un server Node locale, avviabile con un doppio clic, per comprimere i modelli, con supporto a file fino a 5 GB |
 
 ---
 
@@ -485,9 +485,6 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── split-large-primitives.js  # Suddivisione mesh enormi per l'encoder Draco
 │   ├── public/index.html          # Interfaccia web dell'ottimizzatore
 │   └── README.md
-│
-└── 🛠️  glb-optimizer-static/       # Ottimizzatore GLB — versione browser-only
-    └── index.html                 # Pagina HTML singola, nessun server necessario
 ```
 
 ---
@@ -1255,20 +1252,20 @@ pageTitle[en] = "Our caves"
 ✓ Poligoni: < 500k per dispositivi mobili
 ```
 
-> 💡 Il progetto include **due strumenti pronti all'uso** per preparare e
+> 💡 Il progetto include un **ottimizzatore pronto all'uso** per preparare e
 > comprimere i modelli GLB. Vedi la sezione successiva.
 
 ---
 
 ## 🛠️ Ottimizzazione Modelli GLB
 
-Il repository include due ottimizzatori GLB pronti all'uso, pensati per
+Il repository include un ottimizzatore GLB pronto all'uso, pensato per
 aiutare qualsiasi gruppo speleologico a ridurre il peso dei propri rilievi
-prima di pubblicarli nel visualizzatore. Entrambi applicano compressione
-**Draco**, fusione di vertici duplicati (**weld**), deduplicazione
-(**dedup**) e rimozione delle risorse inutilizzate (**prune**), e producono
-file compatibili con il viewer. Solo la versione server ricomprime inoltre
-le texture in **WebP/JPEG** (consigliate per il mobile).
+prima di pubblicarli nel visualizzatore. Applica compressione **Draco**,
+fusione di vertici duplicati (**weld**), deduplicazione (**dedup**) e
+rimozione delle risorse inutilizzate (**prune**), ricomprime le texture in
+**WebP/JPEG** (consigliate per il mobile) e produce file compatibili con il
+viewer.
 
 ### 🌐 `glb-optimizer/` — Server Node.js
 
@@ -1313,35 +1310,6 @@ npm install
 npm start
 # → apri http://localhost:3000 nel browser
 ```
-
-### 💻 `glb-optimizer-static/` — Pagina HTML singola
-
-Un'unica pagina HTML che esegue l'ottimizzazione **interamente nel
-browser**, senza server né dipendenze da installare (le librerie vengono
-caricate da CDN, quindi serve una connessione a Internet; i file invece non
-lasciano il computer). Non ricomprime le texture: per quelle usa la
-versione server o convertile prima di esportare. Ideale per chi vuole
-ottimizzare occasionalmente un modello senza configurare Node.js, o per
-mantenere i file in locale per motivi di privacy.
-
-Supporta drag-and-drop di **OBJ + MTL + texture** in un'unica operazione.
-
-```
-Apri semplicemente glb-optimizer-static/index.html nel browser.
-Nessun upload verso server esterni.
-```
-
-### 🤔 Quale scegliere?
-
-| Esigenza | Strumento consigliato |
-|----------|----------------------|
-| Ottimizzazione saltuaria, zero setup | `glb-optimizer-static/` |
-| Doppio clic, senza installare nulla a mano | `glb-optimizer/` (script `avvia-*`) |
-| Ambiente condiviso / batch ripetuti | `glb-optimizer/` (server Node) |
-| Massima privacy (nessun upload) | Entrambi: anche il server Node gira in locale |
-| Ricompressione texture WebP/JPEG | `glb-optimizer/` (server Node) |
-| File molto grandi (fino a 5 GB) | `glb-optimizer/` (server Node) |
-| Integrazione in workflow automatizzati | `glb-optimizer/` (API HTTP) |
 
 ---
 

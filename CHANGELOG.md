@@ -28,6 +28,10 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   passo successivo invece di creare il modello.
 
 ### Rimosso
+- `glb-optimizer-static/`, l'ottimizzatore in una sola pagina HTML: non
+  ricomprimeva le texture, caricava le librerie da CDN e falliva con i file
+  grandi. Resta solo `glb-optimizer/`, che con gli script di avvio non
+  richiede più di installare nulla a mano.
 - `EXE_GLB_OPTIMIZER/` (programma e installer per Windows) e il workflow
   `glb-optimizer-windows.yml`: senza firma digitale veniva bloccato da
   SmartScreen e su diversi computer non funzionava. Lo sostituiscono gli
