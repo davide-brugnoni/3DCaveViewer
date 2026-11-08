@@ -164,6 +164,8 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │
 ├── docs/
 │   ├── PERSONALIZZAZIONE.md    # Step-by-step customization guide for deployers (Italian)
+│   ├── Guida-installazione-3DCaveViewer.pdf # Illustrated FTP/FileZilla install guide (Italian, real screenshots)
+│   ├── Guida-GLB-Optimizer.pdf # Illustrated GLB Optimizer guide (Italian, real screenshots)
 │   └── img/                    # Wordmark logos (dark/light) used by README.md only
 ├── README.md                   # End-user documentation (Italian)
 ├── CHANGELOG.md                # Release notes; version is APP_VERSION in config.php
