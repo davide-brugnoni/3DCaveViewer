@@ -47,6 +47,9 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+  /* viewport-fit=cover + status bar black-translucent (index.php): nella
+     web app installata su iPhone la pagina passa sotto notch e ora */
+  padding-top: max(20px, env(safe-area-inset-top));
   padding-left: max(20px, env(safe-area-inset-left));
   padding-right: max(20px, env(safe-area-inset-right));
   box-sizing: border-box;
@@ -327,6 +330,7 @@ a.poi-item {
 footer {
   text-align: center;
   padding: 15px;
+  padding-bottom: max(15px, env(safe-area-inset-bottom));
   font-size: 12px;
   color: #fff;
 }
@@ -507,6 +511,7 @@ footer a:hover { text-decoration: underline; }
 @media (max-width: 480px) {
   .container {
     padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
     padding-left: max(12px, env(safe-area-inset-left));
     padding-right: max(12px, env(safe-area-inset-right));
   }
