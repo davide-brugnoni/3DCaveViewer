@@ -43,7 +43,7 @@ $requestKey = trim((string) ($_POST['key'] ?? $_GET['key'] ?? ''));
 
 // La chiave arriva anche via POST proprio per non lasciarla nella barra
 // degli indirizzi, nella cronologia e nei log del server.
-$keyAccepted = $storedKey !== '' && $requestKey !== '' && hash_equals($storedKey, $requestKey);
+$keyAccepted = $requestKey !== '' && installKeyMatches($requestKey);
 $unlocked    = !$installed || $keyAccepted;
 
 // Chiave sbagliata: la schermata di blocco lo dice invece di limitarsi a

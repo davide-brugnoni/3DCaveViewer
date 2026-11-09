@@ -754,6 +754,8 @@
       "intro": "No account exists yet. Create the first administrator: to prove you manage this installation you need the configuration key, the one shown (and downloaded) at the end of the setup wizard and stored in custom/.installed.",
       "key": "Configuration key",
       "keyHint": "You can also pick the saved file: it is read in the browser, not uploaded.",
+      "keyFileRead": "Key read from the file.",
+      "keyFileEmpty": "No key found in this file: check that you picked the right one.",
       "submit": "Create administrator"
     },
     "nav": {

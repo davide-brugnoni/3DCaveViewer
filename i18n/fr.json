@@ -754,6 +754,8 @@
       "intro": "Aucun compte n'existe encore. Cr\u00e9ez le premier administrateur : pour prouver que vous g\u00e9rez cette installation, il faut la cl\u00e9 de configuration, celle affich\u00e9e (et t\u00e9l\u00e9charg\u00e9e) \u00e0 la fin de l'installation guid\u00e9e et enregistr\u00e9e dans custom/.installed.",
       "key": "Cl\u00e9 de configuration",
       "keyHint": "Vous pouvez aussi choisir le fichier enregistr\u00e9 : il est lu dans le navigateur, pas envoy\u00e9.",
+      "keyFileRead": "Clé lue depuis le fichier.",
+      "keyFileEmpty": "Aucune clé trouvée dans ce fichier : vérifiez que vous avez choisi le bon.",
       "submit": "Cr\u00e9er l'administrateur"
     },
     "nav": {

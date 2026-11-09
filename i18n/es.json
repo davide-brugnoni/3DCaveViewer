@@ -754,6 +754,8 @@
       "intro": "Todav\u00eda no existe ninguna cuenta. Crea el primer administrador: para demostrar que gestionas esta instalaci\u00f3n necesitas la clave de configuraci\u00f3n, la que se mostr\u00f3 (y descarg\u00f3) al final de la instalaci\u00f3n guiada y que est\u00e1 guardada en custom/.installed.",
       "key": "Clave de configuraci\u00f3n",
       "keyHint": "Tambi\u00e9n puedes elegir el archivo guardado: se lee en el navegador, no se sube.",
+      "keyFileRead": "Clave leída del archivo.",
+      "keyFileEmpty": "No se encontró ninguna clave en este archivo: comprueba que has elegido el correcto.",
       "submit": "Crear administrador"
     },
     "nav": {

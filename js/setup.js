@@ -122,10 +122,10 @@
             reader.onload = function () {
                 // Stesso formato letto da parseInstallKey() in config.php:
                 // la prima riga che non sia vuota né un commento.
-                const lines = String(reader.result).split(/\r\n|\r|\n/);
+                const lines = String(reader.result).replace(/^\uFEFF/, '').split(/\r\n|\r|\n/);
                 let found = '';
                 for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
+                    const line = lines[i].replace(/[\u00A0\u200B-\u200D\uFEFF]/g, ' ').trim();
                     if (line && line[0] !== ';' && line[0] !== '#') {
                         found = line;
                         break;

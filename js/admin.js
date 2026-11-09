@@ -57,16 +57,23 @@
   // vuota che non sia un commento. Il file non lascia il browser.
   const keyFile = document.getElementById('f-key-file');
   const keyInput = document.getElementById('f-key');
+  const keyState = document.getElementById('f-key-state');
   if (keyFile && keyInput) {
     keyFile.addEventListener('change', () => {
       const file = keyFile.files && keyFile.files[0];
       if (!file || file.size > 64 * 1024) return;
       const reader = new FileReader();
       reader.onload = () => {
-        const line = String(reader.result || '').split(/\r?\n/)
-          .map((l) => l.trim())
+        const line = String(reader.result || '').replace(/^\uFEFF/, '').split(/\r\n|\r|\n/)
+          .map((l) => l.replace(/[\u00A0\u200B-\u200D\uFEFF]/g, ' ').trim())
           .find((l) => l !== '' && l[0] !== ';' && l[0] !== '#');
-        if (line) keyInput.value = line;
+        keyInput.value = line || '';
+        if (keyState) {
+          keyState.textContent = line
+            ? (keyFile.dataset.okText || 'Chiave letta dal file.')
+            : (keyFile.dataset.errorText || 'Nessuna chiave trovata in questo file.');
+          keyState.classList.toggle('adm-hint-error', !line);
+        }
       };
       reader.readAsText(file);
     });

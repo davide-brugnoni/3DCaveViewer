@@ -735,6 +735,8 @@
       "intro": "",
       "key": "",
       "keyHint": "",
+      "keyFileRead": "",
+      "keyFileEmpty": "",
       "submit": ""
     },
     "nav": {
