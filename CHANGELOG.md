@@ -8,15 +8,15 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 ## [Non rilasciato]
 
 ### Aggiunto
-- Pannello, nuova pagina «Statistiche» (`admin.php?p=stats`, per editor e
+- Pannello, nuova pagina «Statistiche» (`admin.php?p=visite`, per editor e
   amministratori): visite al sito e aperture dei modelli negli ultimi 7
   giorni, 30 giorni, nell'ultimo anno e in totale; grafico dell'andamento
   (7 giorni, 30 giorni, 12 mesi, da sempre) per tutto il sito o per un solo
   modello, con i valori anche in tabella; elenco dei modelli ordinabile per
   periodo, con le aperture da iframe di altri siti («Incorpora»), la data
   di caricamento e l'ultima apertura; esportazione in CSV.
-- Il conteggio è anonimo: `js/stats.js` invia una visita per sessione del
-  browser e un'apertura per modello per sessione ad `api/stats_hit.php`,
+- Il conteggio è anonimo: `js/visite.js` invia una visita per sessione del
+  browser e un'apertura per modello per sessione ad `api/visita.php`,
   che salva solo totali per giorno in `custom/admin/stats/` (niente cookie,
   niente indirizzi IP). Bot, browser automatizzati e anteprime delle bozze
   non si contano. Si disattiva con `[stats] enabled = false` in

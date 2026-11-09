@@ -8,7 +8,7 @@
 */
 
 // Conta una visita al sito per sessione del browser e un'apertura per
-// modello per sessione (api/stats_hit.php, riepilogo in admin.php?p=stats).
+// modello per sessione (api/visita.php, riepilogo in admin.php?p=visite).
 // Nessun cookie e nessun identificativo: la sessione vive solo in
 // sessionStorage di questa scheda. Offline la richiesta fallisce in
 // silenzio e quella visita semplicemente non si conta.
@@ -16,7 +16,7 @@
   'use strict';
 
   const cfg = (window.APP_CONFIG && window.APP_CONFIG.stats) || {};
-  const endpoint = new URL('api/stats_hit.php', document.baseURI).href;
+  const endpoint = new URL('api/visita.php', document.baseURI).href;
   const embed = document.body && document.body.classList.contains('embed-mode');
 
   function enabled() {
