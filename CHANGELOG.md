@@ -14,7 +14,9 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   (7 giorni, 30 giorni, 12 mesi, da sempre) per tutto il sito o per un solo
   modello, con i valori anche in tabella; elenco dei modelli ordinabile per
   periodo, con le aperture da iframe di altri siti («Incorpora»), la data
-  di caricamento e l'ultima apertura; esportazione in CSV.
+  di caricamento e l'ultima apertura; esportazione in CSV. Il modello del
+  grafico si sceglie da un campo di ricerca che filtra l'elenco mentre si
+  scrive (anche senza accenti), al posto del menu a tendina.
 - Il conteggio è anonimo: `js/visite.js` invia una visita per sessione del
   browser e un'apertura per modello per sessione ad `api/visita.php`,
   che salva solo totali per giorno in `custom/admin/stats/` (niente cookie,

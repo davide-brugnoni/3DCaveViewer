@@ -608,7 +608,10 @@ own `stats/.lock`): `{"YYYY-MM-DD": {"v": visits, "m": {folder: views},
 "e": {folder: embedViews}}}`. `statsSummary()` gives the 7d/30d/365d/all
 totals (`STATS_PERIODS`), `statsSeries()` the chart points (daily for
 `7d`/`30d`, monthly for `12m`/`all`), `statsModelCreated()` the upload
-date from the history log, `statsCsv()` the `&export=csv` download. The
+date from the history log, `statsCsv()` the `&export=csv` download. The chart's model filter is a `<select data-combobox>` that `js/admin.js`
+(`setupModelCombobox()`) hides behind a search field filtering the models
+as you type (accent-insensitive, ARIA combobox); without JS the menu stays.
+The
 chart is drawn by `js/admin.js` from `data-chart` (SVG sized to the box,
 crosshair tooltip); the same numbers are in a `<details>` table, so the
 page works without JS. Series colours are `--series-1/2` in

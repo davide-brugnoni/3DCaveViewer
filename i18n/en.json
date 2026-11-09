@@ -557,6 +557,9 @@
   "admin": {
     "stats": {
       "allModels": "Whole site",
+      "clearModel": "Back to the whole site",
+      "noMatch": "No model found",
+      "searchModel": "Search a model…",
       "chartEmpty": "No visits recorded in this period.",
       "chartLabel": "Trend chart: the values are in the table below",
       "day": "Day",
