@@ -557,6 +557,9 @@
   "admin": {
     "stats": {
       "allModels": "Tout le site",
+      "clearModel": "Revenir à tout le site",
+      "noMatch": "Aucun modèle trouvé",
+      "searchModel": "Rechercher un modèle…",
       "chartEmpty": "Aucune visite enregistrée sur cette période.",
       "chartLabel": "Graphique de l'évolution : les valeurs sont dans le tableau ci-dessous",
       "day": "Jour",

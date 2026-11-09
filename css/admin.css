@@ -1400,6 +1400,137 @@ h2 {
   padding: 6px 10px;
 }
 
+/* Ricerca del modello del grafico (js/admin.js, setupModelCombobox) */
+.adm-combo {
+  position: relative;
+  width: 280px;
+  max-width: 100%;
+}
+
+.adm-combo-input {
+  font: inherit;
+  color: var(--text-color);
+  background: var(--field-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px 32px 6px 10px;
+  width: 100%;
+  appearance: none;
+}
+
+.adm-combo-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.adm-combo-input::placeholder {
+  color: var(--text-muted);
+}
+
+.adm-combo-input:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+.adm-combo-filled .adm-combo-input {
+  border-color: var(--accent-color);
+}
+
+.adm-combo-busy .adm-combo-input {
+  opacity: 0.6;
+}
+
+.adm-combo-clear {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.adm-combo-clear:hover,
+.adm-combo-clear:focus-visible {
+  color: var(--text-color);
+  background: var(--field-bg);
+}
+
+.adm-combo-list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--panel-bg-solid);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.adm-combo-list li {
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.adm-combo-list li[aria-selected='true'] {
+  font-weight: 600;
+  color: var(--accent-hover);
+}
+
+.adm-combo-list li.active {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.adm-combo-list li.adm-combo-all {
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 6px 6px 0 0;
+  margin-bottom: 2px;
+}
+
+.adm-combo-list li.adm-combo-all.active {
+  color: #fff;
+}
+
+.adm-combo-list mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.adm-combo-list li.adm-combo-empty {
+  color: var(--text-muted);
+  cursor: default;
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .adm-chart-filter,
+  .adm-combo {
+    width: 100%;
+  }
+}
+
 .adm-legend {
   display: flex;
   flex-wrap: wrap;

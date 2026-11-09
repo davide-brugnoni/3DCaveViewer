@@ -538,6 +538,9 @@
   "admin": {
     "stats": {
       "allModels": "",
+      "clearModel": "",
+      "noMatch": "",
+      "searchModel": "",
       "chartEmpty": "",
       "chartLabel": "",
       "day": "",

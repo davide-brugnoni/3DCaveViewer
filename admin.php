@@ -1699,7 +1699,11 @@ $langMeta = getLanguagesMeta();
           <?php if ($range !== '30d'): ?><input type="hidden" name="periodo" value="<?= e($range); ?>" /><?php endif; ?>
           <?php if ($sortKey !== 'all'): ?><input type="hidden" name="ordine" value="<?= e($sortKey); ?>" /><?php endif; ?>
           <label class="adm-sr" for="f-stats-model"><?= e(at('history.model', 'Modello')); ?></label>
-          <select id="f-stats-model" name="m" data-autosubmit>
+          <?php // js/admin.js la sostituisce con una ricerca che filtra i modelli mentre si scrive; senza JavaScript resta il menu ?>
+          <select id="f-stats-model" name="m" data-autosubmit data-combobox
+                  data-placeholder="<?= e(at('stats.searchModel', 'Cerca un modello…')); ?>"
+                  data-no-match="<?= e(at('stats.noMatch', 'Nessun modello trovato')); ?>"
+                  data-clear="<?= e(at('stats.clearModel', 'Torna a tutto il sito')); ?>">
             <option value=""><?= e(at('stats.allModels', 'Tutto il sito')); ?></option>
             <?php foreach ($modelNames as $folder => $name): ?>
             <option value="<?= e((string) $folder); ?>" <?= $chartFolder === (string) $folder ? 'selected' : ''; ?>><?= e($name); ?></option>

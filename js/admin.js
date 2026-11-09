@@ -77,6 +77,188 @@
     select.addEventListener('change', () => select.form && select.form.submit());
   });
 
+  // ===== Statistiche: ricerca del modello del grafico =====
+  // Il <select> resta nel form (è lui che viene inviato) ma sparisce:
+  // al suo posto un campo che filtra i modelli mentre si scrive, con
+  // frecce/Invio/Esc da tastiera e il pattern ARIA "combobox".
+  document.querySelectorAll('select[data-combobox]').forEach(setupModelCombobox);
+
+  function setupModelCombobox(select) {
+    const fold = (text) => String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const options = Array.from(select.options).map((opt) => ({
+      value: opt.value,
+      label: opt.textContent.trim(),
+      folded: fold(opt.textContent.trim()),
+    }));
+    const allOption = options.find((o) => o.value === '') || { value: '', label: '', folded: '' };
+    const models = options.filter((o) => o.value !== '');
+    const current = options.find((o) => o.value === select.value) || allOption;
+    const listId = select.id + '-list';
+
+    const box = document.createElement('div');
+    box.className = 'adm-combo';
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.className = 'adm-combo-input';
+    input.id = select.id;
+    select.removeAttribute('id');
+    input.placeholder = select.dataset.placeholder || '';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-controls', listId);
+    input.value = current.value ? current.label : '';
+    if (current.value) box.classList.add('adm-combo-filled');
+
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'adm-combo-clear';
+    clear.setAttribute('aria-label', select.dataset.clear || '');
+    clear.title = select.dataset.clear || '';
+    clear.textContent = '×';
+    clear.hidden = !current.value;
+
+    const list = document.createElement('ul');
+    list.className = 'adm-combo-list';
+    list.id = listId;
+    list.setAttribute('role', 'listbox');
+    list.hidden = true;
+
+    box.append(input, clear, list);
+    select.hidden = true;
+    select.insertAdjacentElement('afterend', box);
+
+    let shown = [];
+    let active = -1;
+
+    // Evidenzia la parte che corrisponde, confrontando senza accenti
+    function highlighted(label, query) {
+      const frag = document.createDocumentFragment();
+      if (!query) {
+        frag.append(label);
+        return frag;
+      }
+      // Mappa carattere per carattere: la posizione nel testo "piegato"
+      // torna così alla posizione nel testo originale
+      const chars = Array.from(label);
+      let folded = '';
+      const starts = [];
+      chars.forEach((ch, i) => {
+        const f = fold(ch);
+        for (let k = 0; k < f.length; k++) starts.push(i);
+        folded += f;
+      });
+      const at = folded.indexOf(query);
+      if (at < 0) {
+        frag.append(label);
+        return frag;
+      }
+      const from = starts[at];
+      const to = starts[at + query.length - 1] + 1;
+      const mark = document.createElement('mark');
+      mark.textContent = chars.slice(from, to).join('');
+      frag.append(chars.slice(0, from).join(''), mark, chars.slice(to).join(''));
+      return frag;
+    }
+
+    function render() {
+      const raw = input.value.trim();
+      // Il campo che mostra ancora il modello scelto equivale a "nessun filtro"
+      const query = current.value && raw === current.label ? '' : fold(raw);
+      const words = query.split(/\s+/).filter(Boolean);
+      shown = query === ''
+        ? [allOption].concat(models)
+        : models.filter((o) => words.every((w) => o.folded.includes(w)));
+      list.textContent = '';
+      shown.forEach((opt, i) => {
+        const li = document.createElement('li');
+        li.id = listId + '-' + i;
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', opt.value === current.value ? 'true' : 'false');
+        if (opt.value === '') li.classList.add('adm-combo-all');
+        li.append(highlighted(opt.label, words.length === 1 ? words[0] : ''));
+        li.addEventListener('mousedown', (event) => event.preventDefault());
+        li.addEventListener('click', () => choose(opt));
+        list.append(li);
+      });
+      if (!shown.length) {
+        const li = document.createElement('li');
+        li.className = 'adm-combo-empty';
+        li.textContent = select.dataset.noMatch || '';
+        list.append(li);
+      }
+      setActive(query === '' ? shown.indexOf(current) : (shown.length ? 0 : -1));
+    }
+
+    function setActive(index) {
+      active = index;
+      Array.from(list.children).forEach((li, i) => li.classList.toggle('active', i === index));
+      const li = index >= 0 ? list.children[index] : null;
+      if (li) {
+        input.setAttribute('aria-activedescendant', li.id);
+        li.scrollIntoView({ block: 'nearest' });
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    function open() {
+      render();
+      list.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+    }
+
+    function close(restore) {
+      list.hidden = true;
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+      if (restore) input.value = current.value ? current.label : '';
+    }
+
+    function choose(opt) {
+      close(false);
+      input.value = opt.value ? opt.label : '';
+      if (opt.value === current.value) return;
+      select.value = opt.value;
+      // "Tutto il sito": niente m= vuoto nell'indirizzo
+      select.disabled = opt.value === '';
+      box.classList.add('adm-combo-busy');
+      if (select.form) select.form.submit();
+    }
+
+    input.addEventListener('focus', () => {
+      open();
+      input.select();
+    });
+    input.addEventListener('click', () => { if (list.hidden) open(); });
+    input.addEventListener('input', open);
+    input.addEventListener('blur', () => close(true));
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (list.hidden) {
+          open();
+          return;
+        }
+        if (!shown.length) return;
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        setActive((active + step + shown.length) % shown.length);
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        if (!list.hidden && shown[active]) choose(shown[active]);
+        else if (input.value.trim() === '') choose(allOption);
+      } else if (event.key === 'Escape') {
+        if (!list.hidden) {
+          event.preventDefault();
+          close(true);
+        }
+      }
+    });
+    clear.addEventListener('click', () => choose(allOption));
+  }
+
   // ===== Statistiche: grafico dell'andamento =====
   // SVG disegnato qui alla larghezza reale del riquadro (testi leggibili
   // anche sul telefono); senza JavaScript restano la tabella dei dati e
