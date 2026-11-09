@@ -72,6 +72,206 @@
     });
   }
 
+  // ===== Statistiche: selettore che si invia da solo =====
+  document.querySelectorAll('select[data-autosubmit]').forEach((select) => {
+    select.addEventListener('change', () => select.form && select.form.submit());
+  });
+
+  // ===== Statistiche: grafico dell'andamento =====
+  // SVG disegnato qui alla larghezza reale del riquadro (testi leggibili
+  // anche sul telefono); senza JavaScript restano la tabella dei dati e
+  // i riepiloghi, già nella pagina.
+  const chartBox = document.getElementById('adm-stats-chart');
+  if (chartBox) {
+    let chart = null;
+    try {
+      chart = JSON.parse(chartBox.dataset.chart || 'null');
+    } catch (e) {
+      chart = null;
+    }
+    if (chart && Array.isArray(chart.points) && chart.points.length) {
+      setupChart(chartBox, chart);
+    }
+  }
+
+  function setupChart(box, chart) {
+    const SVG = 'http://www.w3.org/2000/svg';
+    const points = chart.points;
+    const series = chart.series;
+    const monthly = points[0].key.length === 7;
+    const locale = chart.lang || document.documentElement.lang || 'it';
+    const num = new Intl.NumberFormat(locale);
+    const dateOf = (key) => new Date(monthly ? key + '-01T12:00:00' : key + 'T12:00:00');
+    const shortFmt = monthly
+      ? new Intl.DateTimeFormat(locale, { month: 'short', year: '2-digit' })
+      : new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+    const longFmt = monthly
+      ? new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' })
+      : new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const tip = document.createElement('div');
+    tip.className = 'adm-chart-tip';
+    tip.hidden = true;
+    tip.setAttribute('aria-hidden', 'true');
+
+    function el(name, attrs, parent) {
+      const node = document.createElementNS(SVG, name);
+      Object.entries(attrs || {}).forEach(([k, v]) => node.setAttribute(k, String(v)));
+      if (parent) parent.appendChild(node);
+      return node;
+    }
+
+    // Massimo "tondo" dell'asse e passo delle tacche (1, 2, 5 × 10^n)
+    function niceScale(max) {
+      if (max <= 0) return { max: 4, step: 1 };
+      const rough = max / 4;
+      const power = Math.pow(10, Math.floor(Math.log10(rough)));
+      const step = [1, 2, 5, 10].map((m) => m * power).find((s) => s >= rough) || power * 10;
+      const niceStep = Math.max(1, step);
+      return { max: Math.ceil(max / niceStep) * niceStep, step: niceStep };
+    }
+
+    function render() {
+      const width = Math.max(260, box.clientWidth);
+      const height = box.clientHeight || 260;
+      const small = width < 520;
+      const m = { top: 10, right: small ? 8 : 14, bottom: 28, left: 0 };
+      const maxValue = Math.max(0, ...points.flatMap((p) => series.map((s) => p[s.key] || 0)));
+      const scale = niceScale(maxValue);
+      // Margine sinistro su misura dell'etichetta più lunga
+      m.left = Math.max(28, num.format(scale.max).length * 7 + 12);
+      const plotW = width - m.left - m.right;
+      const plotH = height - m.top - m.bottom;
+      const n = points.length;
+      const x = (i) => m.left + (n === 1 ? plotW / 2 : (i * plotW) / (n - 1));
+      const y = (v) => m.top + plotH - (v / scale.max) * plotH;
+
+      box.textContent = '';
+      const svg = el('svg', { width, height, viewBox: `0 0 ${width} ${height}`, 'aria-hidden': 'true', focusable: 'false' }, box);
+
+      // Griglia e asse Y
+      const grid = el('g', { class: 'adm-grid' }, svg);
+      const axis = el('g', { class: 'adm-axis' }, svg);
+      for (let v = 0; v <= scale.max + 1e-9; v += scale.step) {
+        const yy = Math.round(y(v)) + 0.5;
+        if (v > 0) el('line', { x1: m.left, x2: width - m.right, y1: yy, y2: yy }, grid);
+        const label = el('text', { x: m.left - 8, y: yy + 4, 'text-anchor': 'end' }, axis);
+        label.textContent = num.format(v);
+      }
+      el('line', { class: 'adm-baseline', x1: m.left, x2: width - m.right, y1: y(0) + 0.5, y2: y(0) + 0.5 }, svg);
+
+      // Asse X: etichette diradate perché non si tocchino
+      const labelW = monthly ? 52 : 50;
+      const every = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(plotW / labelW))));
+      for (let i = 0; i < n; i += every) {
+        // Con poche etichette si ancora l'ultima a destra, la prima a sinistra
+        const anchor = n === 1 ? 'middle' : i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+        const label = el('text', { x: x(i), y: height - 8, 'text-anchor': anchor }, axis);
+        label.textContent = shortFmt.format(dateOf(points[i].key));
+      }
+
+      // Serie: area tenue + linea da 2 px
+      series.forEach((s) => {
+        const g = el('g', { class: 'adm-series-' + s.slot }, svg);
+        const coords = points.map((p, i) => [x(i), y(p[s.key] || 0)]);
+        const line = coords.map(([cx, cy], i) => (i ? 'L' : 'M') + cx.toFixed(1) + ' ' + cy.toFixed(1)).join(' ');
+        if (n > 1) {
+          el('path', { class: 'adm-area', d: `${line} L${x(n - 1).toFixed(1)} ${y(0)} L${x(0).toFixed(1)} ${y(0)} Z` }, g);
+          el('path', { class: 'adm-line', d: line }, g);
+        }
+        // Pochi punti (7 giorni): marcatori sempre visibili
+        if (n <= 12) {
+          coords.forEach(([cx, cy]) => el('circle', { class: 'adm-dot', cx, cy, r: 4 }, g));
+        }
+      });
+
+      if (maxValue === 0) {
+        const msg = document.createElement('div');
+        msg.className = 'adm-chart-empty';
+        msg.textContent = chart.empty || '';
+        box.appendChild(msg);
+      }
+
+      // Livello del passaggio del mouse: linea verticale, punti e riquadro
+      const hover = el('g', { visibility: 'hidden' }, svg);
+      const cross = el('line', { class: 'adm-crosshair', y1: m.top, y2: m.top + plotH }, hover);
+      const dots = series.map((s) => el('circle', { class: 'adm-dot adm-series-' + s.slot, r: 5 }, hover));
+      // Area sensibile più grande del tracciato
+      const hit = el('rect', { x: m.left - 10, y: 0, width: plotW + 20, height: height, fill: 'transparent' }, svg);
+      box.appendChild(tip);
+
+      function show(i) {
+        const p = points[i];
+        cross.setAttribute('x1', x(i));
+        cross.setAttribute('x2', x(i));
+        series.forEach((s, k) => {
+          dots[k].setAttribute('cx', x(i));
+          dots[k].setAttribute('cy', y(p[s.key] || 0));
+        });
+        hover.setAttribute('visibility', 'visible');
+
+        tip.textContent = '';
+        const title = document.createElement('strong');
+        title.textContent = longFmt.format(dateOf(p.key)) + (i === n - 1 && chart.partial ? ` (${chart.partial})` : '');
+        tip.appendChild(title);
+        series.forEach((s) => {
+          const row = document.createElement('span');
+          row.className = 'adm-series-' + s.slot;
+          const sw = document.createElement('i');
+          sw.className = 'adm-swatch';
+          const name = document.createElement('em');
+          name.style.fontStyle = 'normal';
+          name.textContent = s.name;
+          const value = document.createElement('b');
+          value.textContent = num.format(p[s.key] || 0);
+          row.append(sw, name, value);
+          tip.appendChild(row);
+        });
+        tip.hidden = false;
+        const tw = tip.offsetWidth;
+        const th = tip.offsetHeight;
+        let left = x(i) + 12;
+        if (left + tw > width) left = x(i) - tw - 12;
+        left = Math.max(0, left);
+        const top = Math.max(0, Math.min(height - th, y(Math.max(...series.map((s) => p[s.key] || 0))) - th / 2));
+        tip.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+      }
+
+      function hide() {
+        hover.setAttribute('visibility', 'hidden');
+        tip.hidden = true;
+      }
+
+      function nearest(event) {
+        const rect = svg.getBoundingClientRect();
+        const px = event.clientX - rect.left;
+        if (n === 1) return 0;
+        return Math.max(0, Math.min(n - 1, Math.round(((px - m.left) / plotW) * (n - 1))));
+      }
+
+      hit.addEventListener('pointermove', (event) => show(nearest(event)));
+      hit.addEventListener('pointerdown', (event) => show(nearest(event)));
+      hit.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') hide();
+      });
+    }
+
+    render();
+    let frame = 0;
+    let lastWidth = box.clientWidth;
+    const onResize = () => {
+      if (box.clientWidth === lastWidth) return;
+      lastWidth = box.clientWidth;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(render);
+    };
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(onResize).observe(box);
+    } else {
+      window.addEventListener('resize', onResize);
+    }
+  }
+
   const form = document.getElementById('adm-model-form');
   if (!form) return;
 

@@ -25,7 +25,8 @@ Core capabilities:
 - Server-side social preview image generation
 - Mobile-optimized bottom-sheet panels with minimize-to-pill feature
 - Admin panel (`admin.php`): multi-user model upload/editing, trash with
-  file-version restore, audit history of who changed what
+  file-version restore, audit history of who changed what, anonymous visit
+  statistics with a trend chart
 
 ---
 
@@ -58,6 +59,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 ├── setup_lib.php               # Wizard field schema, validation, settings.ini writer
 ├── admin.php                   # Admin panel: models, users, history, trash (see below)
 ├── admin_lib.php               # Admin panel logic: accounts, audit log, uploads, trash
+├── stats_lib.php               # Anonymous visit counters (daily totals) for the stats page
 ├── sitemap.php                 # Dynamic sitemap.xml (served via rewrite)
 ├── robots.php                  # Dynamic robots.txt (served via rewrite)
 ├── generate_social_preview.php # Server-side screenshot via PHP GD
@@ -72,6 +74,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 ├── api/
 │   ├── catalogo.php            # API endpoint: returns model list as JSON
 │   ├── catalogo_assets.php     # API endpoint: model asset URLs (for PWA caching)
+│   ├── stats_hit.php           # Records one anonymous visit/model view (POST from js/stats.js)
 │   ├── admin_upload.php        # Chunked 3D-file upload for the admin panel
 │   └── admin_model.php         # Serves draft model files to panel users (preview)
 │
@@ -86,7 +89,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── .installed                  # Setup-completed marker + reopen key (gitignored)
 │   ├── settings.ini.bak            # Backup written by the wizard (gitignored)
 │   ├── generated/                  # PWA icons generated from the logo (gitignored)
-│   └── admin/                      # Admin panel data: users, history, uploads, trash (gitignored)
+│   └── admin/                      # Admin panel data: users, history, stats, uploads, trash (gitignored)
 │
 ├── img/                        # Project default images (app code, overwritten by updates)
 │   ├── README.md                   # Explains img/ vs custom/ (Italian)
@@ -104,6 +107,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── config.php              # Frontend config (PHP served as JS) + CSS vars
 │   ├── i18n.js                 # Client-side translation fallback
 │   ├── lang-selector.js        # Language dropdown open/close behavior
+│   ├── stats.js                # Anonymous visit beacon (window.CaveStats), index + viewer
 │   ├── index.js                # Homepage map logic (with search/filter)
 │   ├── viewer.js               # 3D viewer entry point (~3,800 lines)
 │   ├── viewer/                 # ES6 modules extracted from viewer.js
@@ -119,7 +123,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   │   ├── gltf-memory.js      # Lean GLB parse + texture downscaling plugin
 │   │   └── diagnostics.js      # GPU upload check + ?debug=1 overlay
 │   ├── setup.js                # Setup wizard UI (steps, colours, mini-map)
-│   ├── admin.js                # Admin panel UI (chunked upload, position map, filters)
+│   ├── admin.js                # Admin panel UI (chunked upload, position map, filters, stats chart)
 │   ├── admin-orientation.js    # Admin panel: 3D orientation preview (ES module, Three.js)
 │   ├── status.js               # Cache management UI (~1,700 lines)
 │   ├── pwa-register.js         # Service worker registration
@@ -452,8 +456,8 @@ must never be served from cache.
 
 ### `admin.php` + `admin_lib.php` + `api/admin_upload.php` — admin panel
 Browser-side management of `modelli/`. `admin.php` is one controller with
-pages selected by `?p=` (`models`, `edit&m=…`, `new`, `history`, `trash`,
-`users`, `account`); every change is a POST with `action=…`, the session's
+pages selected by `?p=` (`models`, `edit&m=…`, `new`, `history`, `stats`,
+`trash`, `users`, `account`); every change is a POST with `action=…`, the session's
 CSRF token (`adminCheckRequest()`, which also runs the same Origin/Referer
 check as `save_social_preview.php`) and Post/Redirect/Get with flash
 messages. A model form with errors is re-rendered in place (HTTP 422)
@@ -584,6 +588,30 @@ model folder, `Cache-Control: private, no-store`, and closes the session
 before streaming. On servers that ignore `.htaccess` (nginx) a draft is
 hidden but its files stay reachable by exact URL.
 
+Statistics (`?p=stats`, permission `stats.view`, both roles): anonymous
+counters, no cookies, no IP, no visitor id. `js/stats.js` (loaded by
+`index.php` and `viewer.php`, before `viewer.js`) exposes
+`window.CaveStats`: `visit()` runs on load, once per browser session
+(`sessionStorage`, skipped in embed mode), and `viewer.js`'s
+`loadModelByName()` calls `model(folder)` — once per model per session,
+never for a draft preview (`modelInfo.fileUrl`). Both `sendBeacon()` to
+`api/stats_hit.php`, which checks `adminSameOrigin()`, drops bots by UA
+(`statsIsBot()`; the script itself skips `navigator.webdriver`), counts a
+model only if its JSON exists and is published, and always answers 204.
+`stats_lib.php` stores daily totals in `custom/admin/stats/YYYY-MM.php`
+(one guarded store per month, so a hit rewrites a small file, under its
+own `stats/.lock`): `{"YYYY-MM-DD": {"v": visits, "m": {folder: views},
+"e": {folder: embedViews}}}`. `statsSummary()` gives the 7d/30d/365d/all
+totals (`STATS_PERIODS`), `statsSeries()` the chart points (daily for
+`7d`/`30d`, monthly for `12m`/`all`), `statsModelCreated()` the upload
+date from the history log, `statsCsv()` the `&export=csv` download. The
+chart is drawn by `js/admin.js` from `data-chart` (SVG sized to the box,
+crosshair tooltip); the same numbers are in a `<details>` table, so the
+page works without JS. Series colours are `--series-1/2` in
+`css/admin.css` (CVD-checked on the dark panel surface). `[stats]
+enabled = false` (in `SETTINGS_SECTIONS`, exposed as
+`APP_CONFIG.stats.enabled`) stops counting; collected data stays.
+
 Large files: `js/admin.js` uploads the file to `api/admin_upload.php` in raw
 chunks (`adminChunkSize()`, below `post_max_size`, halved on HTTP 413),
 resumable via the `offset`/409 protocol, then submits the form with only
@@ -642,7 +670,8 @@ fully-commented reference documenting every available option.
 
 Allowed `settings.ini` sections are listed in the `SETTINGS_SECTIONS` constant:
 `branding`, `texts`, `theme`, `pwa`, `paths`, `language`, `security`, `viewer`,
-`map`, `social`. The first seven are consumed by PHP; `viewer`, `map`, `social`
+`map`, `social`, `stats`. The first seven are consumed by PHP (`stats` by
+both: `stats_lib.php` and `APP_CONFIG.stats`); `viewer`, `map`, `social`
 and the CSS-variable half of `theme` are frontend-only and get applied by
 `js/config.php` (see below). INI files have no nested arrays, so map bounds are
 expressed as `boundsSouth`/`boundsWest`/`boundsNorth`/`boundsEast` and

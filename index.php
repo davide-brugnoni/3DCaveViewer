@@ -138,6 +138,7 @@ $sidebarTitle = uiText('texts.sidebarTitle', 'homepage.sidebarTitle', 'Cavità D
     <script src="js/config.php"></script>
     <script src="js/i18n.js"></script>
     <script src="js/index.js" defer></script>
+    <script src="js/stats.js" defer></script>
     <script src="js/lang-selector.js" defer></script>
     <script src="js/pwa-register.js" defer></script>
 
