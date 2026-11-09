@@ -8,7 +8,7 @@ declare(strict_types=1);
   Licensed under GNU GPL v3
 */
 
-// Chiamato da js/stats.js con navigator.sendBeacon(): POST con
+// Chiamato da js/visite.js con navigator.sendBeacon(): POST con
 //   t = visit | model
 //   m = cartella del modello (solo t=model)
 //   e = 1 se il viewer è dentro un iframe (?embed=1)

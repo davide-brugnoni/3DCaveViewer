@@ -74,7 +74,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 ├── api/
 │   ├── catalogo.php            # API endpoint: returns model list as JSON
 │   ├── catalogo_assets.php     # API endpoint: model asset URLs (for PWA caching)
-│   ├── stats_hit.php           # Records one anonymous visit/model view (POST from js/stats.js)
+│   ├── visita.php              # Records one anonymous visit/model view (POST from js/visite.js)
 │   ├── admin_upload.php        # Chunked 3D-file upload for the admin panel
 │   └── admin_model.php         # Serves draft model files to panel users (preview)
 │
@@ -107,7 +107,7 @@ There is **no build step** — the project is server-side rendered PHP with ES6 
 │   ├── config.php              # Frontend config (PHP served as JS) + CSS vars
 │   ├── i18n.js                 # Client-side translation fallback
 │   ├── lang-selector.js        # Language dropdown open/close behavior
-│   ├── stats.js                # Anonymous visit beacon (window.CaveStats), index + viewer
+│   ├── visite.js               # Anonymous visit beacon (window.CaveStats), index + viewer
 │   ├── index.js                # Homepage map logic (with search/filter)
 │   ├── viewer.js               # 3D viewer entry point (~3,800 lines)
 │   ├── viewer/                 # ES6 modules extracted from viewer.js
@@ -588,14 +588,18 @@ model folder, `Cache-Control: private, no-store`, and closes the session
 before streaming. On servers that ignore `.htaccess` (nginx) a draft is
 hidden but its files stay reachable by exact URL.
 
-Statistics (`?p=stats`, permission `stats.view`, both roles): anonymous
-counters, no cookies, no IP, no visitor id. `js/stats.js` (loaded by
+Statistics (`?p=visite&periodo=…&m=…&ordine=…`, permission `stats.view`,
+both roles): anonymous counters, no cookies, no IP, no visitor id. **Keep
+"stats"/"analytics"/"track"/"hit" out of every URL** (page, query
+parameters, script and endpoint names): tracker blocklists (NordVPN Threat
+Protection, EasyPrivacy-based blockers) block such URLs, which broke the
+page for admins and would silently drop visitors' counts. `js/visite.js` (loaded by
 `index.php` and `viewer.php`, before `viewer.js`) exposes
 `window.CaveStats`: `visit()` runs on load, once per browser session
 (`sessionStorage`, skipped in embed mode), and `viewer.js`'s
 `loadModelByName()` calls `model(folder)` — once per model per session,
 never for a draft preview (`modelInfo.fileUrl`). Both `sendBeacon()` to
-`api/stats_hit.php`, which checks `adminSameOrigin()`, drops bots by UA
+`api/visita.php`, which checks `adminSameOrigin()`, drops bots by UA
 (`statsIsBot()`; the script itself skips `navigator.webdriver`), counts a
 model only if its JSON exists and is published, and always answers 204.
 `stats_lib.php` stores daily totals in `custom/admin/stats/YYYY-MM.php`

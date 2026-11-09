@@ -23,7 +23,8 @@ declare(strict_types=1);
 */
 
 // Pagine (?p=): models (default), edit (&m=cartella), new, history,
-// stats (&r=intervallo, &m=cartella, &export=csv), trash, users, account. Ogni modifica arriva in POST con "action", token
+// visite = statistiche (&periodo=, &m=cartella, &ordine=, &export=csv;
+// nomi scelti apposta: «stats» negli indirizzi fa scattare i blocchi anti-tracker), trash, users, account. Ogni modifica arriva in POST con "action", token
 // CSRF di sessione e controllo di origine; dopo un salvataggio riuscito si
 // torna in GET (Post/Redirect/Get) con un messaggio flash.
 
@@ -816,16 +817,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ------------------------------------------------------------
 if ($user === null) {
     $page = $hasUsers ? 'login' : 'bootstrap';
-} elseif (!in_array($page, ['models', 'edit', 'new', 'history', 'stats', 'trash', 'users', 'account'], true)) {
+} elseif (!in_array($page, ['models', 'edit', 'new', 'history', 'visite', 'trash', 'users', 'account'], true)) {
     $page = 'models';
 }
 if (($page === 'trash' && !adminCan($user, 'trash.manage')) || ($page === 'users' && !adminCan($user, 'users.manage'))
-    || ($page === 'stats' && !adminCan($user, 'stats.view'))) {
+    || ($page === 'visite' && !adminCan($user, 'stats.view'))) {
     $page = 'models';
 }
 
 // Statistiche in CSV: un giorno e un modello per riga, per un foglio di calcolo
-if ($page === 'stats' && ($_GET['export'] ?? '') === 'csv') {
+if ($page === 'visite' && ($_GET['export'] ?? '') === 'csv') {
     $names = [];
     foreach (adminListModels() as $model) {
         $names[$model['folder']] = $model['name'];
@@ -862,7 +863,7 @@ $pageTitles = [
     'edit' => at('edit.title', 'Modifica modello'),
     'new' => at('new.title', 'Nuovo modello'),
     'history' => at('nav.history', 'Storico'),
-    'stats' => at('nav.stats', 'Statistiche'),
+    'visite' => at('nav.stats', 'Statistiche'),
     'trash' => at('nav.trash', 'Cestino'),
     'users' => at('nav.users', 'Utenti'),
     'account' => at('nav.account', 'Il mio account'),
@@ -956,7 +957,7 @@ $langMeta = getLanguagesMeta();
       <a href="admin.php" class="<?= in_array($page, ['models', 'edit', 'new'], true) ? 'active' : ''; ?>"><?= e(at('nav.models', 'Modelli')); ?></a>
       <a href="admin.php?p=history" class="<?= $page === 'history' ? 'active' : ''; ?>"><?= e(at('nav.history', 'Storico')); ?></a>
       <?php if (adminCan($user, 'stats.view')): ?>
-      <a href="admin.php?p=stats" class="<?= $page === 'stats' ? 'active' : ''; ?>"><?= e(at('nav.stats', 'Statistiche')); ?></a>
+      <a href="admin.php?p=visite" class="<?= $page === 'visite' ? 'active' : ''; ?>"><?= e(at('nav.stats', 'Statistiche')); ?></a>
       <?php endif; ?>
       <?php if (adminCan($user, 'trash.manage')): ?>
       <a href="admin.php?p=trash" class="<?= $page === 'trash' ? 'active' : ''; ?>"><?= e(at('nav.trash', 'Cestino')); ?></a>
@@ -1575,7 +1576,7 @@ $langMeta = getLanguagesMeta();
     <?php endif; ?>
     <?php endif; ?>
 
-<?php elseif ($page === 'stats'): ?>
+<?php elseif ($page === 'visite'): ?>
     <?php
     $statsDays = statsLoadDays();
     $summary = statsSummary($statsDays);
@@ -1588,7 +1589,7 @@ $langMeta = getLanguagesMeta();
     foreach (array_keys($summary['perModel']) as $folder) {
         $modelNames[$folder] = $modelNames[$folder] ?? $folder;
     }
-    $range = in_array($_GET['r'] ?? '', STATS_RANGES, true) ? (string) $_GET['r'] : '30d';
+    $range = in_array($_GET['periodo'] ?? '', STATS_RANGES, true) ? (string) $_GET['periodo'] : '30d';
     $chartFolder = (string) ($_GET['m'] ?? '');
     if (!isset($modelNames[$chartFolder])) {
         $chartFolder = '';
@@ -1596,7 +1597,7 @@ $langMeta = getLanguagesMeta();
     $series = statsSeries($statsDays, $range, $chartFolder);
     $firstDay = statsFirstDay($statsDays);
     $created = statsModelCreated();
-    $sortKey = array_key_exists($_GET['s'] ?? '', STATS_PERIODS) ? (string) $_GET['s'] : 'all';
+    $sortKey = array_key_exists($_GET['ordine'] ?? '', STATS_PERIODS) ? (string) $_GET['ordine'] : 'all';
 
     $periodLabels = [
         '7d' => at('stats.period7d', 'Ultimi 7 giorni'),
@@ -1635,7 +1636,7 @@ $langMeta = getLanguagesMeta();
             : substr($key, 8, 2) . '/' . substr($key, 5, 2) . '/' . substr($key, 0, 4);
     };
     $statsUrl = static function (array $params) use ($range, $chartFolder, $sortKey): string {
-        $query = array_filter(['p' => 'stats', 'r' => $range !== '30d' ? $range : '', 'm' => $chartFolder, 's' => $sortKey !== 'all' ? $sortKey : ''] , 'strlen');
+        $query = array_filter(['p' => 'visite', 'periodo' => $range !== '30d' ? $range : '', 'm' => $chartFolder, 'ordine' => $sortKey !== 'all' ? $sortKey : ''], 'strlen');
         $query = array_filter(array_merge($query, $params), 'strlen');
         return 'admin.php?' . http_build_query($query);
     };
@@ -1690,13 +1691,13 @@ $langMeta = getLanguagesMeta();
         <h2><?= e(at('stats.trend', 'Andamento')); ?></h2>
         <nav class="adm-segmented" aria-label="<?= e(at('stats.rangeLabel', 'Intervallo del grafico')); ?>">
           <?php foreach ($rangeLabels as $key => $label): ?>
-          <a href="<?= e($statsUrl(['r' => $key === '30d' ? '' : $key])); ?>" class="<?= $range === $key ? 'active' : ''; ?>"<?= $range === $key ? ' aria-current="page"' : ''; ?>><?= e($label); ?></a>
+          <a href="<?= e($statsUrl(['periodo' => $key === '30d' ? '' : $key])); ?>" class="<?= $range === $key ? 'active' : ''; ?>"<?= $range === $key ? ' aria-current="page"' : ''; ?>><?= e($label); ?></a>
           <?php endforeach; ?>
         </nav>
         <form method="get" action="admin.php" class="adm-chart-filter">
-          <input type="hidden" name="p" value="stats" />
-          <?php if ($range !== '30d'): ?><input type="hidden" name="r" value="<?= e($range); ?>" /><?php endif; ?>
-          <?php if ($sortKey !== 'all'): ?><input type="hidden" name="s" value="<?= e($sortKey); ?>" /><?php endif; ?>
+          <input type="hidden" name="p" value="visite" />
+          <?php if ($range !== '30d'): ?><input type="hidden" name="periodo" value="<?= e($range); ?>" /><?php endif; ?>
+          <?php if ($sortKey !== 'all'): ?><input type="hidden" name="ordine" value="<?= e($sortKey); ?>" /><?php endif; ?>
           <label class="adm-sr" for="f-stats-model"><?= e(at('history.model', 'Modello')); ?></label>
           <select id="f-stats-model" name="m" data-autosubmit>
             <option value=""><?= e(at('stats.allModels', 'Tutto il sito')); ?></option>
@@ -1751,7 +1752,7 @@ $langMeta = getLanguagesMeta();
           <tr>
             <th><?= e(at('models.colName', 'Modello')); ?></th>
             <?php foreach ($periodLabels as $key => $label): ?>
-            <th class="adm-num"><a href="<?= e($statsUrl(['s' => $key === 'all' ? '' : $key])); ?>" class="adm-sort<?= $sortKey === $key ? ' active' : ''; ?>"<?= $sortKey === $key ? ' aria-sort="descending"' : ''; ?>><?= e($label); ?></a></th>
+            <th class="adm-num"><a href="<?= e($statsUrl(['ordine' => $key === 'all' ? '' : $key])); ?>" class="adm-sort<?= $sortKey === $key ? ' active' : ''; ?>"<?= $sortKey === $key ? ' aria-sort="descending"' : ''; ?>><?= e($label); ?></a></th>
             <?php endforeach; ?>
             <th class="adm-num" title="<?= e(at('stats.embedHint', 'Aperture dentro un iframe in un altro sito (codice «Incorpora»), comprese nel totale')); ?>"><?= e(at('stats.embedded', 'Incorporato')); ?></th>
             <th><?= e(at('stats.uploaded', 'Caricato il')); ?></th>

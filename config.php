@@ -156,7 +156,7 @@ $CONFIG = [
     ],
 
     // ============================================================
-    // STATISTICHE - Contatore anonimo delle visite (admin.php?p=stats)
+    // STATISTICHE - Contatore anonimo delle visite (admin.php?p=visite)
     // ============================================================
     // Solo totali per giorno in custom/admin/stats/: nessun cookie, nessun
     // indirizzo IP, nessun identificativo del visitatore (vedi stats_lib.php).

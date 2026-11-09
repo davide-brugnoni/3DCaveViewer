@@ -29,7 +29,7 @@ declare(strict_types=1);
 //
 //   { "2026-11-09": { "v": 12, "m": { "cartella": 7 }, "e": { "cartella": 2 } } }
 //
-//   v  visite al sito (una per sessione del browser, js/stats.js)
+//   v  visite al sito (una per sessione del browser, js/visite.js)
 //   m  aperture di ciascun modello (una per modello per sessione),
 //      incorporamenti compresi
 //   e  di cui dentro un iframe di un altro sito (?embed=1)

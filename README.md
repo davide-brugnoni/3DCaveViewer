@@ -410,7 +410,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 ├── 🔌 api/
 │   ├── catalogo.php               # API catalogo modelli (JSON)
 │   ├── catalogo_assets.php        # API assets/risorse dei modelli
-│   ├── stats_hit.php              # Registra una visita anonima (chiamato da js/stats.js)
+│   ├── visita.php                 # Registra una visita anonima (chiamato da js/visite.js)
 │   ├── admin_upload.php           # Caricamento a blocchi dei file 3D (pannello)
 │   └── admin_model.php            # File delle bozze per l'anteprima (solo pannello)
 │
@@ -441,7 +441,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── pwa-service-worker.js      # Service worker per caching e versioning
 │   ├── i18n.js                    # Sistema internazionalizzazione lato client
 │   ├── lang-selector.js           # Apertura/chiusura del selettore lingua
-│   ├── stats.js                   # Contatore anonimo delle visite (una per sessione)
+│   ├── visite.js                  # Contatore anonimo delle visite (una per sessione)
 │   ├── index.js                   # Logica homepage/mappa (con ricerca)
 │   ├── viewer.js                  # Engine Three.js del visualizzatore (~3.800 righe)
 │   ├── viewer/                    # Moduli ES6 estratti da viewer.js
