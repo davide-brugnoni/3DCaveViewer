@@ -650,6 +650,7 @@ function adminCan(?array $user, string $permission): bool {
     switch ($permission) {
         case 'models.edit':
         case 'history.view':
+        case 'stats.view':
             return in_array($role, ADMIN_ROLES, true);
         case 'models.delete':
         case 'trash.manage':

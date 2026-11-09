@@ -2941,6 +2941,10 @@ const manager = new THREE.LoadingManager();
 
       const basePath = `${MODELS_FOLDER}/${modelInfo.folder}/`;
 
+      // Statistiche anonime (js/stats.js): una per modello per sessione;
+      // l'anteprima di una bozza (fileUrl) non si conta
+      if (!modelInfo.fileUrl) window.CaveStats?.model(modelInfo.folder);
+
       if (modelInfo.file && /\.(glb|gltf)$/i.test(modelInfo.file)) {
         // Mostra loader iniziale
         showLoader(0, { isIndeterminate: true });

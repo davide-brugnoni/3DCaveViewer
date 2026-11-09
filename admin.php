@@ -23,13 +23,14 @@ declare(strict_types=1);
 */
 
 // Pagine (?p=): models (default), edit (&m=cartella), new, history,
-// trash, users, account. Ogni modifica arriva in POST con "action", token
+// stats (&r=intervallo, &m=cartella, &export=csv), trash, users, account. Ogni modifica arriva in POST con "action", token
 // CSRF di sessione e controllo di origine; dopo un salvataggio riuscito si
 // torna in GET (Post/Redirect/Get) con un messaggio flash.
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/i18n/loader.php';
 require_once __DIR__ . '/admin_lib.php';
+require_once __DIR__ . '/stats_lib.php';
 
 redirectToSetupIfNeeded();
 
@@ -815,11 +816,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ------------------------------------------------------------
 if ($user === null) {
     $page = $hasUsers ? 'login' : 'bootstrap';
-} elseif (!in_array($page, ['models', 'edit', 'new', 'history', 'trash', 'users', 'account'], true)) {
+} elseif (!in_array($page, ['models', 'edit', 'new', 'history', 'stats', 'trash', 'users', 'account'], true)) {
     $page = 'models';
 }
-if (($page === 'trash' && !adminCan($user, 'trash.manage')) || ($page === 'users' && !adminCan($user, 'users.manage'))) {
+if (($page === 'trash' && !adminCan($user, 'trash.manage')) || ($page === 'users' && !adminCan($user, 'users.manage'))
+    || ($page === 'stats' && !adminCan($user, 'stats.view'))) {
     $page = 'models';
+}
+
+// Statistiche in CSV: un giorno e un modello per riga, per un foglio di calcolo
+if ($page === 'stats' && ($_GET['export'] ?? '') === 'csv') {
+    $names = [];
+    foreach (adminListModels() as $model) {
+        $names[$model['folder']] = $model['name'];
+    }
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="statistiche-' . date('Y-m-d') . '.csv"');
+    echo "\xEF\xBB\xBF" . statsCsv(statsLoadDays(), $names);
+    exit;
 }
 
 $flashes = (array) ($_SESSION['flash'] ?? []);
@@ -848,6 +862,7 @@ $pageTitles = [
     'edit' => at('edit.title', 'Modifica modello'),
     'new' => at('new.title', 'Nuovo modello'),
     'history' => at('nav.history', 'Storico'),
+    'stats' => at('nav.stats', 'Statistiche'),
     'trash' => at('nav.trash', 'Cestino'),
     'users' => at('nav.users', 'Utenti'),
     'account' => at('nav.account', 'Il mio account'),
@@ -940,6 +955,9 @@ $langMeta = getLanguagesMeta();
     <nav class="adm-nav" aria-label="<?= e(at('nav.label', 'Sezioni del pannello')); ?>">
       <a href="admin.php" class="<?= in_array($page, ['models', 'edit', 'new'], true) ? 'active' : ''; ?>"><?= e(at('nav.models', 'Modelli')); ?></a>
       <a href="admin.php?p=history" class="<?= $page === 'history' ? 'active' : ''; ?>"><?= e(at('nav.history', 'Storico')); ?></a>
+      <?php if (adminCan($user, 'stats.view')): ?>
+      <a href="admin.php?p=stats" class="<?= $page === 'stats' ? 'active' : ''; ?>"><?= e(at('nav.stats', 'Statistiche')); ?></a>
+      <?php endif; ?>
       <?php if (adminCan($user, 'trash.manage')): ?>
       <a href="admin.php?p=trash" class="<?= $page === 'trash' ? 'active' : ''; ?>"><?= e(at('nav.trash', 'Cestino')); ?></a>
       <?php endif; ?>
@@ -1556,6 +1574,222 @@ $langMeta = getLanguagesMeta();
     </nav>
     <?php endif; ?>
     <?php endif; ?>
+
+<?php elseif ($page === 'stats'): ?>
+    <?php
+    $statsDays = statsLoadDays();
+    $summary = statsSummary($statsDays);
+    $statsModels = adminListModels();
+    $modelNames = [];
+    foreach ($statsModels as $model) {
+        $modelNames[$model['folder']] = $model['name'] !== '' ? $model['name'] : $model['folder'];
+    }
+    // Anche i modelli eliminati restano nelle statistiche, con il nome della cartella
+    foreach (array_keys($summary['perModel']) as $folder) {
+        $modelNames[$folder] = $modelNames[$folder] ?? $folder;
+    }
+    $range = in_array($_GET['r'] ?? '', STATS_RANGES, true) ? (string) $_GET['r'] : '30d';
+    $chartFolder = (string) ($_GET['m'] ?? '');
+    if (!isset($modelNames[$chartFolder])) {
+        $chartFolder = '';
+    }
+    $series = statsSeries($statsDays, $range, $chartFolder);
+    $firstDay = statsFirstDay($statsDays);
+    $created = statsModelCreated();
+    $sortKey = array_key_exists($_GET['s'] ?? '', STATS_PERIODS) ? (string) $_GET['s'] : 'all';
+
+    $periodLabels = [
+        '7d' => at('stats.period7d', 'Ultimi 7 giorni'),
+        '30d' => at('stats.period30d', 'Ultimi 30 giorni'),
+        '365d' => at('stats.period365d', 'Ultimo anno'),
+        'all' => at('stats.periodAll', 'Totale'),
+    ];
+    $rangeLabels = [
+        '7d' => at('stats.range7d', '7 giorni'),
+        '30d' => at('stats.range30d', '30 giorni'),
+        '12m' => at('stats.range12m', '12 mesi'),
+        'all' => at('stats.rangeAll', 'Da sempre'),
+    ];
+    $empty = array_fill_keys(array_keys(STATS_PERIODS), 0);
+    $rows = [];
+    foreach ($modelNames as $folder => $name) {
+        $rows[] = [
+            'folder' => (string) $folder,
+            'name' => $name,
+            'counts' => $summary['perModel'][$folder] ?? $empty,
+            'embed' => (int) ($summary['embed'][$folder] ?? 0),
+            'created' => (int) ($created[$folder] ?? 0),
+            'last' => (string) ($summary['lastDay'][$folder] ?? ''),
+            'exists' => in_array((string) $folder, array_column($statsModels, 'folder'), true),
+        ];
+    }
+    usort($rows, static function (array $a, array $b) use ($sortKey): int {
+        return [$b['counts'][$sortKey], $b['counts']['all']] <=> [$a['counts'][$sortKey], $a['counts']['all']]
+            ?: strcasecmp($a['name'], $b['name']);
+    });
+    $maxTotal = max(array_merge([1], array_map(static fn(array $r): int => (int) $r['counts'][$sortKey], $rows)));
+    $fmt = static fn(int $n): string => number_format($n, 0, ',', '.');
+    $dayLabel = static function (string $key): string {
+        return strlen($key) === 7
+            ? substr($key, 5, 2) . '/' . substr($key, 0, 4)
+            : substr($key, 8, 2) . '/' . substr($key, 5, 2) . '/' . substr($key, 0, 4);
+    };
+    $statsUrl = static function (array $params) use ($range, $chartFolder, $sortKey): string {
+        $query = array_filter(['p' => 'stats', 'r' => $range !== '30d' ? $range : '', 'm' => $chartFolder, 's' => $sortKey !== 'all' ? $sortKey : ''] , 'strlen');
+        $query = array_filter(array_merge($query, $params), 'strlen');
+        return 'admin.php?' . http_build_query($query);
+    };
+    $seriesNames = [
+        'visits' => at('stats.siteVisits', 'Visite al sito'),
+        'models' => $chartFolder !== ''
+            ? at('stats.modelViewsOf', 'Aperture di «{name}»', ['name' => $modelNames[$chartFolder]])
+            : at('stats.modelViews', 'Modelli aperti'),
+    ];
+    $chartData = [
+        'range' => $range,
+        'lang' => $lang,
+        'points' => $series,
+        'series' => $chartFolder !== ''
+            ? [['key' => 'models', 'name' => $seriesNames['models'], 'slot' => 2]]
+            : [['key' => 'visits', 'name' => $seriesNames['visits'], 'slot' => 1], ['key' => 'models', 'name' => $seriesNames['models'], 'slot' => 2]],
+        'empty' => at('stats.chartEmpty', 'Nessuna visita registrata in questo periodo.'),
+        // L'ultimo punto (oggi o il mese in corso) è ancora parziale
+        'partial' => at('stats.partial', 'in corso'),
+    ];
+    ?>
+    <section class="adm-toolbar">
+      <h1><?= e(at('nav.stats', 'Statistiche')); ?></h1>
+      <?php if ($statsDays !== []): ?>
+      <a href="<?= e($statsUrl(['export' => 'csv'])); ?>" class="adm-btn adm-btn-ghost" download><?= e(at('stats.exportCsv', 'Esporta CSV')); ?></a>
+      <?php endif; ?>
+    </section>
+
+    <?php if (!statsEnabled()): ?>
+    <div class="adm-flash adm-flash-warn" role="status"><?= e(at('stats.disabled', 'Il conteggio delle visite è disattivato ([stats] enabled = false in custom/settings.ini): qui sotto restano i dati raccolti finora.')); ?></div>
+    <?php endif; ?>
+
+    <section class="adm-stats-kpis">
+      <?php foreach (['site' => [at('stats.siteVisits', 'Visite al sito'), at('stats.siteVisitsHint', 'Una per sessione del browser, da qualsiasi pagina del sito')], 'models' => [at('stats.modelViews', 'Modelli aperti'), at('stats.modelViewsHint', 'Aperture dei modelli 3D, anche incorporati in altri siti')]] as $kpi => [$title, $hint]): ?>
+      <div class="adm-card adm-kpi-card">
+        <h2><?= e($title); ?></h2>
+        <p class="adm-hint"><?= e($hint); ?></p>
+        <dl class="adm-kpis">
+          <?php foreach ($periodLabels as $key => $label): ?>
+          <div class="adm-kpi<?= $key === 'all' ? ' adm-kpi-total' : ''; ?>">
+            <dt><?= e($label); ?></dt>
+            <dd><?= e($fmt((int) $summary[$kpi][$key])); ?></dd>
+          </div>
+          <?php endforeach; ?>
+        </dl>
+      </div>
+      <?php endforeach; ?>
+    </section>
+
+    <section class="adm-card adm-chart-card">
+      <div class="adm-chart-head">
+        <h2><?= e(at('stats.trend', 'Andamento')); ?></h2>
+        <nav class="adm-segmented" aria-label="<?= e(at('stats.rangeLabel', 'Intervallo del grafico')); ?>">
+          <?php foreach ($rangeLabels as $key => $label): ?>
+          <a href="<?= e($statsUrl(['r' => $key === '30d' ? '' : $key])); ?>" class="<?= $range === $key ? 'active' : ''; ?>"<?= $range === $key ? ' aria-current="page"' : ''; ?>><?= e($label); ?></a>
+          <?php endforeach; ?>
+        </nav>
+        <form method="get" action="admin.php" class="adm-chart-filter">
+          <input type="hidden" name="p" value="stats" />
+          <?php if ($range !== '30d'): ?><input type="hidden" name="r" value="<?= e($range); ?>" /><?php endif; ?>
+          <?php if ($sortKey !== 'all'): ?><input type="hidden" name="s" value="<?= e($sortKey); ?>" /><?php endif; ?>
+          <label class="adm-sr" for="f-stats-model"><?= e(at('history.model', 'Modello')); ?></label>
+          <select id="f-stats-model" name="m" data-autosubmit>
+            <option value=""><?= e(at('stats.allModels', 'Tutto il sito')); ?></option>
+            <?php foreach ($modelNames as $folder => $name): ?>
+            <option value="<?= e((string) $folder); ?>" <?= $chartFolder === (string) $folder ? 'selected' : ''; ?>><?= e($name); ?></option>
+            <?php endforeach; ?>
+          </select>
+          <noscript><button type="submit" class="adm-btn adm-btn-small"><?= e(at('history.filter', 'Filtra')); ?></button></noscript>
+        </form>
+      </div>
+      <?php if (count($chartData['series']) > 1): ?>
+      <ul class="adm-legend">
+        <?php foreach ($chartData['series'] as $item): ?>
+        <li><span class="adm-swatch adm-series-<?= (int) $item['slot']; ?>" aria-hidden="true"></span><?= e($item['name']); ?></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php else: ?>
+      <p class="adm-chart-sub"><span class="adm-swatch adm-series-2" aria-hidden="true"></span><?= e($seriesNames['models']); ?></p>
+      <?php endif; ?>
+      <div class="adm-chart" id="adm-stats-chart" data-chart="<?= e((string) json_encode($chartData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>" role="img" aria-label="<?= e(at('stats.chartLabel', 'Grafico dell\'andamento: i valori sono nella tabella qui sotto')); ?>"></div>
+      <details class="adm-chart-table">
+        <summary><?= e(at('stats.showTable', 'Mostra i dati in tabella')); ?></summary>
+        <div class="adm-table-wrap">
+        <table class="adm-table adm-table-compact">
+          <thead>
+            <tr>
+              <th><?= e(strlen((string) ($series[0]['key'] ?? '')) === 7 ? at('stats.month', 'Mese') : at('stats.day', 'Giorno')); ?></th>
+              <?php foreach ($chartData['series'] as $item): ?><th class="adm-num"><?= e($item['name']); ?></th><?php endforeach; ?>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach (array_reverse($series) as $point): ?>
+            <tr>
+              <td><?= e($dayLabel($point['key'])); ?></td>
+              <?php foreach ($chartData['series'] as $item): ?><td class="adm-num"><?= e($fmt((int) $point[$item['key']])); ?></td><?php endforeach; ?>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+        </div>
+      </details>
+    </section>
+
+    <section class="adm-card">
+      <h2><?= e(at('stats.perModel', 'Visite per modello')); ?></h2>
+      <?php if ($rows === []): ?>
+      <p class="adm-muted"><?= e(at('models.empty', 'Non ci sono ancora modelli. Inizia caricando il primo.')); ?></p>
+      <?php else: ?>
+      <div class="adm-table-wrap">
+      <table class="adm-table adm-stats-table">
+        <thead>
+          <tr>
+            <th><?= e(at('models.colName', 'Modello')); ?></th>
+            <?php foreach ($periodLabels as $key => $label): ?>
+            <th class="adm-num"><a href="<?= e($statsUrl(['s' => $key === 'all' ? '' : $key])); ?>" class="adm-sort<?= $sortKey === $key ? ' active' : ''; ?>"<?= $sortKey === $key ? ' aria-sort="descending"' : ''; ?>><?= e($label); ?></a></th>
+            <?php endforeach; ?>
+            <th class="adm-num" title="<?= e(at('stats.embedHint', 'Aperture dentro un iframe in un altro sito (codice «Incorpora»), comprese nel totale')); ?>"><?= e(at('stats.embedded', 'Incorporato')); ?></th>
+            <th><?= e(at('stats.uploaded', 'Caricato il')); ?></th>
+            <th><?= e(at('stats.lastView', 'Ultima apertura')); ?></th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($rows as $row): ?>
+          <tr<?= $chartFolder === $row['folder'] ? ' class="adm-row-selected"' : ''; ?>>
+            <td>
+              <a class="adm-model-name" href="<?= e($statsUrl(['m' => $row['folder']])); ?>#adm-stats-chart" title="<?= e(at('stats.showTrend', 'Mostra l\'andamento nel grafico')); ?>"><?= e($row['name']); ?></a>
+              <?php if (!$row['exists']): ?><span class="adm-badge adm-badge-warn"><?= e(at('stats.deleted', 'eliminato')); ?></span><?php endif; ?>
+            </td>
+            <?php foreach (array_keys($periodLabels) as $key): ?>
+            <td class="adm-num<?= $sortKey === $key ? ' adm-stat-sorted' : ''; ?>">
+              <?= e($fmt((int) $row['counts'][$key])); ?>
+              <?php if ($sortKey === $key && $row['counts'][$key] > 0): ?>
+              <span class="adm-stat-bar" aria-hidden="true"><span style="width: <?= round(100 * $row['counts'][$key] / $maxTotal, 1); ?>%"></span></span>
+              <?php endif; ?>
+            </td>
+            <?php endforeach; ?>
+            <td class="adm-num"><?= e($fmt($row['embed'])); ?></td>
+            <td><?= $row['created'] > 0 ? e(date('d/m/Y', $row['created'])) : '<span class="adm-muted">—</span>'; ?></td>
+            <td><?= $row['last'] !== '' ? e($dayLabel($row['last'])) : '<span class="adm-muted">' . e(at('stats.never', 'mai')) . '</span>'; ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+      </div>
+      <?php endif; ?>
+    </section>
+
+    <p class="adm-hint adm-stats-note">
+      <?= e($firstDay !== ''
+          ? at('stats.since', 'Visite contate dal {date}.', ['date' => $dayLabel($firstDay)])
+          : at('stats.noData', 'Nessuna visita registrata finora: il conteggio parte dalla prima visita al sito.')); ?>
+      <?= e(at('stats.privacy', 'Il conteggio è anonimo: niente cookie, niente indirizzi IP, solo totali per giorno. Una visita vale una sessione del browser e ogni modello si conta una volta per sessione; bot e anteprime delle bozze sono esclusi.')); ?>
+    </p>
 
 <?php elseif ($page === 'trash'): ?>
     <?php $items = adminTrashList(); $trashSize = array_sum(array_map(static fn(array $i): int => (int) ($i['size'] ?? 0), $items)); ?>

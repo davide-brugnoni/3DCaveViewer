@@ -52,6 +52,7 @@
 | 📲 **Modelli grandi su mobile** | Download a copia singola e texture ridotte automaticamente su telefoni e tablet, per non far chiudere la scheda del browser |
 | 🧭 **Installazione guidata** | Al primo avvio un wizard configura nome, logo, colori, mappa e il primo amministratore, senza toccare file |
 | 🔐 **Pannello di Amministrazione** | Caricamento e modifica dei modelli dal browser (anche file da centinaia di MB), orientamento con anteprima 3D, bozze, cestino, storico delle modifiche e più utenti con ruoli |
+| 📈 **Statistiche delle visite** | Visite al sito e aperture di ogni modello negli ultimi 7 giorni, 30 giorni, anno e in totale, con grafico dell'andamento ed esportazione CSV; conteggio anonimo, senza cookie né indirizzi IP |
 | 🛠️ **Ottimizzatore GLB Incluso** | Un programma da usare sul proprio computer (non sul server), avviabile con un doppio clic, per comprimere i modelli, con supporto a file fino a 5 GB |
 
 > [!IMPORTANT]
@@ -390,6 +391,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 ├── 🧩 setup_lib.php               # Campi, validazione e scrittura settings.ini del wizard
 ├── 🔐 admin.php                   # Pannello di amministrazione (modelli, utenti, storico)
 ├── 🧩 admin_lib.php               # Logica del pannello: account, storico, upload, cestino
+├── 📈 stats_lib.php               # Statistiche anonime delle visite (contatori per giorno)
 ├── 🗺️  sitemap.php                 # Sitemap.xml dinamica (via rewrite)
 ├── 🤖 robots.php                  # Robots.txt dinamico (via rewrite)
 ├── ⚙️  config.php                  # Configurazione backend (branding, temi, testi)
@@ -408,6 +410,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 ├── 🔌 api/
 │   ├── catalogo.php               # API catalogo modelli (JSON)
 │   ├── catalogo_assets.php        # API assets/risorse dei modelli
+│   ├── stats_hit.php              # Registra una visita anonima (chiamato da js/stats.js)
 │   ├── admin_upload.php           # Caricamento a blocchi dei file 3D (pannello)
 │   └── admin_model.php            # File delle bozze per l'anteprima (solo pannello)
 │
@@ -420,7 +423,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── .installed                 # Marker di installazione + chiave del wizard (gitignored)
 │   ├── settings.ini.bak           # Copia di sicurezza scritta dal wizard (gitignored)
 │   ├── generated/                 # Icone PWA generate dal logo (gitignored, automatica)
-│   ├── admin/                     # Account, storico, upload e cestino del pannello (gitignored)
+│   ├── admin/                     # Account, storico, statistiche, upload e cestino del pannello (gitignored)
 │   ├── icon-192.png               # La tua icona PWA 192x192, opzionale (gitignored)
 │   ├── icon-512.png               # La tua icona PWA 512x512, opzionale (gitignored)
 │   └── logo.png / logo.webp       # Il tuo logo (gitignored)
@@ -438,6 +441,7 @@ L'applicazione supporta 4 lingue, selezionabili direttamente dall'interfaccia (h
 │   ├── pwa-service-worker.js      # Service worker per caching e versioning
 │   ├── i18n.js                    # Sistema internazionalizzazione lato client
 │   ├── lang-selector.js           # Apertura/chiusura del selettore lingua
+│   ├── stats.js                   # Contatore anonimo delle visite (una per sessione)
 │   ├── index.js                   # Logica homepage/mappa (con ricerca)
 │   ├── viewer.js                  # Engine Three.js del visualizzatore (~3.800 righe)
 │   ├── viewer/                    # Moduli ES6 estratti da viewer.js

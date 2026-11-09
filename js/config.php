@@ -292,6 +292,11 @@ const CONFIG = {
   // ============================================================
   // SOCIAL - Configurazione condivisione (solo frontend)
   // ============================================================
+  stats: {
+    // Contatore anonimo delle visite (config.php → [stats] in settings.ini)
+    enabled: <?= jsVal(config('stats.enabled', true) !== false) ?>,
+  },
+
   social: {
     enableFacebook: true,
     enableWhatsApp: true,

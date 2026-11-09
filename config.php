@@ -154,6 +154,16 @@ $CONFIG = [
         // Lingua dell'applicazione (codice ISO 639-1: it, en, fr, es, de, ecc.)
         'default' => 'it',
     ],
+
+    // ============================================================
+    // STATISTICHE - Contatore anonimo delle visite (admin.php?p=stats)
+    // ============================================================
+    // Solo totali per giorno in custom/admin/stats/: nessun cookie, nessun
+    // indirizzo IP, nessun identificativo del visitatore (vedi stats_lib.php).
+    'stats' => [
+        // false = non si registra più nulla (i dati già raccolti restano)
+        'enabled' => true,
+    ],
 ];
 
 // ============================================================
@@ -182,7 +192,7 @@ $CONFIG = [
  */
 const SETTINGS_SECTIONS = [
     'branding', 'texts', 'theme', 'pwa', 'paths',
-    'language', 'security', 'viewer', 'map', 'social',
+    'language', 'security', 'viewer', 'map', 'social', 'stats',
 ];
 
 /**
