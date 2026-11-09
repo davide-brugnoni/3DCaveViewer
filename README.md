@@ -560,6 +560,11 @@ di build: i file si caricano così come sono.
 > 📘 **Guide illustrate in PDF**, con le schermate reali di ogni passaggio:
 > [Installazione su server Linux con FileZilla](docs/Guida-installazione-3DCaveViewer.pdf)
 > e [GLB Optimizer – preparare i modelli 3D](docs/Guida-GLB-Optimizer.pdf).
+>
+> 🎬 **Video tutorial con voce narrante**, sulle stesse schermate:
+> [Installazione e primo modello](docs/video/3DCaveViewer-installazione.mp4) (7 min)
+> e [GLB Optimizer](docs/video/GLB-Optimizer.mp4) (3 min e mezzo).
+> La cartella `docs/` non serve al sito: puoi non caricarla sul server.
 
 1️⃣ **Scarica il programma**
 - Vai alla pagina
