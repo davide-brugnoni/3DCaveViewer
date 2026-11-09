@@ -344,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             adminFlash('error', 'not_writable');
         } elseif ($stored === '') {
             adminFlash('error', 'no_install_key');
-        } elseif ($key === '' || !hash_equals($stored, $key)) {
+        } elseif ($key === '' || !installKeyMatches($key)) {
             adminRecordLoginFailure();
             adminFlash('error', 'install_key');
         } elseif ($password !== (string) ($_POST['password2'] ?? '')) {
@@ -1001,9 +1001,12 @@ $langMeta = getLanguagesMeta();
         <input type="hidden" name="action" value="bootstrap" />
         <p class="adm-field">
           <label for="f-key"><?= e(at('bootstrap.key', 'Chiave di configurazione')); ?></label>
-          <input type="password" id="f-key" name="key" required autocomplete="off" spellcheck="false" />
-          <span class="adm-hint"><?= e(at('bootstrap.keyHint', 'Puoi anche scegliere il file salvato: viene letto nel browser, non caricato.')); ?></span>
-          <input type="file" id="f-key-file" accept=".installed,.txt,text/plain" class="adm-file-small" />
+          <?php // type="text", non "password": i gestori di password (1Password,
+                // Bitwarden, il browser) riempiono il primo campo password del
+                // form con la password dell'account, sovrascrivendo la chiave. ?>
+          <input type="text" id="f-key" name="key" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" />
+          <span class="adm-hint" id="f-key-state"><?= e(at('bootstrap.keyHint', 'Puoi anche scegliere il file salvato: viene letto nel browser, non caricato.')); ?></span>
+          <input type="file" id="f-key-file" accept=".installed,.txt,text/plain" class="adm-file-small" data-ok-text="<?= e(at('bootstrap.keyFileRead', 'Chiave letta dal file.')); ?>" data-error-text="<?= e(at('bootstrap.keyFileEmpty', 'Nessuna chiave trovata in questo file: controlla di aver scelto quello giusto.')); ?>" />
         </p>
         <?php adminInput('username', at('user.username', 'Nome utente'), '', [], ['required' => true, 'autocomplete' => 'username', 'pattern' => '[a-z0-9][a-z0-9._\-]{2,31}', 'maxlength' => 32], at('user.usernameHint', 'Minuscole, numeri, punto, - e _ (3-32 caratteri).')); ?>
         <?php adminInput('displayName', at('user.displayName', 'Nome visualizzato'), '', [], ['maxlength' => 80, 'autocomplete' => 'name'], at('user.displayNameHint', 'Come appare nello storico, es. «Mario Rossi».')); ?>

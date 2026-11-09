@@ -754,6 +754,8 @@
       "intro": "Non esiste ancora nessun account. Crea il primo amministratore: per dimostrare di gestire questa installazione serve la chiave di configurazione, quella mostrata (e fatta scaricare) alla fine dell'installazione guidata e salvata nel file custom/.installed.",
       "key": "Chiave di configurazione",
       "keyHint": "Puoi anche scegliere il file salvato: viene letto nel browser, non caricato.",
+      "keyFileRead": "Chiave letta dal file.",
+      "keyFileEmpty": "Nessuna chiave trovata in questo file: controlla di aver scelto quello giusto.",
       "submit": "Crea amministratore"
     },
     "nav": {

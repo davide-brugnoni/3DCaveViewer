@@ -1024,8 +1024,12 @@ function installKey(): string {
  * @return string
  */
 function parseInstallKey(string $content): string {
+    // BOM in testa (file riaperto e salvato col Blocco note di Windows) e
+    // spazi "invisibili" incollati da un PDF o da un'e-mail: trim() non li
+    // toglie, e la prima riga di commento passerebbe per la chiave.
+    $content = (string) preg_replace('/^\xEF\xBB\xBF/', '', $content);
     foreach (preg_split('/\R/', $content) ?: [] as $line) {
-        $line = trim($line);
+        $line = trim((string) preg_replace('/[\x{00A0}\x{200B}-\x{200D}\x{FEFF}]/u', ' ', $line) ?: $line);
         if ($line === '' || $line[0] === ';' || $line[0] === '#') {
             continue;
         }
@@ -1033,6 +1037,31 @@ function parseInstallKey(string $content): string {
     }
 
     return '';
+}
+
+/**
+ * Confronta la chiave fornita dall'utente con quella del marker.
+ *
+ * L'input passa da parseInstallKey() come il marker, così funziona anche
+ * incollando il contenuto intero del file; le chiavi generate sono
+ * esadecimali, quindi maiuscole/minuscole non contano. Il confronto resta
+ * a tempo costante (hash_equals).
+ *
+ * @param string $given
+ * @return bool
+ */
+function installKeyMatches(string $given): bool {
+    $stored = installKey();
+    $given  = parseInstallKey($given);
+    if ($stored === '' || $given === '') {
+        return false;
+    }
+    if (ctype_xdigit($stored) && ctype_xdigit($given)) {
+        $stored = strtolower($stored);
+        $given  = strtolower($given);
+    }
+
+    return hash_equals($stored, $given);
 }
 
 /**
