@@ -38,6 +38,8 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+  /* Notch / Dynamic Island nella PWA installata (viewport-fit=cover) */
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
 }
 
 /* Header */

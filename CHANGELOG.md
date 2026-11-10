@@ -7,6 +7,11 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+### Corretto
+- iPhone, app installata sulla schermata Home: la homepage, `status.php`,
+  il pannello e il wizard non finiscono più sotto il notch/Dynamic Island
+  e la barra di stato (mancava il margine `env(safe-area-inset-top)`).
+
 ## [1.3.0] — 2026-11-10 — statistiche delle visite
 
 Il pannello mostra quante persone visitano il sito e aprono ogni modello,
