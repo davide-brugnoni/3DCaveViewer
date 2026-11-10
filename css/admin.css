@@ -70,7 +70,7 @@ h2 {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px 24px;
-  padding: 12px calc(20px + env(safe-area-inset-right)) 12px calc(20px + env(safe-area-inset-left));
+  padding: calc(12px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) 12px calc(20px + env(safe-area-inset-left));
   background: var(--panel-bg-solid);
   border-bottom: 1px solid var(--border-color);
   position: sticky;

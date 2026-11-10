@@ -47,8 +47,12 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+  /* PWA installata su iPhone (status bar black-translucent + viewport-fit=cover):
+     la pagina parte sotto notch/Dynamic Island, quindi serve anche l'inset top */
+  padding-top: max(20px, env(safe-area-inset-top));
   padding-left: max(20px, env(safe-area-inset-left));
   padding-right: max(20px, env(safe-area-inset-right));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   flex-grow: 1;
 }
@@ -507,8 +511,10 @@ footer a:hover { text-decoration: underline; }
 @media (max-width: 480px) {
   .container {
     padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
     padding-left: max(12px, env(safe-area-inset-left));
     padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   header {
     gap: 12px;

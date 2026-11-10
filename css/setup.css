@@ -51,7 +51,7 @@ body {
 .setup-shell {
     max-width: 860px;
     margin: 0 auto;
-    padding: 24px calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    padding: calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
 }
 
 /* ===== Intestazione ===== */
