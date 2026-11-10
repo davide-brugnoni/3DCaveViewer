@@ -25,6 +25,15 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   `custom/settings.ini`. Il conteggio parte dall'aggiornamento: le visite
   precedenti non sono note.
 
+### Corretto
+- PWA su telefono che restava nera aprendola senza internet, anche con tutti
+  i modelli già scaricati: con poco segnale o in un Wi-Fi senza internet la
+  richiesta della pagina non fallisce ma resta appesa, e il service worker
+  aspettava senza limite la risposta della "navigation preload" invece di
+  usare la copia in cache. Ora pagine e catalogo aspettano la rete al
+  massimo 3 secondi, poi si aprono dalla cache (subito, se il telefono si sa
+  offline); la risposta che arriva dopo aggiorna solo la cache.
+
 ## [1.2.0] — 2026-11-06 — ottimizzatore con un doppio clic
 
 L'ottimizzatore GLB si avvia con un doppio clic su Windows, macOS e Linux,

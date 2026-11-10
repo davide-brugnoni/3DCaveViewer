@@ -1044,6 +1044,11 @@ The service worker (`js/pwa-service-worker.js`) uses a **cache-first with networ
   for users who only cached the models they opened — when a page requests
   `api/catalogo.php` (`maybePruneModelCache()`, at most every 10 minutes per
   worker lifetime). An empty asset list never prunes anything
+- Network-first (`networkFirst()`) never waits longer than `NETWORK_GRACE_MS`
+  (3 s) when a cached copy exists, and serves it at once when
+  `navigator.onLine === false`; the late network response only refreshes the
+  cache. `event.preloadResponse` must never be awaited without a timeout: on a
+  phone with no signal it hangs, and the installed PWA stayed black offline
 - `status.php` provides a dashboard to inspect and clear cached assets
 - `offline.html` is the fallback when network and cache both fail
 - Map tiles: only the homepage's **standard view** (configured centre and
