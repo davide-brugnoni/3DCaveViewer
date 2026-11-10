@@ -26,7 +26,7 @@
 | **Requisiti per l'utente** | Solo un browser moderno — nessuna installazione |
 | **Requisiti per chi lo installa** | Un comune hosting PHP — configurazione guidata, senza toccare il codice |
 | **Gestione dei contenuti** | Pannello di amministrazione nel browser, multiutente, con bozze, cestino e storico |
-| **Versione attuale** | 1.2.0 (novembre 2026) |
+| **Versione attuale** | 1.2.1 (novembre 2026) |
 | **Sito del progetto** | https://www.3dcaveviewer.com |
 | **Sito del gruppo** | https://www.buioverticale.it |
 | **Contatto** | davide.brugnoni@gmail.com |

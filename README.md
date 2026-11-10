@@ -9,7 +9,7 @@
 
 ### Visualizzatore Interattivo di Cavità Sotterranee
 
-[![Versione](https://img.shields.io/badge/versione-1.2.0-2ea44f)](CHANGELOG.md)
+[![Versione](https://img.shields.io/badge/versione-1.2.1-2ea44f)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Three.js](https://img.shields.io/badge/Three.js-v0.160.0-000000?logo=three.js)](https://threejs.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
@@ -66,9 +66,30 @@
 
 ---
 
-## 🎉 Novità della versione 1.2.0
+## 🎉 Novità della versione 1.2.1
 
-La 1.2.0 rende l'ottimizzatore GLB **un programma da doppio clic** e
+- 📊 **Statistiche delle visite** nel pannello (pagina «Statistiche», per
+  editor e amministratori): visite al sito e aperture di ogni modello negli
+  ultimi 7 e 30 giorni, nell'ultimo anno e in totale, con il grafico
+  dell'andamento, le aperture dagli iframe di altri siti ed esportazione in
+  CSV. Il conteggio è **anonimo**: niente cookie, niente indirizzi IP; si
+  spegne con `[stats] enabled = false` in `custom/settings.ini`
+- 📴 **PWA offline davvero**: con poco segnale o in un Wi-Fi senza internet
+  l'app sul telefono non resta più nera, ma dopo al massimo 3 secondi si
+  apre dalla cache
+- 🔑 **Chiave di configurazione** accettata al primo accesso al pannello
+  anche quando il browser o un gestore di password provava a riempire il
+  campo
+- 📘 **Guide PDF illustrate e video tutorial** in `docs/` per
+  l'installazione via FileZilla e per il GLB Optimizer
+
+**Aggiornare dalla 1.2.0**: si sovrascrive il codice come sempre (vedi
+[Aggiornare all'ultima versione](#-aggiornare-allultima-versione)); il
+conteggio delle visite parte da quel momento.
+
+### Versione 1.2.0
+
+La 1.2.0 (6 novembre 2026) rende l'ottimizzatore GLB **un programma da doppio clic** e
 semplifica la creazione dei modelli nel pannello.
 
 - 🚀 **GLB Optimizer con un doppio clic** su Windows, macOS e Linux
@@ -86,7 +107,7 @@ semplifica la creazione dei modelli nel pannello.
 - 🛡️ **`glb-optimizer/` resta sul tuo computer**: la documentazione lo dice
   chiaramente e `.htaccess` ne blocca l'accesso se finisce sul server
 
-**Aggiornare dalla 1.1.0**: si sovrascrive il codice come sempre (vedi
+**Aggiornare dalla 1.1.0** alla 1.2.x: si sovrascrive il codice come sempre (vedi
 [Aggiornare all'ultima versione](#-aggiornare-allultima-versione)). Se sul
 server c'erano le cartelle `EXE_GLB_OPTIMIZER/`, `glb-optimizer-static/` o
 `glb-optimizer/`, si possono cancellare: non servono al sito. **Dalla
@@ -579,7 +600,7 @@ di build: i file si caricano così come sono.
   clicca il pulsante verde **Code** → **Download ZIP**.
 
 Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
-`3DCaveViewer-1.2.0` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
+`3DCaveViewer-1.2.1` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
 `css/`, `js/`, `lib/`, `custom/`, `modelli/` e così via.
 
 2️⃣ **Carica i file sul server via FTP**
@@ -589,7 +610,7 @@ Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
   `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
   indirizzo tipo `https://tuodominio.it/grotte/`;
 - trascina lì **il contenuto** della cartella estratta (non la cartella
-  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.2.0/`);
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.2.1/`);
 - ⚠️ **tutto tranne la cartella `glb-optimizer/`**: è l'ottimizzatore dei
   modelli, si usa sul tuo computer e sul server non serve.
 
