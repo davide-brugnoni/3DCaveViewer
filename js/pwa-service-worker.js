@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-offline-v71';
+const CACHE_VERSION = 'pwa-offline-v72';
 const CACHE_PREFIX = 'pwa-offline-'; // Prefisso per identificare le cache dell'app
 const FETCH_TIMEOUT = 15000; // 15 secondi (aumentato per connessioni lente)
 // I modelli 3D (GLB/GLTF) possono superare i 100MB: con FETCH_TIMEOUT il download
@@ -1189,49 +1189,107 @@ function stripQuery(url) {
 }
 
 // Network-First: Prioritizza la rete, fallback a cache
+//
+// Con una copia in cache la rete ha NETWORK_GRACE_MS per rispondere, poi si
+// serve la copia e la risposta della rete, se arriva, aggiorna solo la cache.
+// Senza questo limite, su telefono con poco segnale o in un Wi-Fi senza
+// internet (la richiesta non fallisce: resta appesa) la PWA restava nera:
+// - event.preloadResponse (navigation preload) si attendeva senza timeout,
+//   quindi la pagina in cache non veniva mai servita;
+// - anche senza preload, ogni pagina e il catalogo aspettavano FETCH_TIMEOUT
+//   (15 s) prima di ricadere sulla cache.
+// Se il dispositivo si sa offline (navigator.onLine === false) la cache si
+// serve subito, senza nemmeno tentare la rete.
+const NETWORK_GRACE_MS = 3000;
+
+function cachedFallback(cache, request, { withoutQuery = true } = {}) {
+  return (async () => {
+    const exact = await cache.match(request.url, { ignoreVary: true });
+    if (exact || !withoutQuery) return exact || null;
+    // Per una pagina anche senza query: viewer.php?m=… è in cache come viewer.php
+    return (await cache.match(stripQuery(request.url), { ignoreVary: true })) || null;
+  })().catch(() => null);
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function networkFirst(request, event, preloadResponse) {
   const cache = await caches.open(CACHE_VERSION);
   const requestUrl = request.url;
 
-  try {
-    const preloaded = preloadResponse ? await preloadResponse.catch(() => null) : null;
-    const response = preloaded || await fetchWithTimeout(request);
+  // Risposta della rete (preload se disponibile, altrimenti fetch). Non
+  // rigetta mai: in caso di errore o timeout restituisce null. Il preload non
+  // si può annullare, quindi lo si attende al massimo FETCH_TIMEOUT.
+  const network = (async () => {
+    try {
+      let response = null;
+      if (preloadResponse) {
+        response = await Promise.race([
+          preloadResponse.catch(() => null),
+          delay(FETCH_TIMEOUT).then(() => null)
+        ]);
+      }
+      if (!response) response = await fetchWithTimeout(request);
+      if (isCacheable(response)) {
+        // Si salva anche quando la pagina ha già ricevuto la copia in cache:
+        // la prossima apertura sarà aggiornata
+        await safeCachePut(cache, requestUrl, response.clone());
+      }
+      return response;
+    } catch {
+      return null;
+    }
+  })();
+  keepAlive(event, network);
 
-    // Salva solo se la risposta è cacheable
+  const cachedPromise = cachedFallback(cache, request);
+  const knownOffline = self.navigator && self.navigator.onLine === false;
+
+  let response;
+  if (knownOffline) {
+    const cached = await cachedPromise;
+    if (cached) {
+      console.log('PWA: Offline, uso la cache per', requestUrl);
+      return cached;
+    }
+    response = await network;
+  } else {
+    // Prima che scada il tempo di grazia vince la rete; dopo, se c'è una
+    // copia in cache, vince la copia
+    response = await Promise.race([network, delay(NETWORK_GRACE_MS).then(() => undefined)]);
+    if (response === undefined) {
+      const cached = await cachedPromise;
+      if (cached) {
+        console.log('PWA: Rete lenta o assente, uso la cache per', requestUrl);
+        return cached;
+      }
+      response = await network;
+    }
+  }
+
+  if (response) {
     if (isCacheable(response)) {
-      keepAlive(event, safeCachePut(cache, requestUrl, response.clone()));
       return response;
     }
-
     // Response non cacheable (es. 503 del server), prova la cache. Per una
-    // pagina anche senza query: viewer.php?m=… è in cache come viewer.php
-    const cached = await cache.match(requestUrl, { ignoreVary: true })
-      || (request.mode === 'navigate' && response.status >= 500
-        ? await cache.match(stripQuery(requestUrl), { ignoreVary: true })
-        : null);
-    if (cached) {
-      return cached;
-    }
+    // pagina anche senza query solo sugli errori del server
+    const cached = (request.mode === 'navigate' && response.status >= 500)
+      ? await cachedPromise
+      : await cachedFallback(cache, request, { withoutQuery: false });
+    return cached || response;
+  }
 
-    return response;
-  } catch (error) {
-    // Network fallito, prova la cache usando URL
-    const cached = await cache.match(requestUrl, { ignoreVary: true });
-    if (cached) {
-      console.log('PWA: Usando cache offline per', requestUrl);
-      return cached;
-    }
+  // Rete fallita: prova la cache usando l'URL, anche senza query
+  const cached = await cachedPromise;
+  if (cached) {
+    console.log('PWA: Usando cache offline per', requestUrl);
+    return cached;
+  }
 
-    // Prova a rimuovere query params e hash
-    try {
-      const fallback = await cache.match(stripQuery(requestUrl), { ignoreVary: true });
-
-      if (fallback) {
-        return fallback;
-      }
-    } catch {}
-
-    // Nessuna cache disponibile - mostra pagina offline per navigazione
+  // Nessuna cache disponibile - mostra pagina offline per navigazione
+  if (request.mode === 'navigate') {
     try {
       const offlineUrl = new URL('offline.html', self.registration.scope).toString();
       const offlinePage = await cache.match(offlineUrl, { ignoreVary: true });
@@ -1239,13 +1297,13 @@ async function networkFirst(request, event, preloadResponse) {
         return offlinePage;
       }
     } catch {}
-
-    return new Response('Offline - Risorsa non disponibile', {
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'text/plain' }
-    });
   }
+
+  return new Response('Offline - Risorsa non disponibile', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'text/plain' }
+  });
 }
 
 // Stale-While-Revalidate: Restituisci cache immediatamente, aggiorna in background
