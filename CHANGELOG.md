@@ -7,6 +7,15 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
+## [1.3.0] — 2026-11-10 — statistiche delle visite
+
+Il pannello mostra quante persone visitano il sito e aprono ogni modello,
+senza cookie né indirizzi IP; la PWA si apre senza internet anche quando la
+rete resta appesa, e la chiave di configurazione non viene più rifiutata
+per colpa dei gestori di password. Aggiornare dalla 1.2.0 non richiede
+nulla: si sovrascrive il codice come sempre (preservando `modelli/` e
+`custom/`).
+
 ### Aggiunto
 - Pannello, nuova pagina «Statistiche» (`admin.php?p=visite`, per editor e
   amministratori): visite al sito e aperture dei modelli negli ultimi 7
@@ -33,6 +42,22 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
   usare la copia in cache. Ora pagine e catalogo aspettano la rete al
   massimo 3 secondi, poi si aprono dalla cache (subito, se il telefono si sa
   offline); la risposta che arriva dopo aggiorna solo la cache.
+- Pannello, primo accesso: la chiave letta da `custom/.installed` veniva
+  rifiutata perché il campo era di tipo password e i gestori di password
+  (del browser, 1Password, Bitwarden) lo riempivano con la password
+  dell'account. Ora è un campo di testo ignorato dai gestori di password,
+  dice se il file scelto conteneva una chiave e accetta anche l'intero
+  contenuto del file incollato, maiuscole comprese; un BOM o spazi
+  invisibili all'inizio del file non fanno più leggere la riga di commento
+  come chiave.
+
+### Documentazione
+- Guide PDF illustrate in `docs/`: installazione via FTP con FileZilla
+  (`Guida-installazione-3DCaveViewer.pdf`) e uso del GLB Optimizer
+  (`Guida-GLB-Optimizer.pdf`), con schermate reali.
+- Video tutorial con voce narrante in `docs/video/`, per l'installazione e
+  per il GLB Optimizer, con le copertine per YouTube.
+- Guida e README: basta un qualsiasi server web con PHP, non solo Linux.
 
 ## [1.2.0] — 2026-11-06 — ottimizzatore con un doppio clic
 
