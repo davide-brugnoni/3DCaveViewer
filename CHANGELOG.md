@@ -7,7 +7,7 @@ Tutte le modifiche rilevanti di 3DCaveViewer. Il formato segue
 
 ## [Non rilasciato]
 
-## [1.2.1] — 2026-11-10 — statistiche delle visite
+## [1.3.0] — 2026-11-10 — statistiche delle visite
 
 Il pannello mostra quante persone visitano il sito e aprono ogni modello,
 senza cookie né indirizzi IP; la PWA si apre senza internet anche quando la

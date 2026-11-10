@@ -9,7 +9,7 @@
 
 ### Visualizzatore Interattivo di Cavità Sotterranee
 
-[![Versione](https://img.shields.io/badge/versione-1.2.1-2ea44f)](CHANGELOG.md)
+[![Versione](https://img.shields.io/badge/versione-1.3.0-2ea44f)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Three.js](https://img.shields.io/badge/Three.js-v0.160.0-000000?logo=three.js)](https://threejs.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
@@ -66,7 +66,7 @@
 
 ---
 
-## 🎉 Novità della versione 1.2.1
+## 🎉 Novità della versione 1.3.0
 
 - 📊 **Statistiche delle visite** nel pannello (pagina «Statistiche», per
   editor e amministratori): visite al sito e aperture di ogni modello negli
@@ -600,7 +600,7 @@ di build: i file si caricano così come sono.
   clicca il pulsante verde **Code** → **Download ZIP**.
 
 Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
-`3DCaveViewer-1.2.1` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
+`3DCaveViewer-1.3.0` o `3DCaveViewer-main`) che contiene `index.php`, `viewer.php`, le cartelle
 `css/`, `js/`, `lib/`, `custom/`, `modelli/` e così via.
 
 2️⃣ **Carica i file sul server via FTP**
@@ -610,7 +610,7 @@ Estrai lo ZIP sul tuo computer: ottieni una cartella (es.
   `htdocs/`), oppure una sua sottocartella se vuoi il viewer su un
   indirizzo tipo `https://tuodominio.it/grotte/`;
 - trascina lì **il contenuto** della cartella estratta (non la cartella
-  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.2.1/`);
+  stessa, altrimenti il sito finisce in `…/3DCaveViewer-1.3.0/`);
 - ⚠️ **tutto tranne la cartella `glb-optimizer/`**: è l'ottimizzatore dei
   modelli, si usa sul tuo computer e sul server non serve.
 
