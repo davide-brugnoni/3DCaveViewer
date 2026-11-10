@@ -562,7 +562,7 @@ di build: i file si caricano così come sono.
 ### 🔧 Installazione in 5 passi (FTP)
 
 > 📘 **Guide illustrate in PDF**, con le schermate reali di ogni passaggio:
-> [Installazione su server Linux con FileZilla](docs/Guida-installazione-3DCaveViewer.pdf)
+> [Installazione su server web con FileZilla](docs/Guida-installazione-3DCaveViewer.pdf)
 > e [GLB Optimizer – preparare i modelli 3D](docs/Guida-GLB-Optimizer.pdf).
 >
 > 🎬 **Video tutorial con voce narrante**, sulle stesse schermate:
